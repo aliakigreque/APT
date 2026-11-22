@@ -1,0 +1,174 @@
+{
+	"geode": "5.11.2",
+	"gd": {
+		"win": "2.2081"
+	},
+	"version": "v1.0.0",
+	"id": "aliaky.auto-pathing-tool",
+	"name": "Auto Pathing Tool",
+	"developer": "aliaky",
+	"description": "A free bot that finds by itself how to beat a level, using an exact simulation of Geometry Dash physics, with a tick by tick path editor.",
+	"links": {
+		"homepage": "https://github.com/aliakigreque/APT-files",
+		"source": "https://github.com/aliakigreque/APT-files",
+		"community": "https://discord.gg/S4QzXYf65G"
+	},
+	"issues": {
+		"info": "Send auto-pathing-tool.log (in the mod's save folder) and the level from levels/ on the Discord server.",
+		"url": "https://discord.gg/S4QzXYf65G"
+	},
+	"tags": [
+		"gameplay",
+		"utility",
+		"cheat"
+	],
+	"settings": {
+		"keys-title": {
+			"type": "title",
+			"name": "Keys"
+		},
+		"key-menu": {
+			"name": "Open the menu",
+			"description": "Opens the Auto Pathing Tool menu. Press again to close it.",
+			"type": "keybind",
+			"default": "F1"
+		},
+		"key-live": {
+			"name": "Find the path while playing",
+			"description": "In a level: the attempt restarts from the beginning and the bot plays it while it searches for the path alongside (the level only waits if the search falls behind). Press again to stop.",
+			"type": "keybind",
+			"default": "F2"
+		},
+		"key-edit": {
+			"name": "Edit the path",
+			"description": "While the bot plays (or a macro plays): stops the level. Left / A goes back one tick, Right / D plays one tick (hold to go faster); the jump button held while a tick plays is written in the path. Press again to let the bot go on from there.",
+			"type": "keybind",
+			"default": "F3"
+		},
+		"key-offline": {
+			"name": "Find the whole path first",
+			"description": "In a level: the game waits while the bot searches the whole level in the simulator, then plays the path it found. Press again to stop.",
+			"type": "keybind",
+			"default": "F4"
+		},
+		"key-play-macro": {
+			"name": "Play the macro",
+			"description": "Plays the current macro (the last path found, edited or loaded) from the start of the level.",
+			"type": "keybind",
+			"default": "F5"
+		},
+		"key-save-macro": {
+			"name": "Save the macro",
+			"description": "Saves the current macro in GDR format in the mod's save folder (macros/).",
+			"type": "keybind",
+			"default": "F6"
+		},
+		"key-record-game": {
+			"name": "Record the game (bug reports)",
+			"description": "While you play: writes the exact player state and your inputs tick by tick (recordings/), plus the level's objects (levels/). Attach these files to bug reports. Press again to stop.",
+			"type": "keybind",
+			"default": "F7"
+		},
+		"progress-title": {
+			"type": "title",
+			"name": "Progress"
+		},
+		"safe-mode": {
+			"name": "Safe mode",
+			"description": "An attempt the bot played any part of counts for nothing.",
+			"type": "bool",
+			"default": true
+		},
+		"auto-reset": {
+			"name": "Auto reset",
+			"description": "In live mode, when the bot reaches a dead end and the player is still alive 6s after the end of the plan, the level restarts. Off (default): the attempt goes on without inputs until the player dies or finishes the level.",
+			"type": "bool",
+			"default": false
+		},
+		"save-on-death": {
+			"name": "Save on death",
+			"description": "When Record is on (menu, Macro): an attempt of yours that dies is still saved in macros.",
+			"type": "bool",
+			"default": false
+		},
+		"search-title": {
+			"type": "title",
+			"name": "Search"
+		},
+		"max-cps": {
+			"name": "Max clicks per second",
+			"description": "Minimum gap between two presses. When the search gets stuck on a part that needs faster presses, it halves this gap, then quarters it, until it gets through.",
+			"type": "int",
+			"default": 12,
+			"min": 2,
+			"max": 60,
+			"control": {
+				"slider": true,
+				"slider-step": 1
+			}
+		},
+		"search-beam": {
+			"name": "States kept per tick (beam)",
+			"description": "The search keeps at most this many states per tick. Larger is more thorough but slower. It widens by itself at dead ends, so the default (150) is usually best.",
+			"type": "int",
+			"default": 150,
+			"min": 100,
+			"max": 2400,
+			"control": {
+				"slider": true,
+				"slider-step": 50
+			}
+		},
+		"search-time-limit": {
+			"name": "Offline search time budget (s)",
+			"description": "Past this time, the offline search stops and keeps the best partial path. 0 = unlimited (default): the search only stops when it has found a path or tried everything; pressing its key again (F4 by default) interrupts it.",
+			"type": "int",
+			"default": 0,
+			"min": 0,
+			"max": 3600,
+			"control": {
+				"slider": true,
+				"slider-step": 10
+			}
+		},
+		"fast-search": {
+			"name": "Fastest search",
+			"description": "Off (default): in live mode, the search uses one thread per physical core of your CPU but one, so the game keeps a whole core and stays smooth. On: it uses every logical thread but two; the search goes further ahead, but the game can lose FPS on heavy levels.",
+			"type": "bool",
+			"default": false
+		},
+		"display-title": {
+			"type": "title",
+			"name": "Display"
+		},
+		"overlay": {
+			"name": "Draw the path",
+			"description": "Draws the path found in the level.",
+			"type": "bool",
+			"default": true
+		},
+		"show-status": {
+			"name": "Show the bot info",
+			"description": "Writes what the bot is doing (tick played, how far the plan goes, where the search is).",
+			"type": "bool",
+			"default": true
+		},
+		"status-position": {
+			"name": "Bot info position",
+			"description": "Corner of the screen where the bot info is shown.",
+			"type": "string",
+			"default": "Top left",
+			"one-of": [
+				"Top left",
+				"Top right",
+				"Bottom left",
+				"Bottom right"
+			]
+		}
+	},
+	"resources": {
+		"sprites": [
+			"resources/*.png"
+		]
+	}
+}
