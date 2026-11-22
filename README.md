@@ -1,5 +1,7 @@
 # Auto Pathing Tool
 
+Free download : https://github.com/aliakigreque/APT/releases/latest/download/aliaky.auto-pathing-tool.geode
+
 A free Geode mod for Geometry Dash 2.2081 (Windows) that finds by itself how to beat a level. It simulates the game's
 physics, searches the simulation for the clicks that beat the level, and plays them in the real game. A tick by tick
 path editor (F3) lets you correct the bot and let it go on from there.
