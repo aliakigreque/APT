@@ -12,8 +12,7 @@ namespace ap {
     class ObjectWatcher {
     public:
         void reset(PlayLayer* pl);
-        size_t sample(int tick, std::vector<sim::TimelineEvent>& out, bool all = false, cocos2d::CCPoint center = {},
-                      float window = 0.f);
+        size_t sample(int tick, std::vector<sim::TimelineEvent>& out, bool all = false, cocos2d::CCPoint center = {}, float window = 0.f);
         // number of watched objects
         size_t candidates() const { return m_c.size(); }
 

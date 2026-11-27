@@ -1,5 +1,4 @@
-// Helpers, types and per-thread state shared by the trigger files (triggers*.cpp). Only those files include it;
-// the rest of the simulator goes through triggers.hpp.
+// Helpers, types and per-thread state shared by the trigger files (triggers*.cpp). Only those files include it; the rest of the simulator goes through triggers.hpp.
 
 #pragma once
 #include <map>
@@ -141,9 +140,9 @@ namespace ap::sim::trigger_impl {
     double kfSplineEval(World::KfSpline const& spline, double t);
 
     void buildKeyframeAnim(World const& w, std::vector<int> const& keys,
-                           std::vector<World::KfKeyState> const& keyStates, World::KfAnim& anim,
-                           std::vector<World::KfSpline>& splines, float timeMod, float posXMod, float posYMod,
-                           float rotMod, float scaleXMod, float scaleYMod);
+                            std::vector<World::KfKeyState> const& keyStates, World::KfAnim& anim,
+                            std::vector<World::KfSpline>& splines, float timeMod, float posXMod, float posYMod,
+                            float rotMod, float scaleXMod, float scaleYMod);
 
 }
 
@@ -414,8 +413,7 @@ namespace ap::sim::trigger_impl {
 
     void toggleGroup(Game& g, int id, bool activate);
 
-    void spawnGroupLayer(Game& g, int group, bool ordered, double delay, int uid, int control,
-                         RemapKeys const* keys = nullptr);
+    void spawnGroupLayer(Game& g, int group, bool ordered, double delay, int uid, int control, RemapKeys const* keys = nullptr);
 
     void spawnObject(Game& g, int idx, double delay, RemapKeys const* keys = nullptr);
 
@@ -428,8 +426,7 @@ namespace ap::sim::trigger_impl {
     void queueSpawn(Game& g, int group, float delay, bool ordered, int uid, int control,
                     RemapKeys const* keys = nullptr);
 
-    void spawnObjectsInOrder(Game& g, std::vector<int> const& objs, double delay, int uid, int control,
-                             RemapKeys const* keys);
+    void spawnObjectsInOrder(Game& g, std::vector<int> const& objs, double delay, int uid, int control, RemapKeys const* keys);
 
     inline thread_local bool tl_spRec = false;
 
@@ -441,21 +438,15 @@ namespace ap::sim::trigger_impl {
 
     GroupCmd& newCmd(Game& g);
 
-    void createMoveCommand(Game& g, double dx, double dy, int group, float duration, int easing, float rate,
-                           bool lockPX, bool lockPY, bool lockCX, bool lockCY, float modX, float modY, int uid,
-                           int control);
+    void createMoveCommand(Game& g, double dx, double dy, int group, float duration, int easing, float rate, bool lockPX, bool lockPY, bool lockCX, bool lockCY, float modX, float modY, int uid, int control);
 
-    void createRotateCommand(Game& g, float rotation, float duration, int target, int center, int easing, float rate,
-                             bool lockRot, int uid, int control);
+    void createRotateCommand(Game& g, float rotation, float duration, int target, int center, int easing, float rate, bool lockRot, int uid, int control);
 
-    void createFollowCommand(Game& g, float xMod, float yMod, float duration, int target, int center, int uid,
-                             int control);
+    void createFollowCommand(Game& g, float xMod, float yMod, float duration, int target, int center, int uid, int control);
 
-    void createPlayerFollowCommand(Game& g, float speed, float delay, int offset, float maxSpeed, float duration,
-                                   int target, int uid, int control);
+    void createPlayerFollowCommand(Game& g, float speed, float delay, int offset, float maxSpeed, float duration, int target, int uid, int control);
 
-    void createTransformCommand(Game& g, double scaleX, double scaleY, int target, int center, bool onlyMove,
-                                bool relRot, float duration, int easing, float rate, int uid, int control);
+    void createTransformCommand(Game& g, double scaleX, double scaleY, int target, int center, bool onlyMove, bool relRot, float duration, int easing, float rate, int uid, int control);
 
     void updateAction(GroupCmd& cmd, int type, float value);
 
@@ -567,11 +558,8 @@ namespace ap::sim::trigger_impl {
     void msvcHashInsert(std::vector<T>& list, uint32_t& buckets, T const& e, KeyOf key) {
         size_t const newSize = list.size() + 1;
         if (1.f < static_cast<float>(newSize) / static_cast<float>(buckets)) {
-            size_t const needed =
-                    std::max<size_t>(8, static_cast<size_t>(std::ceil(static_cast<float>(newSize) / 1.f)));
-            size_t bucketCount = (buckets < 512 && static_cast<size_t>(buckets) * 8 >= needed)
-                                         ? static_cast<size_t>(buckets) * 8
-                                         : needed;
+            size_t const needed = std::max<size_t>(8, static_cast<size_t>(std::ceil(static_cast<float>(newSize) / 1.f)));
+            size_t bucketCount = (buckets < 512 && static_cast<size_t>(buckets) * 8 >= needed) ? static_cast<size_t>(buckets) * 8 : needed;
             size_t pow2 = 1;
             while (pow2 < bucketCount) pow2 <<= 1;
             bucketCount = pow2;
@@ -602,8 +590,7 @@ namespace ap::sim::trigger_impl {
         list.push_back(e);
     }
 
-    void createTimer(Game& g, int id, double start, double target, bool stopEnabled, bool running, bool dontOverride,
-                     float mod, bool ignoreTW, int group, RemapKeys const* keys, int uid, int control);
+    void createTimer(Game& g, int id, double start, double target, bool stopEnabled, bool running, bool dontOverride, float mod, bool ignoreTW, int group, RemapKeys const* keys, int uid, int control);
 
     void updateTimer(Game& g, int id, double value);
 
@@ -666,8 +653,7 @@ namespace ap::sim::trigger_impl {
 
     void objectsCollided(Game& g, int a, int b);
 
-    void checkBlockAgainst(Game& g, int blockIdx, Rect const& blockRect, bool blockOriented, int otherIdx,
-                           bool otherIsPlayer, Rect const& otherRect, OBB const* otherBox, OBB const* blockBox);
+    void checkBlockAgainst(Game& g, int blockIdx, Rect const& blockRect, bool blockOriented, int otherIdx, bool otherIsPlayer, Rect const& otherRect, OBB const* otherBox, OBB const* blockBox);
 
     // own entry of an object (position, rotation, scale), nullptr if it has none
     inline ObjDyn const* dynOf(Game const& g, int idx) {
@@ -995,7 +981,7 @@ namespace ap::sim::trigger_impl {
     inline MemoEntry const* memoFind2(uint64_t key, TrigDyn const& dyn) {
         void const* const excl = tl_fyExcl;
         for (int slot = tl_memo2Idx.head[MemoIndex::bucket(key)]; slot >= 0;
-             slot = tl_memo2Idx.next[static_cast<size_t>(slot)]) {
+            slot = tl_memo2Idx.next[static_cast<size_t>(slot)]) {
             size_t const i = static_cast<size_t>(slot);
             if (tl_memo2Keys[i] != key) continue;
             MemoEntry const& entry = tl_memo2[i];
@@ -1076,7 +1062,7 @@ namespace ap::sim::trigger_impl {
 
     // stores the result of the computation just done, keyed by its observed dyn dependency
     inline void memoCommit(uint64_t key, TrigState const& trig, uint64_t keysBefore,
-                           std::shared_ptr<TrigDyn> const& fullBefore, std::vector<FollowYCmd> const* fy = nullptr) {
+                            std::shared_ptr<TrigDyn> const& fullBefore, std::vector<FollowYCmd> const* fy = nullptr) {
         tl_spRec = false;
         size_t const cap = trig.h && trig.r().M().pset ? 512u : 64u;
         if (tl_memo.size() + tl_memo2.size() >= cap) {
@@ -1273,12 +1259,10 @@ namespace ap::sim::trigger_impl {
     inline bool advPlayerDep(World const& w, AdvInst const& I) {
         if (I.key < 0) return true;
         int const mainObj = w.mainObjectOf(I.key);
-        return mainObj >= 0 && static_cast<size_t>(mainObj) < w.areaTarget.size() &&
-               w.areaTarget[static_cast<size_t>(mainObj)];
+        return mainObj >= 0 && static_cast<size_t>(mainObj) < w.areaTarget.size() && w.areaTarget[static_cast<size_t>(mainObj)];
     }
 
-    std::vector<int> const& fyObjectsOf(World const& w, std::vector<GroupCmd> const& cmds,
-                                        std::vector<AdvInst> const& advs);
+    std::vector<int> const& fyObjectsOf(World const& w, std::vector<GroupCmd> const& cmds, std::vector<AdvInst> const& advs);
 
     bool followIndependent(World const& w, GroupCmd const& c, std::vector<int> const& fy);
 
@@ -1345,8 +1329,7 @@ namespace ap::sim::trigger_impl {
 
     Aff tfWorld(float cx, float cy, double fxN, double fxO, double fyN, double fyO, float rotT, float centerRot);
 
-    void tfObj(Obj const& o, ObjDyn& d, Aff const& P, float cx, float cy, float pdx, float pdy, bool onlyMove,
-               float rotOff);
+    void tfObj(Obj const& o, ObjDyn& d, Aff const& P, float cx, float cy, float pdx, float pdy, bool onlyMove, float rotOff);
 
     // scale without a center: scale += scale * ratio - scale
     inline void tfScaleNoCenter(ObjDyn& d, double rx, double ry) {
@@ -1499,8 +1482,7 @@ namespace ap::sim::trigger_impl {
 
     // true if there is no player part or it holds nothing
     inline bool pvEmpty(TrigPv const* P) {
-        return !P || (P->off.items.empty() && P->dyn.items.empty() && P->af.items.empty() && P->afObjs.empty() &&
-                      P->kfSnap.empty());
+        return !P || (P->off.items.empty() && P->dyn.items.empty() && P->af.items.empty() && P->afObjs.empty() && P->kfSnap.empty());
     }
 
 }

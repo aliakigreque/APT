@@ -118,8 +118,7 @@ namespace ap {
             dumpLevel(pl);
             beginAttempt(pl);
         }
-        Notification::create(fmt::format("Auto Pathing Tool: recording ({} to stop)", keyName(Action::Record)),
-                             NotificationIcon::Info)
+        Notification::create(fmt::format("Auto Pathing Tool: recording ({} to stop)", keyName(Action::Record)), NotificationIcon::Info)
                 ->show();
         Log::print("recording started: play normally, each attempt gives one file.");
     }
@@ -162,14 +161,12 @@ namespace ap {
         if (!m_enabled || !m_file.is_open()) return;
         if (pl && m_snapshotDone) {
             m_events.clear();
-            m_watch.sample(step + 1, m_events, false, pl->m_player1 ? pl->m_player1->getPosition() : cocos2d::CCPoint{},
-                           kObjWindow);
+            m_watch.sample(step + 1, m_events, false, pl->m_player1 ? pl->m_player1->getPosition() : cocos2d::CCPoint{}, kObjWindow);
             if (!m_events.empty()) {
                 m_file << fmt::format(R"({{"ev":"obj","t":{},"o":[)", step + 1);
                 for (size_t i = 0; i < m_events.size(); ++i) {
                     auto const& event = m_events[i];
-                    m_file << fmt::format("{}[{},{},{},{},{},{},{}]", i ? "," : "", event.uid, f32(event.x),
-                                          f32(event.y), f32(event.rot), event.flags, f32(event.nx), f32(event.ny));
+                    m_file << fmt::format("{}[{},{},{},{},{},{},{}]", i ? "," : "", event.uid, f32(event.x), f32(event.y), f32(event.rot), event.flags, f32(event.nx), f32(event.ny));
                 }
                 m_file << "]}\n";
                 m_objEvents += static_cast<int>(m_events.size());
@@ -179,20 +176,15 @@ namespace ap {
         if (auto* p1 = pl->m_player1) {
             if (auto it = p1->m_holdingButtons.find(1); it != p1->m_holdingButtons.end()) held = it->second;
         }
-        m_file << fmt::format(R"({{"ev":"death","t":{},"p":{},"killer":{},"killerId":{},"x":{},"y":{},"h":{}}})"
-                              "\n",
-                              step, (player == pl->m_player2) ? 2 : 1, uid(killer), killer ? killer->m_objectID : 0,
-                              f32(player ? player->m_position.x : 0.f), f32(player ? player->m_position.y : 0.f),
-                              held ? 1 : 0);
+        m_file << fmt::format(R"({{"ev":"death","t":{},"p":{},"killer":{},"killerId":{},"x":{},"y":{},"h":{}}})" "\n", step, (player == pl->m_player2) ? 2 : 1, uid(killer), killer ? killer->m_objectID : 0,
+                                f32(player ? player->m_position.x : 0.f), f32(player ? player->m_position.y : 0.f), held ? 1 : 0);
         endAttempt("death");
     }
 
     // writes the complete line and close the file
     void Recorder::onComplete(int step) {
         if (!m_enabled || !m_file.is_open()) return;
-        m_file << fmt::format(R"({{"ev":"complete","t":{}}})"
-                              "\n",
-                              step);
+        m_file << fmt::format(R"({{"ev":"complete","t":{}}})" "\n", step);
         endAttempt("level complete");
     }
 
@@ -241,10 +233,7 @@ namespace ap {
                 f32(p2 ? p2->m_fallStartY : 0.f), static_cast<uint32_t>(Engine::rng()), pl->m_attempts,
                 persistItems(pl), persistTimers(pl),
                 (m_hasRng0 ? fmt::format(R"(,"rng0":{})", static_cast<uint32_t>(m_rng0)) : std::string()) +
-                        fmt::format(R"(,"mp":{})", (Engine::get().playing() ||
-                                                    ap::SimPlanner::get().phase() == ap::SimPlanner::Phase::Live)
-                                                           ? 1
-                                                           : 0) +
+                        fmt::format(R"(,"mp":{})", (Engine::get().playing() || ap::SimPlanner::get().phase() == ap::SimPlanner::Phase::Live) ? 1 : 0) +
                         fmt::format(R"(,"rngs":{})", static_cast<uint32_t>(Engine::attemptSeed(pl))) +
                         fmt::format(R"(,"tprng":{})", static_cast<uint32_t>(m_hasTp0 ? m_tp0 : Engine::tpRng())) +
                         preInputs(pl));
@@ -255,14 +244,11 @@ namespace ap {
     // writes the end line with the reason and closes the file
     void Recorder::endAttempt(char const* why) {
         if (!m_file.is_open()) return;
-        m_file << fmt::format(R"({{"ev":"end","why":"{}","rows":{},"objEvents":{},"objCandidates":{}}})"
-                              "\n",
-                              why, m_rows, m_objEvents, m_watch.candidates());
+        m_file << fmt::format(R"({{"ev":"end","why":"{}","rows":{},"objEvents":{},"objCandidates":{}}})" "\n", why, m_rows, m_objEvents, m_watch.candidates());
         m_file.close();
         ++m_files;
         m_totalRows += m_rows;
-        Log::printf("recording: {} ticks -> {} ({})", m_rows, geode::utils::string::pathToString(m_path.filename()),
-                    why);
+        Log::printf("recording: {} ticks -> {} ({})", m_rows, geode::utils::string::pathToString(m_path.filename()), why);
     }
 
     // tracks the inputs, then writes the player lines and the moved objects of this tick
@@ -287,15 +273,13 @@ namespace ap {
         if (pl->m_gameState.m_isDualMode && pl->m_player2) writeRow(pl, pl->m_player2, step, 2, lastTick);
         ++m_rows;
         m_events.clear();
-        m_watch.sample(step, m_events, !m_snapshotDone,
-                       pl->m_player1 ? pl->m_player1->getPosition() : cocos2d::CCPoint{}, kObjWindow);
+        m_watch.sample(step, m_events, !m_snapshotDone, pl->m_player1 ? pl->m_player1->getPosition() : cocos2d::CCPoint{}, kObjWindow);
         m_snapshotDone = true;
         if (!m_events.empty()) {
             m_file << fmt::format(R"({{"ev":"obj","t":{},"o":[)", step);
             for (size_t i = 0; i < m_events.size(); ++i) {
                 auto const& event = m_events[i];
-                m_file << fmt::format("{}[{},{},{},{},{},{},{}]", i ? "," : "", event.uid, f32(event.x), f32(event.y),
-                                      f32(event.rot), event.flags, f32(event.nx), f32(event.ny));
+                m_file << fmt::format("{}[{},{},{},{},{},{},{}]", i ? "," : "", event.uid, f32(event.x), f32(event.y), f32(event.rot), event.flags, f32(event.nx), f32(event.ny));
             }
             m_file << "]}\n";
             m_objEvents += static_cast<int>(m_events.size());
@@ -398,8 +382,7 @@ namespace ap {
     //status line text while recording
     std::string Recorder::statusText() const {
         if (!m_enabled) return "";
-        return fmt::format("Auto Pathing Tool: debug recording - attempt {}, {} ticks ({} files)", m_attempt, m_rows,
-                           m_files);
+        return fmt::format("Auto Pathing Tool: debug recording - attempt {}, {} ticks ({} files)", m_attempt, m_rows, m_files);
     }
 
 }

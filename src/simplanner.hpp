@@ -118,6 +118,9 @@ namespace ap {
         mutable std::chrono::steady_clock::time_point m_frozenSince{};
         mutable double m_frozenFor = 0;
         mutable std::atomic<bool> m_starving{false};
+        std::atomic<bool> m_holding{false};
+        mutable int m_holdSeenTick = -1;
+        mutable std::chrono::steady_clock::time_point m_holdSeenAt{};
         std::chrono::steady_clock::time_point m_attemptStart{};
         mutable int m_frozenGen = -1;
         mutable std::atomic<int> m_giveUpGen{-1};

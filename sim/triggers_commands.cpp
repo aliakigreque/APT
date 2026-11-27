@@ -14,9 +14,7 @@ namespace ap::sim {
         }
 
         // createMoveCommand of the game (type 0), locks follow the player or the camera
-        void createMoveCommand(Game& g, double dx, double dy, int group, float duration, int easing, float rate,
-                               bool lockPX, bool lockPY, bool lockCX, bool lockCY, float modX, float modY, int uid,
-                               int control) {
+        void createMoveCommand(Game& g, double dx, double dy, int group, float duration, int easing, float rate, bool lockPX, bool lockPY, bool lockCX, bool lockCY, float modX, float modY, int uid, int control) {
             if (dx == 0.0 && dy == 0.0 && !lockPX && !lockPY && !lockCX && !lockCY) return;
             if (group <= 0) return;
             if (!g.world->relevantGroup(group)) return;
@@ -57,8 +55,7 @@ namespace ap::sim {
         }
 
         // createRotateCommand of the game (type 1)
-        void createRotateCommand(Game& g, float rotation, float duration, int target, int center, int easing,
-                                 float rate, bool lockRot, int uid, int control) {
+        void createRotateCommand(Game& g, float rotation, float duration, int target, int center, int easing, float rate, bool lockRot, int uid, int control) {
             if (!g.world->relevantGroup(target)) return;
             GroupCmd& cmd = newCmd(g);
             cmd.type = CmdType::Rotate;
@@ -82,8 +79,7 @@ namespace ap::sim {
         }
 
         // createFollowCommand of the game (type 2): target follows the center moves times the mods
-        void createFollowCommand(Game& g, float xMod, float yMod, float duration, int target, int center, int uid,
-                                 int control) {
+        void createFollowCommand(Game& g, float xMod, float yMod, float duration, int target, int center, int uid, int control) {
             if (!g.world->relevantGroup(target)) return;
             GroupCmd& cmd = newCmd(g);
             cmd.type = CmdType::Follow;
@@ -101,8 +97,7 @@ namespace ap::sim {
         }
 
         // createPlayerFollowCommand of the game (type 3), follows the player y
-        void createPlayerFollowCommand(Game& g, float speed, float delay, int offset, float maxSpeed, float duration,
-                                       int target, int uid, int control) {
+        void createPlayerFollowCommand(Game& g, float speed, float delay, int offset, float maxSpeed, float duration, int target, int uid, int control) {
             if (!g.world->relevantGroup(target)) return;
             GroupCmd& cmd = newCmd(g);
             cmd.type = CmdType::FollowY;
@@ -125,8 +120,7 @@ namespace ap::sim {
         }
 
         // createTransformCommand of the game (type 4), scale around a center
-        void createTransformCommand(Game& g, double scaleX, double scaleY, int target, int center, bool onlyMove,
-                                    bool relRot, float duration, int easing, float rate, int uid, int control) {
+        void createTransformCommand(Game& g, double scaleX, double scaleY, int target, int center, bool onlyMove, bool relRot, float duration, int easing, float rate, int uid, int control) {
             if (target <= 0 || !g.world->relevantGroup(target)) return;
             GroupCmd& cmd = newCmd(g);
             cmd.type = CmdType::Transform;
@@ -254,9 +248,7 @@ namespace ap::sim {
                 KfDyn const& existing = *it->second;
                 bool same = existing.anim == anim && existing.st.size() == states.size();
                 for (size_t i = 0; same && i < states.size(); ++i) {
-                    same = existing.st[i].px == states[i].px && existing.st[i].py == states[i].py &&
-                           existing.st[i].sx == states[i].sx && existing.st[i].sy == states[i].sy &&
-                           existing.st[i].rotX == states[i].rotX && existing.st[i].rotY == states[i].rotY;
+                    same = existing.st[i].px == states[i].px && existing.st[i].py == states[i].py && existing.st[i].sx == states[i].sx && existing.st[i].sy == states[i].sy && existing.st[i].rotX == states[i].rotX && existing.st[i].rotY == states[i].rotY;
                 }
                 if (same) return hash;
                 hash = hash * 0x9e3779b97f4a7c15ull + 1;
@@ -270,8 +262,7 @@ namespace ap::sim {
             path->A.uid = source.uid;
             path->A.control = source.control;
             path->A.keys = source.keys;
-            buildKeyframeAnim(w, source.keys, states, path->A, path->splines, source.timeMod, source.pxm, source.pym,
-                              source.rotm, source.sxm, source.sym);
+            buildKeyframeAnim(w, source.keys, states, path->A, path->splines, source.timeMod, source.pxm, source.pym, source.rotm, source.sxm, source.sym);
             for (auto const& e : path->A.e)
                 if (e.spawnGroup > 0) path->A.spawns = true;
             pool.map.emplace(hash, std::move(path));
@@ -295,8 +286,7 @@ namespace ap::sim {
                 current = &entries[static_cast<size_t>(i)];
                 double const easeDur = current->runEase;
                 if (0.0 < easeDur && segTime < easeDur) {
-                    segTime = easeDur * static_cast<double>(easedValue(static_cast<float>(segTime / easeDur),
-                                                                       current->easing, current->rate));
+                    segTime = easeDur * static_cast<double>(easedValue(static_cast<float>(segTime / easeDur), current->easing, current->rate));
                 }
                 if (segTime < current->dur || i == count - 2) {
                     elapsed += segTime;
@@ -337,12 +327,10 @@ namespace ap::sim {
                     }
                     onSpline = true;
                     if (e.splineX >= 0) {
-                        posX = static_cast<float>(kfSplineEval(splines[static_cast<size_t>(e.splineX)], splineTime) +
-                                                  static_cast<double>(posX));
+                        posX = static_cast<float>(kfSplineEval(splines[static_cast<size_t>(e.splineX)], splineTime) + static_cast<double>(posX));
                     }
                     if (e.splineY >= 0) {
-                        posY = static_cast<float>(kfSplineEval(splines[static_cast<size_t>(e.splineY)], splineTime) +
-                                                  static_cast<double>(posY));
+                        posY = static_cast<float>(kfSplineEval(splines[static_cast<size_t>(e.splineY)], splineTime) + static_cast<double>(posY));
                     }
                 }
                 bool const lastActive = (i == count - 2) && !(cmd.duration <= cmd.deltaTime);
@@ -477,8 +465,7 @@ namespace ap::sim {
         }
 
         // rotateTargetAngle of the game: rotation that turns the target toward the aim, clamped by min / max objects
-        float rotateTargetAngle(Game& g, Obj const& trig, int center, int target, int aim, int mnx, int mny, int mxx,
-                                int mxy) {
+        float rotateTargetAngle(Game& g, Obj const& trig, int center, int target, int aim, int mnx, int mny, int mxx, int mxy) {
             Point const centerPos = refPos(g, center);
             Point aimPos = refPos(g, aim);
             float current;
@@ -560,9 +547,7 @@ namespace ap::sim {
                 float duration = o.duration;
                 if (duration < 1.f) duration = 1.f;
                 float const quotient = o.mvX / duration;
-                int const quotientInt = (std::isnan(quotient) || quotient >= 2147483648.f || quotient < -2147483648.f)
-                                                ? INT_MIN
-                                                : static_cast<int>(quotient);
+                int const quotientInt = (std::isnan(quotient) || quotient >= 2147483648.f || quotient < -2147483648.f) ? INT_MIN : static_cast<int>(quotient);
                 if (static_cast<unsigned>(quotientInt) + 999999u > 0x1e847eu) return;
             }
             bool lockX = o.tf(Obj::TF_LockPX);
@@ -682,8 +667,7 @@ namespace ap::sim {
                 lockX = lockY = lockCX = lockCY = false;
             }
             if (!o.tf(Obj::TF_Silent)) {
-                createMoveCommand(g, dx, dy, o.targetGroup, o.duration, o.easing, o.easingRate, lockX, lockY, lockCX,
-                                  lockCY, modX, modY, o.uid, o.controlID);
+                createMoveCommand(g, dx, dy, o.targetGroup, o.duration, o.easing, o.easingRate, lockX, lockY, lockCX, lockCY, modX, modY, o.uid, o.controlID);
                 return;
             }
             moveGroup(g, o.targetGroup, dx, dy, false);

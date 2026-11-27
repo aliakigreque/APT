@@ -243,8 +243,7 @@ namespace ap::sim {
         GroupOff const* undoFind(short gr, bool& hit) {
             hit = false;
             auto const& undo = tl_undoJr->undo;
-            auto it = std::lower_bound(undo.begin(), undo.end(), gr,
-                                       [](UndoE const& e, short value) { return e.group < value; });
+            auto it = std::lower_bound(undo.begin(), undo.end(), gr, [](UndoE const& e, short value) { return e.group < value; });
             for (; it != undo.end() && it->group == gr; ++it)
                 if (it->pos > tl_jrPos) {
                     hit = true;
@@ -333,12 +332,10 @@ namespace ap::sim {
                 auto const& objs = g.world->objs;
                 auto& list = *slot.v;
                 if (!std::is_sorted(list.begin(), list.end(), [&](int a, int b) {
-                        return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) <
-                               static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
+                        return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) < static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
                     }))
                     std::sort(list.begin(), list.end(), [&](int a, int b) {
-                        return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) <
-                               static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
+                        return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) < static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
                     });
             } else
                 slot.v = std::make_shared<std::vector<int>>();
@@ -365,9 +362,7 @@ namespace ap::sim {
                 }
                 if (from.empty()) {
                     auto const& cells = w.cells;
-                    bool const staticEmpty = static_cast<size_t>(cx0) >= cells.size() ||
-                                             static_cast<size_t>(cy0) >= cells[static_cast<size_t>(cx0)].size() ||
-                                             cells[static_cast<size_t>(cx0)][static_cast<size_t>(cy0)].empty();
+                    bool const staticEmpty = static_cast<size_t>(cx0) >= cells.size() || static_cast<size_t>(cy0) >= cells[static_cast<size_t>(cx0)].size() || cells[static_cast<size_t>(cx0)][static_cast<size_t>(cy0)].empty();
                     if (staticEmpty) g.trig.w().Mw().cellOv.erase(World::cellKey(cx0, cy0));
                 }
             }
@@ -548,9 +543,7 @@ namespace ap::sim {
                 };
                 for (size_t i = 0; i < objs.size(); ++i) {
                     World::ObjLite const& lite = w.lite[static_cast<size_t>(objs[i])];
-                    size_t const k = (anyDyn && w.mayHaveDyn[static_cast<size_t>(objs[i])])
-                                             ? dynMap.indexHint(objs[i], hint)
-                                             : dynMap.items.size();
+                    size_t const k = (anyDyn && w.mayHaveDyn[static_cast<size_t>(objs[i])]) ? dynMap.indexHint(objs[i], hint) : dynMap.items.size();
                     auto const* entry = k < dynMap.items.size() ? &dynMap.items[k].second : nullptr;
                     oldDyn[i] = entry != nullptr;
                     if (entry) {
@@ -698,9 +691,7 @@ namespace ap::sim {
                 double const movedX = prevX + dx;
                 double const movedY = prevY + dy;
                 int const oldCell = World::cellOf(prevX);
-                if (World::cellOf(movedX - 1e-6) == oldCell && World::cellOf(movedX + 1e-6) == oldCell &&
-                    (!sectY ||
-                     (w.cellYOf(movedY - 1e-6) == w.cellYOf(prevY) && w.cellYOf(movedY + 1e-6) == w.cellYOf(prevY))))
+                if (World::cellOf(movedX - 1e-6) == oldCell && World::cellOf(movedX + 1e-6) == oldCell && (!sectY || (w.cellYOf(movedY - 1e-6) == w.cellYOf(prevY) && w.cellYOf(movedY + 1e-6) == w.cellYOf(prevY))))
                     continue;
                 double newX, newY;
                 groupPos(g, objAt(g, idx), newX, newY);
@@ -774,8 +765,7 @@ namespace ap::sim {
         }
 
         // spawn ordered: each trigger waits for its x distance to the first one
-        void spawnObjectsInOrder(Game& g, std::vector<int> const& objs, double delay, int uid, int control,
-                                 RemapKeys const* keys) {
+        void spawnObjectsInOrder(Game& g, std::vector<int> const& objs, double delay, int uid, int control, RemapKeys const* keys) {
             float firstX = 0.f;
             bool first = false;
             for (int idx : objs) {
@@ -805,16 +795,15 @@ namespace ap::sim {
         }
 
         // spawnGroup of the game: activates every spawn triggered trigger of the group, once per step
-        void spawnGroupLayer(Game& g, int group, bool ordered, double delay, int uid, int control,
-                             RemapKeys const* keys) {
+        void spawnGroupLayer(Game& g, int group, bool ordered, double delay, int uid, int control, RemapKeys const* keys) {
             int groupId = group < 0 ? 0 : group;
             if (groupId > 9999) groupId = 9999;
             if (!groupEnabled(g, groupId)) return;
             int const remapUid = (keys && keys->n) ? -keys->begin()[keys->n - 1] : 0;
             int const trigId = g.enable22Changes ? uid : 0;
             uint64_t const spawnKey = (static_cast<uint64_t>(static_cast<uint32_t>(group) & 0xFFFFu) << 48) |
-                                      (static_cast<uint64_t>(static_cast<uint32_t>(trigId) & 0xFFFFFFu) << 24) |
-                                      (static_cast<uint64_t>(static_cast<uint32_t>(remapUid) & 0xFFFFFFu));
+                                        (static_cast<uint64_t>(static_cast<uint32_t>(trigId) & 0xFFFFFFu) << 24) |
+                                        (static_cast<uint64_t>(static_cast<uint32_t>(remapUid) & 0xFFFFFFu));
             bool const already = g.trig.spawnedThisTick.count(spawnKey) != 0;
             if (tl_spRec) tl_spTests.emplace_back(spawnKey, already);
             if (already) return;

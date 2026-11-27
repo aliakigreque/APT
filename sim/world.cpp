@@ -38,8 +38,8 @@ namespace ap::sim {
             float const cx = px + o.boxOffX;
             float const cy = py + o.boxOffY;
             float const corners[8] = {cx - widthX - heightX, cy - widthY - heightY, cx + widthX - heightX,
-                                      cy + widthY - heightY, cx + widthX + heightX, cy + widthY + heightY,
-                                      cx - widthX + heightX, cy - widthY + heightY};
+                                    cy + widthY - heightY, cx + widthX + heightX, cy + widthY + heightY,
+                                    cx - widthX + heightX, cy - widthY + heightY};
             for (int i = 0; i < 8; ++i) out[i] = corners[i];
         };
         for (auto& o : objs) {
@@ -150,8 +150,7 @@ namespace ap::sim {
                 }
                 o.rect = Rect{x0, y0, x1 - x0, y1 - y0};
             } else {
-                o.rect = genericObjRect(o, static_cast<float>(o.posX), static_cast<float>(o.posY), o.scaleX, o.scaleY,
-                                        o.rotationAligned);
+                o.rect = genericObjRect(o, static_cast<float>(o.posX), static_cast<float>(o.posY), o.scaleX, o.scaleY, o.rotationAligned);
                 o.rectGen = true;
             }
         }
@@ -299,8 +298,7 @@ namespace ap::sim {
         for (auto& column : cells)
             for (auto& cell : column)
                 std::sort(cell.begin(), cell.end(), [&](int a, int b) {
-                    return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) <
-                           static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
+                    return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) < static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
                 });
         auto buildIndex = [&](std::vector<int> const& list, CellIndex& index) {
             index.bands.clear();
@@ -333,8 +331,7 @@ namespace ap::sim {
                     minY = std::min(minY, circleY - reach);
                     maxY = std::max(maxY, circleY + reach);
                 }
-                bool const dyn = useTimeline && static_cast<size_t>(idx) < timeline->dynOf.size() &&
-                                 timeline->dynOf[static_cast<size_t>(idx)] >= 0;
+                bool const dyn = useTimeline && static_cast<size_t>(idx) < timeline->dynOf.size() && timeline->dynOf[static_cast<size_t>(idx)] >= 0;
                 bool const isTeleport = o.type == TeleportPortal || o.id == ObjId::TeleportTrigger;
                 if (o.movable || dyn) {
                     MovEntry entry;
@@ -420,8 +417,7 @@ namespace ap::sim {
             Obj const& o = objs[static_cast<size_t>(e.second)];
             candidates.push_back(Cand{o.rect.x + o.rect.w * 0.5f, family(o), e.second});
         }
-        std::sort(candidates.begin(), candidates.end(),
-                  [](Cand const& a, Cand const& b) { return a.fam != b.fam ? a.fam < b.fam : a.cx < b.cx; });
+        std::sort(candidates.begin(), candidates.end(), [](Cand const& a, Cand const& b) { return a.fam != b.fam ? a.fam < b.fam : a.cx < b.cx; });
         float lastCx = 0.f;
         int lastFam = -1;
         for (auto const& c : candidates) {
@@ -693,8 +689,7 @@ namespace ap::sim {
             o.scaleX = static_cast<float>(json.numOr("sx", 1));
             o.scaleY = static_cast<float>(json.numOr("sy", 1));
             if (auto* rect = json.get("rect"); rect && rect->arr.size() == 4) {
-                o.rect = {static_cast<float>(rect->arr[0].num), static_cast<float>(rect->arr[1].num),
-                          static_cast<float>(rect->arr[2].num), static_cast<float>(rect->arr[3].num)};
+                o.rect = {static_cast<float>(rect->arr[0].num), static_cast<float>(rect->arr[1].num), static_cast<float>(rect->arr[2].num), static_cast<float>(rect->arr[3].num)};
             }
             o.width = static_cast<float>(json.numOr("w"));
             o.height = static_cast<float>(json.numOr("h"));

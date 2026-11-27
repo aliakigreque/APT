@@ -1,5 +1,4 @@
-// Item, timer, sequence, area setup, control (stop/pause/resume) and camera tween triggers, plus the object
-// collision callbacks.
+// Item, timer, sequence, area setup, control (stop/pause/resume) and camera tween triggers, plus the object collision callbacks.
 
 #include "triggers_internal.hpp"
 
@@ -89,8 +88,7 @@ namespace ap::sim {
                             writable.erase(writable.begin() + static_cast<long>(foundIdx));
                             erased = true;
                         }
-                        toggleGroupTriggered(g, action.group, action.activate, action.uid, action.control,
-                                             &action.keys);
+                        toggleGroupTriggered(g, action.group, action.activate, action.uid, action.control, &action.keys);
                     }
                 }
                 if (!erased) ++k;
@@ -142,9 +140,7 @@ namespace ap::sim {
         }
 
         // createTimer of the game: creates the timer or updates the existing one
-        void createTimer(Game& g, int id, double start, double target, bool stopEnabled, bool running,
-                         bool dontOverride, float mod, bool ignoreTW, int group, RemapKeys const* keys, int uid,
-                         int control) {
+        void createTimer(Game& g, int id, double start, double target, bool stopEnabled, bool running, bool dontOverride, float mod, bool ignoreTW, int group, RemapKeys const* keys, int uid, int control) {
             int const index = timerIndex(g, id);
             TrigHeavy& heavy = g.trig.w();
             if (index < 0) {
@@ -225,8 +221,7 @@ namespace ap::sim {
 
         // 1 nearest, 2 floor, 3 ceil, else unchanged
         double itemRound(double value, int rounding) {
-            return rounding == 1 ? std::round(value)
-                                 : (rounding == 2 ? std::floor(value) : (rounding == 3 ? std::ceil(value) : value));
+            return rounding == 1 ? std::round(value) : (rounding == 2 ? std::floor(value) : (rounding == 3 ? std::ceil(value) : value));
         }
 
         // 1 absolute value, 2 negative absolute value, else unchanged
@@ -299,8 +294,17 @@ namespace ap::sim {
                 g.trig.w().points = static_cast<int>(result);
         }
 
+        // the two sides of an item compare (3620) and its result, as the game works them out
+        struct CompareEval {
+            double left;
+            double right;
+            double tol;
+            int op;
+            bool result;
+        };
+
         // item compare (3620): compares two expressions and spawns the true or false group
-        void activateItemCompare(Game& g, Obj const& o, RemapKeys const* keys) {
+        CompareEval evalItemCompare(Game const& g, Obj const& o) {
             World const& w = *g.world;
             int const round1 = static_cast<int>(w.prop(o, 485));
             int const round2 = static_cast<int>(w.prop(o, 486));
@@ -350,12 +354,18 @@ namespace ap::sim {
             default:
                 break;
             }
+            return CompareEval{left, right, tol, compareOp, result};
+        }
+
+        // item compare (3620): compares two expressions and spawns the true or false group
+        void activateItemCompare(Game& g, Obj const& o, RemapKeys const* keys) {
+            CompareEval const e = evalItemCompare(g, o);
             if (g_trace || debugOptions().trigLogAt(g.tick)) {
                 std::printf("[items] t=%d compare uid %d : %g ? %g (op %d, tol %g) -> %s -> group %d\n", g.tick, o.uid,
-                            left, right, compareOp, tol, result ? "true" : "false",
-                            result ? o.targetGroup : o.centerGroup);
+                            e.left, e.right, e.op, e.tol, e.result ? "true" : "false",
+                            e.result ? o.targetGroup : o.centerGroup);
             }
-            spawnGroupLayer(g, result ? o.targetGroup : o.centerGroup, false, 0.0, o.uid, o.controlID, keys);
+            spawnGroupLayer(g, e.result ? o.targetGroup : o.centerGroup, false, 0.0, o.uid, o.controlID, keys);
         }
 
         // persistent item (3641): marks or unmarks an item (or timer) as persistent, can reset it or all of them
@@ -707,12 +717,9 @@ namespace ap::sim {
                     for (auto& e : events.items) {
                         auto& listeners = e.second;
                         if (cmd == 0) {
-                            listeners.erase(std::remove_if(listeners.begin(), listeners.end(),
-                                                           [&](EventListener const& listener) {
-                                                               return control >= 0 ? (listener.control == control)
-                                                                                   : (listener.uid == uid);
-                                                           }),
-                                            listeners.end());
+                            listeners.erase(std::remove_if(listeners.begin(), listeners.end(), [&](EventListener const& listener) {
+                                return control >= 0 ? (listener.control == control) : (listener.uid == uid);
+                            }), listeners.end());
                         } else
                             for (auto& listener : listeners) {
                                 if (control >= 0 ? (listener.control == control) : (listener.uid == uid)) {
@@ -879,8 +886,7 @@ namespace ap::sim {
         }
 
         // starts a camera tween under this key
-        void tweenValue(Game& g, int key, float from, float to, float duration, int easing, float rate, int uid,
-                        int control) {
+        void tweenValue(Game& g, int key, float from, float to, float duration, int easing, float rate, int uid, int control) {
             Tween tween;
             tween.from = from;
             tween.to = to;
@@ -951,8 +957,7 @@ namespace ap::sim {
         }
 
         // collision block against another object, boxes are given if already built
-        void checkBlockAgainst(Game& g, int blockIdx, Rect const& blockRect, bool blockOriented, int otherIdx,
-                               bool otherIsPlayer, Rect const& otherRect, OBB const* otherBox, OBB const* blockBox) {
+        void checkBlockAgainst(Game& g, int blockIdx, Rect const& blockRect, bool blockOriented, int otherIdx, bool otherIsPlayer, Rect const& otherRect, OBB const* otherBox, OBB const* blockBox) {
             (void)otherIsPlayer;
             Obj const& block = objAt(g, blockIdx);
             Obj const& o = objAt(g, otherIdx);
@@ -962,8 +967,7 @@ namespace ap::sim {
             }
             GObj other = g.obj(otherIdx);
             if (other.disabled()) return;
-            if (!(otherRect.x <= blockRect.x + blockRect.w && blockRect.x <= otherRect.x + otherRect.w &&
-                  otherRect.y <= blockRect.y + blockRect.h && blockRect.y <= otherRect.y + otherRect.h))
+            if (!(otherRect.x <= blockRect.x + blockRect.w && blockRect.x <= otherRect.x + otherRect.w && otherRect.y <= blockRect.y + blockRect.h && blockRect.y <= otherRect.y + otherRect.h))
                 return;
             if (blockOriented || other.hasOrientedBox()) {
                 OBB const blockShape = blockBox ? *blockBox : objectObb(g.obj(blockIdx));
@@ -975,9 +979,16 @@ namespace ap::sim {
 
     }
 
+    // how far an item compare (3620) is from its true branch right now: 0 when it would be true, else the gap between its two sides rounded up (at least 1); the search uses it to steer the inputs that change the items
+    int trigCompareGap(Game const& g, Obj const& o) {
+        trigger_impl::CompareEval const e = trigger_impl::evalItemCompare(g, o);
+        if (e.result) return 0;
+        double const gap = std::fabs(e.left - e.right);
+        return std::max(1, static_cast<int>(std::min(1.0e6, std::ceil(gap))));
+    }
+
     // starts a camera tween, for the other files
-    void trigTweenValue(Game& g, int key, float from, float to, float duration, int easing, float rate, int uid,
-                        int control) {
+    void trigTweenValue(Game& g, int key, float from, float to, float duration, int easing, float rate, int uid, int control) {
         tweenValue(g, key, from, to, duration, easing, rate, uid, control);
     }
 

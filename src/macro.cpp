@@ -75,9 +75,7 @@ namespace ap {
 **/
 
     // writes the macro as a GDR json file (open replay format, xdBot can read it) at 240 fps
-    Result<std::filesystem::path> Macro::exportGDR(std::filesystem::path const& dir, std::string const& levelName,
-                                                   int levelId, std::string const& botVersion,
-                                                   std::string const& fileSuffix) const {
+    Result<std::filesystem::path> Macro::exportGDR(std::filesystem::path const& dir, std::string const& levelName, int levelId, std::string const& botVersion, std::string const& fileSuffix) const {
         std::error_code ec;
         std::filesystem::create_directories(dir, ec);
 
@@ -155,9 +153,7 @@ namespace ap {
 
         for (auto const& input : root["inputs"]) {
             if (!input.isObject() || !input.contains("frame") || !input["frame"].isNumber()) continue;
-            int const button = input.contains("btn") && input["btn"].isNumber()
-                                       ? static_cast<int>(input["btn"].asInt().unwrapOr(std::intmax_t{1}))
-                                       : 1;
+            int const button = input.contains("btn") && input["btn"].isNumber() ? static_cast<int>(input["btn"].asInt().unwrapOr(std::intmax_t{1})) : 1;
             if (button != 1) continue;
             double const frame = input["frame"].asDouble().unwrapOr(0.0);
             Toggle toggle;
@@ -167,8 +163,7 @@ namespace ap {
             if (toggle.step < 0) continue;
             out.macro.toggles.push_back(toggle);
         }
-        std::stable_sort(out.macro.toggles.begin(), out.macro.toggles.end(),
-                         [](Toggle const& a, Toggle const& b) { return a.step < b.step; });
+        std::stable_sort(out.macro.toggles.begin(), out.macro.toggles.end(), [](Toggle const& a, Toggle const& b) { return a.step < b.step; });
         if (out.macro.toggles.empty()) return Err("the macro has no jump inputs");
         return Ok(std::move(out));
     }

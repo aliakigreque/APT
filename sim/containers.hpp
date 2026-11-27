@@ -103,8 +103,7 @@ namespace ap::sim {
             if constexpr (std::is_integral_v<K>)
                 return static_cast<uint64_t>(static_cast<int64_t>(key));
             else
-                return (static_cast<uint64_t>(static_cast<uint32_t>(key.first)) << 32) ^
-                       static_cast<uint64_t>(static_cast<uint32_t>(key.second));
+                return (static_cast<uint64_t>(static_cast<uint32_t>(key.first)) << 32) ^ static_cast<uint64_t>(static_cast<uint32_t>(key.second));
         }
 
         // fibonacci hashing
@@ -173,8 +172,7 @@ namespace ap::sim {
                 step <<= 1;
             }
             if (hi > n) hi = n;
-            auto it = std::lower_bound(items.begin() + static_cast<long>(lo), items.begin() + static_cast<long>(hi),
-                                       key, [](auto const& a, K const& b) { return a.first < b; });
+            auto it = std::lower_bound(items.begin() + static_cast<long>(lo), items.begin() + static_cast<long>(hi), key, [](auto const& a, K const& b) { return a.first < b; });
             hint = static_cast<size_t>(it - items.begin());
             return (it != items.end() && it->first == key) ? &it->second : nullptr;
         }
@@ -193,8 +191,7 @@ namespace ap::sim {
                 step <<= 1;
             }
             if (hi > n) hi = n;
-            auto it = std::lower_bound(items.begin() + static_cast<long>(lo), items.begin() + static_cast<long>(hi),
-                                       key, [](auto const& a, K const& b) { return a.first < b; });
+            auto it = std::lower_bound(items.begin() + static_cast<long>(lo), items.begin() + static_cast<long>(hi), key, [](auto const& a, K const& b) { return a.first < b; });
             hint = static_cast<size_t>(it - items.begin());
             return (it != items.end() && it->first == key) ? hint : n;
         }

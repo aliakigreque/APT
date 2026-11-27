@@ -155,16 +155,14 @@ namespace ap::ui {
                         {"search-beam", 100, 2400, 50},
                         {"search-time-limit", 0, 3600, 10},
                 };
-                char const* names[] = {"Max clicks per second", "Beam (states per tick)",
-                                       "Offline time budget (s, 0 = none)"};
+                char const* names[] = {"Max clicks per second", "Beam (states per tick) Offline time budget (s, 0 = none)"};
                 for (size_t i = 0; i < m_rows.size(); ++i) {
                     float const y = 90.f - 32.f * static_cast<float>(i);
                     auto* name = label(names[i], .35f);
                     name->setAnchorPoint({0.f, .5f});
                     m_mainLayer->addChildAtPosition(name, Anchor::Center, ccp(-160.f, y));
 
-                    auto* minus = CCMenuItemSpriteExtra::create(buttonSprite("-", "GJ_button_04.png", .6f), this,
-                                                                menu_selector(SettingsPopup::onStep));
+                    auto* minus = CCMenuItemSpriteExtra::create(buttonSprite("-", "GJ_button_04.png", .6f), this, menu_selector(SettingsPopup::onStep));
                     minus->setTag(static_cast<int>(i) * 2);
                     m_buttonMenu->addChildAtPosition(minus, Anchor::Center, ccp(52.f, y));
 
@@ -177,8 +175,7 @@ namespace ap::ui {
                     m_mainLayer->addChildAtPosition(input, Anchor::Center, ccp(100.f, y));
                     m_rows[i].input = input;
 
-                    auto* plus = CCMenuItemSpriteExtra::create(buttonSprite("+", "GJ_button_04.png", .6f), this,
-                                                               menu_selector(SettingsPopup::onStep));
+                    auto* plus = CCMenuItemSpriteExtra::create(buttonSprite("+", "GJ_button_04.png", .6f), this, menu_selector(SettingsPopup::onStep));
                     plus->setTag(static_cast<int>(i) * 2 + 1);
                     m_buttonMenu->addChildAtPosition(plus, Anchor::Center, ccp(148.f, y));
                 }
@@ -187,14 +184,12 @@ namespace ap::ui {
                 auto* name = label("Bot info position", .35f);
                 name->setAnchorPoint({0.f, .5f});
                 m_mainLayer->addChildAtPosition(name, Anchor::Center, ccp(-160.f, cornerY));
-                auto* prev = CCMenuItemSpriteExtra::create(buttonSprite("<", "GJ_button_04.png", .6f), this,
-                                                           menu_selector(SettingsPopup::onCorner));
+                auto* prev = CCMenuItemSpriteExtra::create(buttonSprite("<", "GJ_button_04.png", .6f), this, menu_selector(SettingsPopup::onCorner));
                 prev->setTag(-1);
                 m_buttonMenu->addChildAtPosition(prev, Anchor::Center, ccp(52.f, cornerY));
                 m_corner = label(kStatusCorners[Settings::get().statusCorner], .35f);
                 m_mainLayer->addChildAtPosition(m_corner, Anchor::Center, ccp(100.f, cornerY));
-                auto* next = CCMenuItemSpriteExtra::create(buttonSprite(">", "GJ_button_04.png", .6f), this,
-                                                           menu_selector(SettingsPopup::onCorner));
+                auto* next = CCMenuItemSpriteExtra::create(buttonSprite(">", "GJ_button_04.png", .6f), this, menu_selector(SettingsPopup::onCorner));
                 next->setTag(1);
                 m_buttonMenu->addChildAtPosition(next, Anchor::Center, ccp(148.f, cornerY));
 
@@ -212,8 +207,7 @@ namespace ap::ui {
                     m_toggles.push_back(toggler);
                 }
 
-                auto* reset = CCMenuItemSpriteExtra::create(buttonSprite("Reset to defaults", "GJ_button_06.png", .65f),
-                                                            this, menu_selector(SettingsPopup::onReset));
+                auto* reset = CCMenuItemSpriteExtra::create(buttonSprite("Reset to defaults", "GJ_button_06.png", .65f), this, menu_selector(SettingsPopup::onReset));
                 m_buttonMenu->addChildAtPosition(reset, Anchor::Bottom, ccp(0.f, 26.f));
                 return true;
             }
@@ -248,8 +242,7 @@ namespace ap::ui {
             void onToggle(CCObject* sender) {
                 int const i = sender->getTag();
                 if (i < 0 || i >= 2) return;
-                Mod::get()->setSettingValue<bool>(kToggleKeys[i],
-                                                  !static_cast<CCMenuItemToggler*>(sender)->isToggled());
+                Mod::get()->setSettingValue<bool>(kToggleKeys[i], !static_cast<CCMenuItemToggler*>(sender)->isToggled());
             }
 
             // next or previous corner, wraps around
@@ -316,11 +309,9 @@ namespace ap::ui {
                     m_buttonMenu->addChildAtPosition(button, Anchor::Center, ccp(115.f, y));
                     m_keys.push_back(sprite);
                 }
-                auto* hint = textArea("Click a key, then press the new one. Esc: cancel. Delete: no key.", .5f, 290.f,
-                                      kGray);
+                auto* hint = textArea("Click a key, then press the new one. Esc: cancel. Delete: no key.", .5f, 290.f, kGray);
                 m_mainLayer->addChildAtPosition(hint, Anchor::Bottom, ccp(0.f, 58.f));
-                auto* reset = CCMenuItemSpriteExtra::create(buttonSprite("Reset keys", "GJ_button_06.png", .6f), this,
-                                                            menu_selector(KeysPopup::onReset));
+                auto* reset = CCMenuItemSpriteExtra::create(buttonSprite("Reset keys", "GJ_button_06.png", .6f), this, menu_selector(KeysPopup::onReset));
                 m_buttonMenu->addChildAtPosition(reset, Anchor::Bottom, ccp(0.f, 26.f));
                 return true;
             }
@@ -397,10 +388,7 @@ namespace ap::ui {
                         auto const other = Mod::get()->getSettingValue<std::vector<Keybind>>(
                                 actionSettingKey(static_cast<Action>(i)));
                         if (std::find(other.begin(), other.end(), keybind) != other.end()) {
-                            Notification::create(fmt::format("Auto Pathing Tool: {} is also the key of \"{}\"",
-                                                             keybind.toString(), actionLabel(static_cast<Action>(i))),
-                                                 NotificationIcon::Warning, 3.f)
-                                    ->show();
+                            Notification::create(fmt::format("Auto Pathing Tool: {} is also the key of \"{}\"", keybind.toString(), actionLabel(static_cast<Action>(i))), NotificationIcon::Warning, 3.f) ->show();
                         }
                     }
                 }
@@ -471,8 +459,7 @@ namespace ap::ui {
                 m_info = textArea("", .55f, 340.f, kGray);
                 m_mainLayer->addChildAtPosition(m_info, Anchor::Bottom, ccp(0.f, 48.f));
 
-                auto* folder = CCMenuItemSpriteExtra::create(buttonSprite("Open folder", "GJ_button_04.png", .6f), this,
-                                                             menu_selector(MacrosPopup::onFolder));
+                auto* folder = CCMenuItemSpriteExtra::create(buttonSprite("Open folder", "GJ_button_04.png", .6f), this, menu_selector(MacrosPopup::onFolder));
                 m_buttonMenu->addChildAtPosition(folder, Anchor::Bottom, ccp(0.f, 22.f));
 
                 build();
@@ -534,13 +521,11 @@ namespace ap::ui {
                     int const index = m_page * kPerPage + k;
                     if (index >= static_cast<int>(m_files.size())) break;
                     float const y = 62.f - 30.f * static_cast<float>(k);
-                    auto* name = CCLabelBMFont::create(displayName(m_files[static_cast<size_t>(index)]).c_str(),
-                                                       "chatFont.fnt");
+                    auto* name = CCLabelBMFont::create(displayName(m_files[static_cast<size_t>(index)]).c_str(), "chatFont.fnt");
                     name->setScale(.7f);
                     name->setAnchorPoint({0.f, .5f});
                     m_mainLayer->addChildAtPosition(name, Anchor::Center, ccp(-160.f, y));
-                    auto* play = CCMenuItemSpriteExtra::create(buttonSprite("Play", "GJ_button_01.png", .55f), this,
-                                                               menu_selector(MacrosPopup::onPlay));
+                    auto* play = CCMenuItemSpriteExtra::create(buttonSprite("Play", "GJ_button_01.png", .55f), this, menu_selector(MacrosPopup::onPlay));
                     play->setTag(index);
                     m_buttonMenu->addChildAtPosition(play, Anchor::Center, ccp(140.f, y));
                     m_rowNodes.push_back(name);
@@ -636,8 +621,7 @@ namespace ap::ui {
 
             // checkbox with its text, in a section
             float addCheck(Check check, char const* text, bool on, CCPoint pos) {
-                auto* toggler =
-                        CCMenuItemToggler::createWithStandardSprites(this, menu_selector(MenuPopup::onCheck), .55f);
+                auto* toggler = CCMenuItemToggler::createWithStandardSprites(this, menu_selector(MenuPopup::onCheck), .55f);
                 toggler->toggle(on);
                 toggler->setTag(check);
                 m_buttonMenu->addChildAtPosition(toggler, Anchor::Center, pos);
@@ -660,8 +644,7 @@ namespace ap::ui {
                 auto const& options = Settings::get();
 
                 if (auto* discordLogo = logo("discord.png"_spr, 32.f)) {
-                    auto* discord =
-                            CCMenuItemSpriteExtra::create(discordLogo, this, menu_selector(MenuPopup::onDiscord));
+                    auto* discord = CCMenuItemSpriteExtra::create(discordLogo, this, menu_selector(MenuPopup::onDiscord));
                     discord->setID("discord"_spr);
                     m_buttonMenu->addChildAtPosition(discord, Anchor::TopRight, ccp(-26.f, -25.f));
                 }
@@ -689,11 +672,9 @@ namespace ap::ui {
                 addCheck(ShowPath, "Show path", options.overlay, left + ccp(-80.f, 2.f));
                 addCheck(ShowInfo, "Show info", options.showStatus, left + ccp(-80.f, -22.f));
                 addCheck(SafeMode, "Safe mode", options.safeMode, left + ccp(-80.f, -46.f));
-                auto* keys = CCMenuItemSpriteExtra::create(wideButton("Keys", "GJ_button_04.png"), this,
-                                                           menu_selector(MenuPopup::onKeys));
+                auto* keys = CCMenuItemSpriteExtra::create(wideButton("Keys", "GJ_button_04.png"), this, menu_selector(MenuPopup::onKeys));
                 m_buttonMenu->addChildAtPosition(keys, Anchor::Center, left + ccp(-47.f, -74.f));
-                auto* settings = CCMenuItemSpriteExtra::create(wideButton("Settings", "GJ_button_04.png"), this,
-                                                               menu_selector(MenuPopup::onSettings));
+                auto* settings = CCMenuItemSpriteExtra::create(wideButton("Settings", "GJ_button_04.png"), this, menu_selector(MenuPopup::onSettings));
                 m_buttonMenu->addChildAtPosition(settings, Anchor::Center, left + ccp(47.f, -74.f));
 
                 CCPoint const right{108.f, 4.f};
@@ -714,11 +695,9 @@ namespace ap::ui {
                 playKey->setAnchorPoint({0.f, .5f});
                 m_mainLayer->addChildAtPosition(playKey, Anchor::Center, right + ccp(-80.f + playEnd + 6.f, -22.f));
                 addCheck(SaveOnDeath, "Save on death", options.saveOnDeath, right + ccp(-80.f, -46.f));
-                auto* load = CCMenuItemSpriteExtra::create(wideButton("Load", "GJ_button_01.png"), this,
-                                                           menu_selector(MenuPopup::onLoad));
+                auto* load = CCMenuItemSpriteExtra::create(wideButton("Load", "GJ_button_01.png"), this, menu_selector(MenuPopup::onLoad));
                 m_buttonMenu->addChildAtPosition(load, Anchor::Center, right + ccp(-47.f, -74.f));
-                auto* save = CCMenuItemSpriteExtra::create(wideButton("Save", "GJ_button_01.png"), this,
-                                                           menu_selector(MenuPopup::onSave));
+                auto* save = CCMenuItemSpriteExtra::create(wideButton("Save", "GJ_button_01.png"), this, menu_selector(MenuPopup::onSave));
                 m_buttonMenu->addChildAtPosition(save, Anchor::Center, right + ccp(47.f, -74.f));
 
                 auto* band = CCNode::create();

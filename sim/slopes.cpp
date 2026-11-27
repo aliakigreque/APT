@@ -67,8 +67,7 @@ namespace ap::sim {
                 handled = true;
                 flatInset = (!p.isGoingLeft && !p.isPlatformer) ? 1.f : 0.f;
                 wallInset += flatInset;
-                Rect const strip{(objRect.w + objRect.x) - 1.f, objRect.y + wallInset, 1.f,
-                                 objRect.h - (wallInset + wallInset)};
+                Rect const strip{(objRect.w + objRect.x) - 1.f, objRect.y + wallInset, 1.f, objRect.h - (wallInset + wallInset)};
                 if (intersectsRect(plRect, strip)) collidedWithObjectInternal(g, p, dt, object, strip, false);
             }
         }
@@ -152,8 +151,7 @@ namespace ap::sim {
                 return;
         }
         float const slopeYVelocity =
-                objRect.h / static_cast<float>(static_cast<double>(objRect.w) /
-                                               (static_cast<double>(p.playerSpeed) * p.speedMultiplier));
+                objRect.h / static_cast<float>(static_cast<double>(objRect.w) / (static_cast<double>(p.playerSpeed) * p.speedMultiplier));
         if (wasOn) {
             if (0.f < sign * p.slopeVelocity && static_cast<double>(slopeYVelocity) < p.currentSlopeYVelocity) return;
         }
@@ -224,7 +222,7 @@ namespace ap::sim {
         }
         if (std::isnan(targetY)) {
             if (g_trace)
-                std::printf("      [trace] slope uid %d : NaN target (zero size slope) : no effect\n", object.uid());
+                std::printf("[trace] slope uid %d : NaN target (zero size slope) : no effect\n", object.uid());
             return;
         }
         bool maybeUpsideDownSlope = false;
@@ -318,7 +316,7 @@ namespace ap::sim {
             if (land) {
                 if (!(isFlying || p.isBall) && !p.isPlatformer && p.stateHitHead < 1) {
                     bool const recent = (p.gameModeChangedTime != 0.0 &&
-                                         p.totalTime - p.gameModeChangedTime < 0.10000000149011612) ||
+                                        p.totalTime - p.gameModeChangedTime < 0.10000000149011612) ||
                                         (p.lastFlipTime != 0.0 && p.totalTime - p.lastFlipTime < 0.10000000149011612);
                     if (recent) {
                         p.x = posX;
@@ -370,17 +368,14 @@ namespace ap::sim {
                 levelTargetY = static_cast<float>(static_cast<double>(targetY) - ov->dy);
         if (wasOn) {
             bool const changed = p.unk3d0 != static_cast<double>(targetY) &&
-                                 (!p.isSideways || p.blackOrbRelated != static_cast<double>(levelTargetY));
+                                (!p.isSideways || p.blackOrbRelated != static_cast<double>(levelTargetY));
             if (!changed)
                 land = false;
             else if (dOther != 0.f && ((cappedTop && p.unk3e0) || (clampedEnd && p.unk3e1)) && !p.isDashing)
                 land = false;
         }
         if (g_trace)
-            std::printf(
-                    "      [trace] slope uid %d : path %c, target y=%.3f (slopeY=%.3f tol=%.3f cap=%d end=%d) land=%d "
-                    "movingDownhill=%d oppositeSlope=%d topSet=%d dPerp=%.4f movingUp=%d forced=%d real=(%.3f,%.3f) "
-                    "last=(%.3f,%.3f) posY=%.3f\n",
+            std::printf("[trace] slope uid %d : path %c, target y=%.3f (slopeY=%.3f tol=%.3f cap=%d end=%d) land=%d movingDownhill=%d oppositeSlope=%d topSet=%d dPerp=%.4f movingUp=%d forced=%d real=(%.3f,%.3f) last=(%.3f,%.3f) posY=%.3f\n",
                     object.uid(), p.isUpsideDown == topSet ? 'A' : 'B', targetY, slopeY, tolerance, cappedTop,
                     clampedEnd, land, movingDownhill, oppositeSlope, topSet, dPerp, movingUp, forced, real.x, real.y,
                     last.x, last.y, posY);

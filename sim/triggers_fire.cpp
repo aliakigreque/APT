@@ -11,8 +11,7 @@ namespace ap::sim {
             if (!ex) return;
             std::vector<double> const* events = ex->list(430);
             if (!events || events->empty()) return;
-            int const extra = remapForActivation(g, idx, static_cast<int>(ex->num(447, 0))) * 10000 +
-                              remapForActivation(g, idx, static_cast<int>(ex->num(525, 0)));
+            int const extra = remapForActivation(g, idx, static_cast<int>(ex->num(447, 0))) * 10000 + remapForActivation(g, idx, static_cast<int>(ex->num(525, 0)));
             bool const reset = ex->num(431, 0) != 0;
             std::vector<int> ids;
             for (double d : *events) ids.push_back(static_cast<int>(d));
@@ -25,8 +24,7 @@ namespace ap::sim {
                 if (reset) {
                     if (auto* listeners = H.events.find(key)) {
                         listeners->erase(
-                                std::remove_if(listeners->begin(), listeners->end(),
-                                               [&](EventListener const& l) { return l.target == o.targetGroup; }),
+                                std::remove_if(listeners->begin(), listeners->end(), [&](EventListener const& l) { return l.target == o.targetGroup; }),
                                 listeners->end());
                     }
                 } else {
@@ -195,13 +193,11 @@ namespace ap::sim {
             break;
         }
         if (g_trace)
-            std::printf("      [trig] tick %d : trigger uid %d id %d (x %.1f) -> group %d\n", g.tick, o.uid, o.id,
-                        o.startX, o.targetGroup);
+            std::printf("[trig] tick %d : trigger uid %d id %d (x %.1f) -> group %d\n", g.tick, o.uid, o.id, o.startX, o.targetGroup);
         {
             if (debugOptions().trigLogAt(g.tick)) {
                 char const* why = unsupportedReason(o);
-                std::printf("[triglog] t=%d uid %d id %d x=%.0f y=%.0f tgt %d ctr %d%s%s\n", g.tick, o.uid, o.id, o.x,
-                            o.y, o.targetGroup, o.centerGroup, why ? " NOT SIMULATED: " : "", why ? why : "");
+                std::printf("[triglog] t=%d uid %d id %d x=%.0f y=%.0f tgt %d ctr %d%s%s\n", g.tick, o.uid, o.id, o.x, o.y, o.targetGroup, o.centerGroup, why ? " NOT SIMULATED: " : "", why ? why : "");
             }
         }
         switch (o.id) {
@@ -243,8 +239,7 @@ namespace ap::sim {
                     if (old) newKeys = *old;
                 }
                 if (set) {
-                    bool const same =
-                            old && old->n == newKeys.n && std::equal(old->begin(), old->end(), newKeys.begin());
+                    bool const same = old && old->n == newKeys.n && std::equal(old->begin(), old->end(), newKeys.begin());
                     if (!same && (newKeys.n || old)) {
                         TrigHeavy& H = g.trig.w();
                         if (old) H.remapSum -= remapEntryHash(idx, *old);
@@ -380,8 +375,7 @@ namespace ap::sim {
                     if (mulY != 0.f) scaleY = (scaleY - 1.0) / static_cast<double>(mulY) + 1.0;
                 }
             }
-            createTransformCommand(g, scaleX, scaleY, o.targetGroup, center, w.prop(o, 133, 0.0) != 0.0,
-                                   w.prop(o, 452, 0.0) != 0.0, o.duration, o.easing, o.easingRate, o.uid, o.controlID);
+            createTransformCommand(g, scaleX, scaleY, o.targetGroup, center, w.prop(o, 133, 0.0) != 0.0, w.prop(o, 452, 0.0) != 0.0, o.duration, o.easing, o.easingRate, o.uid, o.controlID);
             break;
         }
         case 1347:
@@ -389,8 +383,7 @@ namespace ap::sim {
                                 o.controlID);
             break;
         case 1814:
-            createPlayerFollowCommand(g, o.fySpeed, o.fyDelay, o.fyOffset, o.fyMaxSpeed, o.duration, o.targetGroup,
-                                      o.uid, o.controlID);
+            createPlayerFollowCommand(g, o.fySpeed, o.fyDelay, o.fyOffset, o.fyMaxSpeed, o.duration, o.targetGroup, o.uid, o.controlID);
             break;
         case 1815: {
             auto addAction = [&](int a, int b) {
@@ -425,8 +418,7 @@ namespace ap::sim {
             if (RemapKeys const* k = activationKeys(idx)) t.keys = *k;
             {
                 if (debugOptions().trigLogAt(g.tick)) {
-                    std::printf("[touch] tick %d : trigger uid %d registered (group %d, mode %d%s)\n", g.tick, o.uid,
-                                t.group, t.toggleMode, t.hold ? ", held" : "");
+                    std::printf("[touch] tick %d : trigger uid %d registered (group %d, mode %d%s)\n", g.tick, o.uid, t.group, t.toggleMode, t.hold ? ", held" : "");
                 }
             }
             g.trig.w().touches.push_back(t);
@@ -464,8 +456,7 @@ namespace ap::sim {
             else if (o.compare == 2)
                 fire = count < o.count;
             if (fire) {
-                toggleGroupTriggered(g, o.targetGroup, o.tf(Obj::TF_ActivateGroup), o.uid, o.controlID,
-                                     activationKeys(idx));
+                toggleGroupTriggered(g, o.targetGroup, o.tf(Obj::TF_ActivateGroup), o.uid, o.controlID, activationKeys(idx));
             }
             break;
         }
@@ -595,9 +586,9 @@ namespace ap::sim {
         }
         case 3661: {
             int key = o.tf(Obj::TF_TargetP1)    ? -1
-                      : o.tf(Obj::TF_TargetP2)  ? -2
-                      : o.tf(Obj::TF_FollowCPP) ? -3
-                                                : o.centerGroup;
+                    : o.tf(Obj::TF_TargetP2)  ? -2
+                    : o.tf(Obj::TF_FollowCPP) ? -3
+                    : o.centerGroup;
             if (key == 0) break;
             World const& w = *g.world;
             if (g.trig.r().M().advs.empty()) break;
@@ -645,9 +636,7 @@ namespace ap::sim {
             if (o.centerGroup > 0 && g.world->hasRandom) (void)tryGetObjectRef(g, o.centerGroup);
             break;
         case 3016: {
-            int const def = (static_cast<size_t>(idx) < g.world->advDefOf.size())
-                                    ? g.world->advDefOf[static_cast<size_t>(idx)]
-                                    : -1;
+            int const def = (static_cast<size_t>(idx) < g.world->advDefOf.size()) ? g.world->advDefOf[static_cast<size_t>(idx)] : -1;
             if (def < 0) break;
             World::AdvDef const& advDef = g.world->advDefs[static_cast<size_t>(def)];
             bool const rngOnly = !advDef.relevant && tl_remap.idx != idx;
@@ -679,8 +668,7 @@ namespace ap::sim {
         case 1912: {
             tl_sideEffect = true;
             float const r = g.rand01() * 100.f;
-            spawnGroupLayer(g, o.duration < r ? o.centerGroup : o.targetGroup, false, -0.0, o.uid, o.controlID,
-                            activationKeys(idx));
+            spawnGroupLayer(g, o.duration < r ? o.centerGroup : o.targetGroup, false, -0.0, o.uid, o.controlID, activationKeys(idx));
             break;
         }
         case 2068: {
@@ -877,8 +865,7 @@ namespace ap::sim {
                 cameraStaticToGroup(g, o.centerGroup, mode != 2, mode != 1, follow, followEasing, o.duration, o.easing,
                                     o.easingRate, smooth, velocityMod);
             } else {
-                cameraExitStatic(g, mode != 2, mode != 1, o.duration, o.easing, o.easingRate, smooth, velocityMod,
-                                 instant);
+                cameraExitStatic(g, mode != 2, mode != 1, o.duration, o.easing, o.easingRate, smooth, velocityMod, instant);
             }
             break;
         }
@@ -914,11 +901,9 @@ namespace ap::sim {
                 bool const editVelocity = (o.rgFlags & 1) != 0;
                 bool const overrideVelocity = (o.rgFlags & 2) != 0;
                 bool const dontSlide = (o.rgFlags & 32) != 0;
-                playerRotateGameplay(g, g.p1, o.rgMove, o.rgGround, editVelocity, o.rgModX, o.rgModY, overrideVelocity,
-                                     dontSlide);
+                playerRotateGameplay(g, g.p1, o.rgMove, o.rgGround, editVelocity, o.rgModX, o.rgModY, overrideVelocity, dontSlide);
                 if (g.isDualMode) {
-                    playerRotateGameplay(g, g.p2, o.rgMove, o.rgGround, editVelocity, o.rgModX, o.rgModY,
-                                         overrideVelocity, dontSlide);
+                    playerRotateGameplay(g, g.p2, o.rgMove, o.rgGround, editVelocity, o.rgModX, o.rgModY, overrideVelocity, dontSlide);
                 }
             }
             break;
@@ -943,8 +928,7 @@ namespace ap::sim {
         if (!g.trig.on) return;
         Obj const& o = objAt(g, idx);
         if (g_trace) {
-            std::printf("      [trig] tick %d custom orb uid %d -> group %d %s\n", g.tick, o.uid, o.targetGroup,
-                        o.ringSpawnOnly ? "spawn" : (o.tf(Obj::TF_ActivateGroup) ? "on" : "off"));
+            std::printf("[trig] tick %d custom orb uid %d -> group %d %s\n", g.tick, o.uid, o.targetGroup, o.ringSpawnOnly ? "spawn" : (o.tf(Obj::TF_ActivateGroup) ? "on" : "off"));
         }
         {
             if (!trigHasSlot(g, idx)) g.osMut(idx).activated = true;

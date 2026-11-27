@@ -1,5 +1,4 @@
-// Reads of the current position, rectangle, rotation and scale of an object as the triggers left it, with
-// per-step caches.
+// Reads of the current position, rectangle, rotation and scale of an object as the triggers left it, with per-step caches.
 
 #include "triggers_internal.hpp"
 
@@ -47,9 +46,7 @@ namespace ap::sim {
             };
             static thread_local Slot cache[1024];
             TrigMotion const& motion = g.trig.r().M();
-            Slot& slot = cache[(static_cast<uint32_t>(o.groupSig) * 2654435761u ^
-                                static_cast<uint32_t>(motion.ver * 0x9e3779b97f4a7c15ull >> 44)) &
-                               1023u];
+            Slot& slot = cache[(static_cast<uint32_t>(o.groupSig) * 2654435761u ^ static_cast<uint32_t>(motion.ver * 0x9e3779b97f4a7c15ull >> 44)) & 1023u];
             if (slot.sig != o.groupSig || slot.ver != motion.ver) {
                 slot.sig = o.groupSig;
                 slot.ver = motion.ver;
@@ -155,8 +152,7 @@ namespace ap::sim {
                     if (auto const* off = offFind(g, gr)) curP[i] = {off->x, off->y};
                 }
                 TrigPv const* const pv = g.trig.pv.get();
-                auto same = [](std::vector<std::pair<double, double>> const& a,
-                               std::vector<std::pair<double, double>> const& b) {
+                auto same = [](std::vector<std::pair<double, double>> const& a, std::vector<std::pair<double, double>> const& b) {
                     return a.size() == b.size() && std::memcmp(a.data(), b.data(), a.size() * sizeof(a[0])) == 0;
                 };
                 if (!pv || !same(pv->kfSnap, curP)) g.trig.wp().kfSnap = curP;
@@ -207,7 +203,7 @@ namespace ap::sim {
     void trigDebugObj(Game const& g, int idx) {
         World const& w = *g.world;
         Obj const& o = objAt(g, idx);
-        std::printf("    [posdbg] t=%d uid %d id %d movable %d lockX %d centerLike %d", g.tick, o.uid, o.id,
+        std::printf("[posdbg] t=%d uid %d id %d movable %d lockX %d centerLike %d", g.tick, o.uid, o.id,
                     o.movable ? 1 : 0, o.lockX ? 1 : 0, w.centerLike[static_cast<size_t>(idx)] ? 1 : 0);
         if (g.trig.on && g.trig.h) {
             if (auto* entry = dynOf(g, idx)) std::printf(" dyn (%.3f, %.3f)", entry->x, entry->y);
@@ -272,8 +268,7 @@ namespace ap::sim {
         uint64_t const dynVer = g.trig.rd().ver;
         Slot& slot = cache[(static_cast<uint32_t>(idx) * 2654435761u ^
                             static_cast<uint32_t>(motionVer * 0x9e3779b97f4a7c15ull >> 40) ^
-                            static_cast<uint32_t>(dynVer * 0xc2b2ae3d27d4eb4full >> 44)) &
-                           4095u];
+                            static_cast<uint32_t>(dynVer * 0xc2b2ae3d27d4eb4full >> 44)) & 4095u];
         if (slot.idx == idx && slot.mv == motionVer && slot.dv == dynVer) return slot.r;
         Rect const rect = trigRect(g, idx);
         slot.mv = motionVer;
@@ -342,9 +337,7 @@ namespace ap::sim {
         if (o.rectGen) return genericObjRectStatic(o, static_cast<float>(x), static_cast<float>(y));
         if (o.useOuterOb && o.obbGen) {
             Point corners[4];
-            OBB::cornersFromHalfAxes(corners,
-                                     Point{static_cast<float>(x) + o.boxOffX, static_cast<float>(y) + o.boxOffY},
-                                     o.obbHx, o.obbHy, o.obbVx, o.obbVy);
+            OBB::cornersFromHalfAxes(corners, Point{static_cast<float>(x) + o.boxOffX, static_cast<float>(y) + o.boxOffY}, o.obbHx, o.obbHy, o.obbVx, o.obbVy);
             return OBB::boundingRectOf(corners);
         }
         Rect rect = o.rect;
@@ -608,8 +601,7 @@ namespace ap::sim {
         int const cx1 = World::cellOfF(x1) + 1;
         int const cy0 = std::max(0, w.cellYOfF(y0) - 1);
         int const cy1 = w.cellYOfF(y1) + 1;
-        auto it = std::lower_bound(overrides.begin(), overrides.end(), World::cellKey(cx0, 0),
-                                   [](auto const& e, int key) { return e.first < key; });
+        auto it = std::lower_bound(overrides.begin(), overrides.end(), World::cellKey(cx0, 0), [](auto const& e, int key) { return e.first < key; });
         for (; it != overrides.end() && it->first <= World::cellKey(cx1, 4095); ++it) {
             int const cy = it->first % 4096;
             if (cy < cy0 || cy > cy1 || !it->second.v) continue;

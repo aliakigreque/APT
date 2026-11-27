@@ -44,9 +44,7 @@ namespace ap {
         bool heldBefore(int step) const;
         void truncateBefore(int step);
 
-        geode::Result<std::filesystem::path> exportGDR(std::filesystem::path const& dir, std::string const& levelName,
-                                                       int levelId, std::string const& botVersion,
-                                                       std::string const& fileSuffix = "") const;
+        geode::Result<std::filesystem::path> exportGDR(std::filesystem::path const& dir, std::string const& levelName, int levelId, std::string const& botVersion, std::string const& fileSuffix = "") const;
     };
 
     struct MacroFile {

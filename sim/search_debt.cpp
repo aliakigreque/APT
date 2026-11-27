@@ -68,7 +68,7 @@ namespace ap::sim {
                     continue;
                 float const missX = -p->debtX0;
                 auto it = std::lower_bound(cues.passX.begin(), cues.passX.end(),
-                                           std::make_pair(missX - 0.5f, -(1 << 30)));
+                                        std::make_pair(missX - 0.5f, -(1 << 30)));
                 for (; it != cues.passX.end() && it->first <= missX + 0.5f && !fly; ++it)
                     for (int m : clusterOf(cues, it->second).members)
                         if (flyExitType(player, p->g->world->objs[static_cast<size_t>(m)].type)) {
@@ -102,11 +102,7 @@ namespace ap::sim {
                     missed = false;
                     flyExitTry = true;
                     if (debugOptions().check)
-                        std::fprintf(stderr,
-                                     "[flying] tick %d (x~%.0f) : flying mode exit missed by the whole beam (x %.0f) ; "
-                                     "one try\n",
-                                     tick, lastLiveX,
-                                     liveNext[0]->debtX0 < 0.f ? -liveNext[0]->debtX0 : liveNext[0]->debtX0);
+                        std::fprintf(stderr, "[flying] tick %d (x~%.0f) : flying mode exit missed by the whole beam (x %.0f) ; one try\n", tick, lastLiveX, liveNext[0]->debtX0 < 0.f ? -liveNext[0]->debtX0 : liveNext[0]->debtX0);
                 }
             }
         }
@@ -115,7 +111,8 @@ namespace ap::sim {
     // in live mode, a miss right after a beam reduction is retried at the nominal beam
     auto SearchRun::checkNominalBeam() -> void {
         nominal = false;
-        if (!missed && opt.playedTicks && lastReducedTick >= tick - 240 && tick >= noReduceUntil) {
+        if (!missed && opt.playedTicks && lastReducedTick >= tick - 240 && tick >= noReduceUntil &&
+            liveTryAllowed(effFrom(240))) {
             nominal = true;
             for (int spot : nominalSpots)
                 if (std::abs(spot - tick) <= 48) {
@@ -131,10 +128,7 @@ namespace ap::sim {
             nominalSpots.push_back(tick);
             noReduceUntil = tick + 480;
             if (debugOptions().check)
-                std::fprintf(stderr,
-                             "[live] tick %d (x~%.0f) : wanted path lost under a reduced beam (debt %d -> %d) ; back "
-                             "to the normal beam\n",
-                             tick, lastLiveX, prevMinDebt, minDebt);
+                std::fprintf(stderr, "[live] tick %d (x~%.0f) : wanted path lost under a reduced beam (debt %d -> %d) ; back to the normal beam\n", tick, lastLiveX, prevMinDebt, minDebt);
             while (!soft.empty() && soft.back().tick > tick - 240) {
                 soft.pop_back();
                 ++res.stats.softRestarts;
@@ -163,8 +157,7 @@ namespace ap::sim {
             forceFlyExit();
             restartAtDebtRung();
         } else if (debugOptions().check)
-            std::fprintf(stderr, "[debt] tick %d (x~%.0f) : cluster out of reach, debt %d accepted\n", tick, lastLiveX,
-                         minDebt);
+            std::fprintf(stderr, "[debt] tick %d (x~%.0f) : cluster out of reach, debt %d accepted\n", tick, lastLiveX, minDebt);
     }
 
     auto SearchRun::effFrom(int back) -> int {
@@ -182,8 +175,17 @@ namespace ap::sim {
         return width;
     }
 
+    // in live mode, a miss right after a beam reduction is retried at the nominal beam
+    auto SearchRun::liveTryAllowed(int from) -> bool {
+        if (!opt.playedTicks) return true;
+        int const lead = from - opt.playedTicks->load(std::memory_order_relaxed);
+        return lead >= kLiveRungLead && 2 * (tick - from) <= lead;
+    }
+
+    // skips the rungs that would not change anything, and accepts the debt without a try when only touch
     auto SearchRun::skipRung(int k) -> bool {
         if (ladder[k].anchor) return true;
+        if (!liveTryAllowed(effFrom(ladder[k].back))) return true;
         if (opt.playedTicks && !portalOnly) {
             for (int j = 0; j < k; ++j)
                 if (!ladder[j].anchor && ladder[j].back > ladder[k].back) return true;
@@ -258,9 +260,10 @@ namespace ap::sim {
             touchOnlyDebt = portalOnly && nSurv > 0 && allExtra;
         }
         flyDebt = (flyExitTry || (opt.flyExitTries && !liveNext.empty() && liveNext[0]->g &&
-                                  (liveNext[0]->g->p1.isDart || liveNext[0]->g->p1.isShip ||
-                                   liveNext[0]->g->p1.isBird || liveNext[0]->g->p1.isSwing)));
+                                (liveNext[0]->g->p1.isDart || liveNext[0]->g->p1.isShip ||
+                                liveNext[0]->g->p1.isBird || liveNext[0]->g->p1.isSwing)));
         if (portalOnly && *debtRungOf > (flyDebt ? 2 : 0)) *debtRungOf = kNLadder;
+        if (!portalOnly && *debtRungOf >= 6) *debtRungOf = kNLadder;
         if (touchOnlyDebt && opt.playedTicks) {
             if (*debtRungOf < kNLadder && debugOptions().check)
                 std::fprintf(
@@ -271,10 +274,7 @@ namespace ap::sim {
         }
         if (portalOnly && flyDebt && *debtRungOf < kNLadder && flyTriesExhausted(lastLiveX)) {
             if (debugOptions().check)
-                std::fprintf(stderr,
-                             "[flying] tick %d (x~%.0f) : exit tries already failed in this zone ; debt accepted "
-                             "without a try\n",
-                             tick, lastLiveX);
+                std::fprintf(stderr, "[flying] tick %d (x~%.0f) : exit tries already failed in this zone ; debt accepted without a try\n", tick, lastLiveX);
             *debtRungOf = kNLadder;
         }
     }
@@ -285,8 +285,7 @@ namespace ap::sim {
             double const elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
             bool waveExit = flyDebt;
             if (!waveExit && !liveNext.empty() && liveNext[0]->g && liveNext[0]->g->p1.isDart) {
-                auto it = std::lower_bound(cues.passX.begin(), cues.passX.end(),
-                                           std::make_pair(lastLiveX - 900.f, -(1 << 30)));
+                auto it = std::lower_bound(cues.passX.begin(), cues.passX.end(), std::make_pair(lastLiveX - 900.f, -(1 << 30)));
                 for (; it != cues.passX.end() && it->first <= lastLiveX + 1.f; ++it)
                     if (clusterOf(cues, it->second).modeOut) {
                         waveExit = true;
@@ -310,8 +309,7 @@ namespace ap::sim {
                 Player const& player = p->g->p1;
                 if (!(player.isShip || player.isBird || player.isDart || player.isSwing)) continue;
                 float const missX = -p->debtX0;
-                auto it = std::lower_bound(cues.passX.begin(), cues.passX.end(),
-                                           std::make_pair(missX - 0.5f, -(1 << 30)));
+                auto it = std::lower_bound(cues.passX.begin(), cues.passX.end(), std::make_pair(missX - 0.5f, -(1 << 30)));
                 for (; it != cues.passX.end() && it->first <= missX + 0.5f; ++it) {
                     bool isExit = false;
                     for (int m : clusterOf(cues, it->second).members)
@@ -336,8 +334,7 @@ namespace ap::sim {
                 if (forcedX != 0.f) break;
             }
             if (forcedX != 0.f && debugOptions().check)
-                std::fprintf(stderr, "[flying] tick %d (x~%.0f) : flying mode exit (x %.0f) forced during the try\n",
-                             tick, lastLiveX, forcedX);
+                std::fprintf(stderr, "[flying] tick %d (x~%.0f) : flying mode exit (x %.0f) forced during the try\n", tick, lastLiveX, forcedX);
         }
     }
 
@@ -351,10 +348,7 @@ namespace ap::sim {
             ++res.stats.debtRungs;
             if (debtTickMark < 0) debtTickMark = simulated.load();
             if (debugOptions().check)
-                std::fprintf(stderr,
-                             "[debt] tick %d (x~%.0f) : no state left on the wanted path (debt %d -> %d) ; back %d "
-                             "ticks, beam x%d, q/%d\n",
-                             tick, lastLiveX, prevMinDebt, minDebt, rung.back, rung.mul, 1 << rung.q);
+                std::fprintf(stderr, "[debt] tick %d (x~%.0f) : no state left on the wanted path (debt %d -> %d) ; back %d ticks, beam x%d, q/%d\n", tick, lastLiveX, prevMinDebt, minDebt, rung.back, rung.mul, 1 << rung.q);
             if (debugOptions().check) {
                 std::fprintf(stderr, "    survivors (debt %d) : missed clusters", minDebt);
                 int shownN = 0;
@@ -408,8 +402,7 @@ namespace ap::sim {
             }
             if (flyDebt && portalOnly && debtWasTried) flyTryFails.push_back(lastLiveX);
             if (debugOptions().check)
-                std::fprintf(stderr, "[debt] tick %d (x~%.0f) : debt %d accepted (ladder used up)\n", tick, lastLiveX,
-                             minDebt);
+                std::fprintf(stderr, "[debt] tick %d (x~%.0f) : debt %d accepted (ladder used up)\n", tick, lastLiveX, minDebt);
         }
     }
 
@@ -425,16 +418,13 @@ namespace ap::sim {
     auto SearchRun::liftMustTakes() -> void {
         if (liveNext.empty() && !mustTakes.empty()) {
             size_t const nBefore = mustTakes.size();
-            mustTakes.erase(std::remove_if(mustTakes.begin(), mustTakes.end(),
-                                           [&](MustTake const& mustTake) {
-                                               return lastLiveX >= mustTake.passX - 600.f && lastLiveX <= mustTake.x1;
-                                           }),
+            mustTakes.erase(std::remove_if(mustTakes.begin(), mustTakes.end(), [&](MustTake const& mustTake) {
+                return lastLiveX >= mustTake.passX - 600.f && lastLiveX <= mustTake.x1;
+            }),
                             mustTakes.end());
             if (mustTakes.size() != nBefore) flyTryFails.push_back(lastLiveX);
             if (mustTakes.size() != nBefore && debugOptions().check)
-                std::fprintf(stderr,
-                             "[flying] tick %d (x~%.0f) : dead end in the zone of a forced exit ; exit lifted\n", tick,
-                             lastLiveX);
+                std::fprintf(stderr, "[flying] tick %d (x~%.0f) : dead end in the zone of a forced exit ; exit lifted\n", tick, lastLiveX);
         }
     }
 

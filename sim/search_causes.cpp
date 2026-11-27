@@ -155,8 +155,7 @@ namespace ap::sim {
         }
 
         // at an impasse at x fx: which toggle orbs to take or avoid so the killer groups get moved or turned off
-        CauseResult impasseCauses(World const& w, Game const& bg, CauseIndex& ix,
-                                  std::vector<short> const& killerGroups, float fx) {
+        CauseResult impasseCauses(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx) {
             ix.build(w);
             CauseResult out;
             CauseWalk walk{w, bg, ix, fx, out, {}};
@@ -177,8 +176,7 @@ namespace ap::sim {
         }
 
         // item conditions that would have avoided the impasse (same arguments as impasseCauses)
-        std::vector<ItemTarget> itemTargetsFor(World const& w, Game const& bg, CauseIndex& ix,
-                                               std::vector<short> const& killerGroups, float fx) {
+        std::vector<ItemTarget> itemTargetsFor(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx) {
             ix.build(w);
             std::vector<ItemTarget> out;
             auto fromCounters = [&](short group) {
@@ -189,8 +187,7 @@ namespace ap::sim {
                         continue;
                     if (trigGroupDisabled(bg, c)) continue;
                     if (std::any_of(out.begin(), out.end(), [&](ItemTarget const& t) {
-                            return t.idx == a ||
-                                   (t.item == std::clamp(c.itemID, 0, 9999) && t.count == c.count && t.group == group);
+                            return t.idx == a || (t.item == std::clamp(c.itemID, 0, 9999) && t.count == c.count && t.group == group);
                         }))
                         continue;
                     ItemTarget t;
@@ -206,6 +203,8 @@ namespace ap::sim {
                             t.x = std::max(t.x, c2.x);
                     }
                     t.mode = c.id == ObjId::CountTrigger ? 3 : (c.compare == 1 ? 1 : c.compare == 2 ? 2 : 0);
+                    t.x0 = c.x;
+                    if (c.id == ObjId::CountTrigger) t.x = std::max(t.x, fx - 90.f);
                     if (t.dist(trigItemValue(bg, t.item)) == 0) continue;
                     out.push_back(t);
                 }
@@ -234,14 +233,159 @@ namespace ap::sim {
                     bool const rescue =
                             ((o.id == ObjId::ToggleOrb || o.id == ObjId::ToggleBlock) && causeDeactivates(o)) ||
                             (o.id == ObjId::ToggleTrigger && causeDeactivates(o));
-                    if (!rescue || !(o.x > fx - 2400.f && o.x < fx + 600.f)) continue;
+                    if (!rescue) continue;
+                    if (!o.spawnTriggered && !(o.x > fx - 2400.f && o.x < fx + 600.f)) continue;
                     for (short group : o.groups) {
-                        if (group <= 0 || group >= 10000 || trigGroupOn(bg, group)) continue;
+                        if (group <= 0 || group >= 10000 || (!o.spawnTriggered && trigGroupOn(bg, group))) continue;
                         fromCounters(group);
                     }
                 }
             }
+            avoidTargets(w, bg, ix, killerGroups, fx, out);
+            compareTargets(w, bg, ix, killerGroups, fx, out);
             return out;
+        }
+
+        // returns the item targets that are not met, or that are met but have a trigger that should not have fired, and that can be avoided by not touching some triggers
+        void avoidTargets(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx, std::vector<ItemTarget>& out) {
+            std::vector<short> groups(killerGroups.begin(), killerGroups.end());
+            {
+                float const py = bg.p1.y;
+                for (auto const& o : w.objs) {
+                    if (o.type != Hazard && o.type != Solid) continue;
+                    if (o.rect.maxX() < fx - 150.f || o.rect.x > fx + 300.f || o.rect.maxY() < py - 600.f ||
+                        o.rect.y > py + 600.f)
+                        continue;
+                    for (short gr : o.groups)
+                        if (gr > 0 && gr < 10000 && trigGroupOn(bg, gr) &&
+                            std::find(groups.begin(), groups.end(), gr) == groups.end())
+                            groups.push_back(gr);
+                    if (groups.size() > 64) break;
+                }
+            }
+            for (short killer : groups) {
+                if (killer <= 0 || killer >= 10000) continue;
+                for (int a : ix.byTarget[static_cast<size_t>(killer)]) {
+                    Obj const& c = w.objs[static_cast<size_t>(a)];
+                    if ((c.id != ObjId::InstantCountTrigger && c.id != ObjId::CountTrigger) || !causeActivates(c) ||
+                        c.spawnTriggered || c.touchTriggered || !(c.x < fx + 600.f) || c.x < fx - 6000.f)
+                        continue;
+                    ItemTarget t;
+                    t.idx = a;
+                    t.item = std::clamp(c.itemID, 0, 9999);
+                    t.group = killer;
+                    t.avoid = true;
+                    if (c.id == ObjId::InstantCountTrigger) {
+                        if (c.compare == 2) {
+                            t.mode = 1;
+                            t.count = c.count - 1;
+                        } else if (c.compare == 1) {
+                            t.mode = 2;
+                            t.count = c.count + 1;
+                        } else
+                            continue;
+                    } else if (c.count >= 0) {
+                        t.mode = 2;
+                        t.count = c.count;
+                    } else {
+                        t.mode = 1;
+                        t.count = c.count;
+                    }
+                    if (t.dist(trigItemValue(bg, t.item)) == 0) continue;
+                    if (std::any_of(out.begin(), out.end(), [&](ItemTarget const& o) { return o.idx == a; })) continue;
+                    t.x = c.x;
+                    float x0 = c.x;
+                    for (auto const& o : w.objs) {
+                        if (o.itemID != t.item || o.x > c.x || o.x < c.x - 15000.f) continue;
+                        if ((o.type == Collectible || o.type == UserCoin) && o.tf(Obj::TF_PickupItem))
+                            x0 = std::min(x0, o.x);
+                        else if (o.id == ObjId::PickupTrigger && o.spawnTriggered)
+                            for (short gr : o.groups) {
+                                if (gr <= 0 || gr >= 10000) continue;
+                                for (int s : ix.byTarget[static_cast<size_t>(gr)]) {
+                                    Obj const& act = w.objs[static_cast<size_t>(s)];
+                                    if ((act.id == 1595 || act.id == ObjId::ToggleOrb) && act.x < c.x &&
+                                        act.x > c.x - 15000.f)
+                                        x0 = std::min(x0, act.x);
+                                }
+                            }
+                    }
+                    t.x0 = x0;
+                    out.push_back(t);
+                }
+            }
+        }
+
+        // tries to find item compare triggers that would have avoided the impasse
+        void compareTargets(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx, std::vector<ItemTarget>& out) {
+            constexpr int kDepth = 5;
+            std::vector<char> inChain(10000, 0);
+            std::vector<short> chain;
+            std::vector<short> todo;
+            for (short killer : killerGroups)
+                if (killer > 0 && killer < 10000 && !inChain[static_cast<size_t>(killer)]) {
+                    inChain[static_cast<size_t>(killer)] = 1;
+                    todo.push_back(killer);
+                    chain.push_back(killer);
+                }
+            for (int depth = 0; depth < kDepth && !todo.empty() && chain.size() < 256; ++depth) {
+                std::vector<short> next;
+                for (short group : todo)
+                    for (int a : ix.byTarget[static_cast<size_t>(group)]) {
+                        Obj const& o = w.objs[static_cast<size_t>(a)];
+                        bool const turnsOn =
+                                o.id == ObjId::SpawnTrigger || (o.id == ObjId::ToggleTrigger && causeActivates(o));
+                        if (!turnsOn) continue;
+                        for (short g2 : o.groups)
+                            if (g2 > 0 && g2 < 10000 && !inChain[static_cast<size_t>(g2)]) {
+                                inChain[static_cast<size_t>(g2)] = 1;
+                                next.push_back(g2);
+                                chain.push_back(g2);
+                            }
+                    }
+                todo = std::move(next);
+            }
+            for (short group : chain) {
+                if (!trigGroupOn(bg, group)) continue;
+                for (int r : ix.byTarget[static_cast<size_t>(group)]) {
+                    Obj const& rescue = w.objs[static_cast<size_t>(r)];
+                    if (rescue.id != ObjId::ToggleTrigger || !causeDeactivates(rescue) || !rescue.spawnTriggered)
+                        continue;
+                    for (short rg : rescue.groups) {
+                        if (rg <= 0 || rg >= 10000) continue;
+                        for (int ci : ix.byTarget[static_cast<size_t>(rg)]) {
+                            Obj const& c = w.objs[static_cast<size_t>(ci)];
+                            if (c.id != ObjId::ItemCompareTrigger || c.targetGroup != rg || c.spawnTriggered ||
+                                c.touchTriggered || !(c.x < fx))
+                                continue;
+                            if (trigCompareGap(bg, c) == 0) continue;
+                            if (std::any_of(out.begin(), out.end(), [&](ItemTarget const& t) { return t.idx == ci; }))
+                                continue;
+                            ItemTarget t;
+                            t.idx = ci;
+                            t.cmp = ci;
+                            t.item = std::clamp(c.itemID2 > 0 ? c.itemID2 : c.itemID, 0, 9999);
+                            t.group = rg;
+                            t.x = c.x;
+                            t.x0 = c.x - 600.f;
+                            for (auto const& p : w.objs) {
+                                if (p.id != ObjId::PickupTrigger || (p.itemID != c.itemID && p.itemID != c.itemID2))
+                                    continue;
+                                if (!p.spawnTriggered && p.x < c.x && p.x > c.x - 3000.f) t.x0 = std::min(t.x0, p.x);
+                                for (short pg : p.groups) {
+                                    if (pg <= 0 || pg >= 10000) continue;
+                                    for (int ai : ix.byTarget[static_cast<size_t>(pg)]) {
+                                        Obj const& a = w.objs[static_cast<size_t>(ai)];
+                                        if (!a.spawnTriggered && a.x < c.x && a.x > c.x - 3000.f)
+                                            t.x0 = std::min(t.x0, a.x);
+                                    }
+                                }
+                            }
+                            out.push_back(t);
+                        }
+                    }
+                }
+            }
         }
 
     }

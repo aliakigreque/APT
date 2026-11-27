@@ -1,5 +1,4 @@
-// Types, level maps and helpers shared by the search files (search*.cpp), and the SearchRun class whose stages they
-// define. Only those files include it; the rest of the simulator goes through search.hpp.
+// Types, level maps and helpers shared by the search files (search*.cpp), and the SearchRun class whose stages they define. Only those files include it; the rest of the simulator goes through search.hpp.
 
 #pragma once
 #include "search.hpp"
@@ -27,8 +26,7 @@
 #include <functional>
 
 namespace ap::sim::search_impl {
-    // 4 seconds of play at the game's 240 steps per second: how far back a restart or a revisit kill still
-    // counts as recent
+    // 4 seconds of play at the game's 240 steps per second: how far back a restart or a revisit kill still counts as recent
     constexpr int kFourSeconds = 4 * 240;
 
     struct Key {
@@ -169,8 +167,7 @@ namespace ap::sim::search_impl {
             if (col < 0 || col >= static_cast<long>(extent.lo.size())) return false;
             if (extent.hi[static_cast<size_t>(col)] < extent.lo[static_cast<size_t>(col)]) return false;
             if (p.y < extent.groundY + margin) return false;
-            return p.y > extent.hi[static_cast<size_t>(col)] + localMargin ||
-                   p.y < extent.lo[static_cast<size_t>(col)] - localMargin;
+            return p.y > extent.hi[static_cast<size_t>(col)] + localMargin || p.y < extent.lo[static_cast<size_t>(col)] - localMargin;
         };
         return out(g.p1) || (g.isDualMode && out(g.p2));
     }
@@ -184,14 +181,11 @@ namespace ap::sim::search_impl {
             if (col < 0 || col >= static_cast<long>(extent.lo.size())) return 0;
             if (extent.hi[static_cast<size_t>(col)] < extent.lo[static_cast<size_t>(col)]) return 0;
             if (p.y < extent.groundY + margin) return 0;
-            return p.y > extent.hi[static_cast<size_t>(col)] + localMargin
-                           ? 1
-                           : (p.y < extent.lo[static_cast<size_t>(col)] - localMargin ? -1 : 0);
+            return p.y > extent.hi[static_cast<size_t>(col)] + localMargin ? 1 : (p.y < extent.lo[static_cast<size_t>(col)] - localMargin ? -1 : 0);
         };
         auto nearOne = [&](Player const& p, int dir) {
             float const localMargin = (p.isShip || p.isBird || p.isDart || p.isSwing) ? margin * 0.5f : margin;
-            return dir > 0 ? trigMovedGameplayIn(g, p.x - 150.f, p.x + 150.f, p.y - localMargin, 1e7f)
-                           : trigMovedGameplayIn(g, p.x - 150.f, p.x + 150.f, -1e7f, p.y + localMargin);
+            return dir > 0 ? trigMovedGameplayIn(g, p.x - 150.f, p.x + 150.f, p.y - localMargin, 1e7f) : trigMovedGameplayIn(g, p.x - 150.f, p.x + 150.f, -1e7f, p.y + localMargin);
         };
         int const side1 = side(g.p1);
         int const side2 = g.isDualMode ? side(g.p2) : 0;
@@ -519,8 +513,7 @@ namespace ap::sim::search_impl {
             static thread_local std::vector<std::pair<float, float>> intervals;
             intervals.clear();
             for (long k = c - 1; k <= c + 1; ++k)
-                intervals.insert(intervals.end(), cols[static_cast<size_t>(k)].begin(),
-                                 cols[static_cast<size_t>(k)].end());
+                intervals.insert(intervals.end(), cols[static_cast<size_t>(k)].begin(), cols[static_cast<size_t>(k)].end());
             if (intervals.empty()) return 0;
             bool above = false;
             bool below = false;
@@ -576,6 +569,7 @@ namespace ap::sim::search_impl {
         LevelPresence presence;
         StructureMap structure;
         float endZoneX = std::numeric_limits<float>::infinity();
+        float voidEndX = std::numeric_limits<float>::infinity();
     };
 
     // lowest x of an end trigger that fires by position, infinity if none
@@ -730,24 +724,22 @@ namespace ap::sim::search_impl {
 
     int prepaidAt(Game const& g, Cues const& cues, SearchOptions const& opt);
 
-    int portalPrepay(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt,
-                     SmallVec<std::pair<int, bool>, 8> const& open);
+    int portalPrepay(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt, SmallVec<std::pair<int, bool>, 8> const& open);
 
     inline thread_local int g_portalMisses = 0;
 
     inline thread_local float g_lastMissX = 0;
 
-    int missedPortalsCost(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt, int& speedMisses,
-                          bool outside = false);
+    int missedPortalsCost(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt, int& speedMisses, bool outside = false);
 
-    int flyExitMisses(Game const& g, float prevX, Cues const& cues, bool outside, bool waveOnly = false,
-                      float maxReach = 1e30f);
+    int flyExitMisses(Game const& g, float prevX, Cues const& cues, bool outside, bool waveOnly = false, float maxReach = 1e30f);
 
     int missedOrbsCost(Game const& g, RingList const& prevRings1, RingList const& prevRings2, SearchOptions const& opt);
 
     struct Span {
         float x0 = 0;
         float x1 = 0;
+        float xr = 0;
         float y0 = 0;
         float y1 = 0;
         int tick = -1;
@@ -820,6 +812,7 @@ namespace ap::sim::search_impl {
         static constexpr float kCell = 120.f;
         static constexpr int kRecent = 8;
         static constexpr float kCellBack = 3000.f;
+        static constexpr float kRunMin = 1200.f;
         int16_t rcx[kRecent] = {};
         int16_t rcy[kRecent] = {};
         uint8_t rn = 0;
@@ -839,9 +832,9 @@ namespace ap::sim::search_impl {
         }
 
         // advances one tick, returns true if the lineage hasn't grown its area (by margin) for kill ticks
-        bool step(float x, float y, int t, int kill, float margin) {
+        bool step(float x, float y, int t, int kill, float margin, bool goingLeft = false) {
             if (tick < 0) {
-                x0 = x1 = x;
+                x0 = x1 = xr = x;
                 y0 = y1 = y;
                 tick = t;
                 px = x;
@@ -863,6 +856,12 @@ namespace ap::sim::search_impl {
                 x1 = x;
                 grew = true;
             }
+            if (goingLeft) {
+                xr = x + kRunMin;
+            } else if (x > xr + margin) {
+                xr = x;
+                grew = true;
+            }
             if (x < x0 - margin) {
                 x0 = x;
                 grew = true;
@@ -875,7 +874,7 @@ namespace ap::sim::search_impl {
                 y0 = y;
                 grew = true;
             }
-            if (x >= x1 - kCellBack && newCell(x, y)) grew = true;
+            if ((x >= x1 - kCellBack || goingLeft) && newCell(x, y)) grew = true;
             if (grew) {
                 tick = t;
                 touchGrace = false;
@@ -975,8 +974,7 @@ namespace ap::sim::search_impl {
         int const group = o.targetGroup;
         switch (o.id) {
         case 1049:
-            return group > 0 && group < static_cast<int>(w.groupObjs.size()) &&
-                   !w.groupObjs[static_cast<size_t>(group)].empty();
+            return group > 0 && group < static_cast<int>(w.groupObjs.size()) && !w.groupObjs[static_cast<size_t>(group)].empty();
         case 901:
         case 1346:
         case 1347:
@@ -1066,8 +1064,7 @@ namespace ap::sim::search_impl {
 
     // returns true if the object can start the triggers of its target group
     inline bool causeSpawns(Obj const& a) {
-        return a.id == ObjId::SpawnTrigger ||
-               ((a.id == ObjId::ToggleOrb || a.id == ObjId::ToggleBlock) && a.ringSpawnOnly) || causeActivates(a);
+        return a.id == ObjId::SpawnTrigger || ((a.id == ObjId::ToggleOrb || a.id == ObjId::ToggleBlock) && a.ringSpawnOnly) || causeActivates(a);
     }
 
     struct CauseWalk {
@@ -1159,8 +1156,7 @@ namespace ap::sim::search_impl {
         }
     };
 
-    CauseResult impasseCauses(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups,
-                              float fx);
+    CauseResult impasseCauses(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx);
 
     struct ItemTarget {
         int idx = -1;
@@ -1169,6 +1165,9 @@ namespace ap::sim::search_impl {
         int mode = 0;
         short group = 0;
         float x = 0;
+        float x0 = 0;
+        int cmp = -1;
+        bool avoid = false;
 
         // how far value v is from meeting the condition (0 when met)
         int dist(int v) const {
@@ -1184,9 +1183,19 @@ namespace ap::sim::search_impl {
             }
         }
     };
+    
+    std::vector<ItemTarget> itemTargetsFor(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx);
 
-    std::vector<ItemTarget> itemTargetsFor(World const& w, Game const& bg, CauseIndex& ix,
-                                           std::vector<short> const& killerGroups, float fx);
+    // returns the item targets that are not met, or that are met but have a trigger that should not have fired
+    void compareTargets(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx, std::vector<ItemTarget>& out);
+    // returns the item targets that are not met, or that are met but have a trigger that should not have fired, and that can be avoided by not touching some triggers
+    void avoidTargets(World const& w, Game const& bg, CauseIndex& ix, std::vector<short> const& killerGroups, float fx, std::vector<ItemTarget>& out);
+
+    // how far the game is from meeting an item target (0 when met): the compare gap or the counter distance
+    inline int itemTargetGap(Game const& g, ItemTarget const& t) {
+        if (t.cmp >= 0) return trigCompareGap(g, g.world->objs[static_cast<size_t>(t.cmp)]);
+        return t.dist(trigItemValue(g, t.item));
+    }
 
     // returns true if both nodes have the same trigger state
     inline bool sameTrig(Node& a, Node& b) {
@@ -1226,8 +1235,7 @@ namespace ap::sim::search_impl {
         uint32_t const xBits = static_cast<uint32_t>(std::max(0, static_cast<int>(std::floor(fAxis / 60.f)))) & 0x3ffu;
         uint32_t const vBits =
                 static_cast<uint32_t>(std::clamp(static_cast<int>(std::floor(g.p1.yVelocity / 2.0)) + 16, 0, 31));
-        return (flags & 0xffu) | (((flags >> 16) & 1u) << 8) | (((flags >> 21) & 1u) << 9) | (yBits << 10) |
-               (xBits << 20) | ((vBits & 31u) << 27);
+        return (flags & 0xffu) | (((flags >> 16) & 1u) << 8) | (((flags >> 21) & 1u) << 9) | (yBits << 10) | (xBits << 20) | ((vBits & 31u) << 27);
     }
 
     class CountTable {
@@ -1499,19 +1507,15 @@ namespace ap::sim::search_impl {
 
     enum class Flow { Next, Continue, Break, Return };
 
-    // One run of searchPath. The search keeps a lot of state across ticks (beam width, kill zones, restart points...),
-    // so its locals are members here and each stage of a tick is a member function.
+    // One run of searchPath. The search keeps a lot of state across ticks (beam width, kill zones, restart points...), so its locals are members here and each stage of a tick is a member function.
     struct SearchRun {
         SearchRun(Game const& start, SearchOptions const& opt, std::atomic<bool> const* cancel,
-                  std::function<void(int, int)> const& progress)
-            : start(start), opt(opt), cancel(cancel), progress(progress) {}
+                std::function<void(int, int)> const& progress) : start(start), opt(opt), cancel(cancel), progress(progress) {}
 
-        // arguments of searchPath
         Game const& start;
         SearchOptions const& opt;
         std::atomic<bool> const* cancel;
         std::function<void(int, int)> const& progress;
-        // what run() returns, set by the stage that ends the search
         SearchResult finalResult;
 
         std::chrono::steady_clock::time_point startTime;
@@ -1575,6 +1579,7 @@ namespace ap::sim::search_impl {
         static constexpr int kTrapKiller = -14;
         std::vector<std::vector<float>> escapeKillsOf;
         std::vector<std::pair<float, float>> awayZones;
+        std::vector<std::pair<float, float>> awayFreeZones;
         std::vector<std::pair<float, float>> flyOkZones;
         int lastFlyKillTick;
         float lastFlyKillX;
@@ -1619,6 +1624,28 @@ namespace ap::sim::search_impl {
             float x1;
             float y;
         };
+        struct BackPortal {
+            float sx;
+            float sy;
+            float dx;
+            float dy;
+        };
+        std::vector<BackPortal> backPortals;
+        struct DecisionZone {
+            float x0;
+            float x1;
+            int crossTick = -1;
+            bool settled = false;
+        };
+        std::vector<DecisionZone> decisionZones;
+        static constexpr int kDecisionSettle = 1440;
+        void findDecisionZones();
+        void updateDecisionZones();
+        size_t decisionCut(Game g, std::vector<uint8_t> const& prefix) const;
+        bool backPortalsOn = true;
+        int backPortalDeadEnds = 0;
+        static constexpr int kSeedLoopKiller = -18;
+        void findBackPortals();
         std::vector<std::vector<LoopZone>> loopZonesOf;
         std::vector<LoopZone> loopZones;
         struct TrapCorr {
@@ -1636,8 +1663,13 @@ namespace ap::sim::search_impl {
             int tick = 0;
             bool off = false;
             int offAt = 0;
+            float learnX = 0;
+            bool refuted = false;
         };
         std::vector<DeadPortal> deadPortals;
+        std::vector<std::pair<float, int>> deadRefutedAt;
+        void noteDeadRefuted(float learnX);
+        int deadRefutedNear(float x) const;
         int deadLearns;
         static constexpr int kMaxDeadLearns = 32;
         static constexpr int kDeadPortalKiller = -17;
@@ -1898,8 +1930,7 @@ namespace ap::sim::search_impl {
         int beamEff;
         void makeSoft();
         int leadBase();
-        // starts the clock and the result, and lists the speed portals that move triggers bring from afar
-        // (the search uses a finer grid near them)
+        // starts the clock and the result, and lists the speed portals that move triggers bring from afar (the search uses a finer grid near them)
         void beginRun();
         // level maps that the costs read: portal clusters, objects to touch, structure, void and end zone
         void buildCues();
@@ -1909,23 +1940,19 @@ namespace ap::sim::search_impl {
         void initState();
         // roots the search at the start state
         void startFromLevel();
-        // stops when the caller cancels; in live mode, also takes back the unplayed path when the player loses an
-        // attempt
+        // stops when the caller cancels; in live mode, also takes back the unplayed path when the player loses an attempt
         Flow checkCancelled();
         // stops when no tick record was beaten for stallSeconds, or when the tick or time budget is used up
         Flow checkBudget();
-        // stops when a live state finished the level (the lowest portal debt first, when debts count) or at the
-        // horizon
+        // stops when a live state finished the level (the lowest portal debt first, when debts count) or at the horizon
         Flow checkCompleted();
-        // setup of the tick: front x, forced exits already passed, finer grid near moved speed portals and in the fine
-        // zones, and the split of the live states among the workers
+        // setup of the tick: front x, forced exits already passed, finer grid near moved speed portals and in the fine zones, and the split of the live states among the workers
         void prepareLayer();
         // expands every live state by its inputs on the workers
         void expandLayer();
         // adds the kills the workers counted to the stats and remembers where the last kill of each kind happened
         void countKills();
-        // puts the children of all workers in the next layer; children with the same key and trigger state are merged
-        // into the cheapest one
+        // puts the children of all workers in the next layer; children with the same key and trigger state are merged into the cheapest one
         void mergeChildren();
         // sorts the next layer by portal debt, cost, fragility, last press and a salted hash
         void sortChildren();
@@ -1934,8 +1961,7 @@ namespace ap::sim::search_impl {
         Flow checkDebtRise();
         // a dead end inside the zone of a forced exit lifts that exit
         void liftMustTakes();
-        // every state died: learns why (kills, traps, missed portals, items) and restarts wider or from an earlier
-        // point
+        // every state died: learns why (kills, traps, missed portals, items) and restarts wider or from an earlier point
         Flow backOff();
         // back to the normal beam, grid and press gap once the front passed the spot that needed them
         void narrowBack();
@@ -1967,15 +1993,15 @@ namespace ap::sim::search_impl {
         std::vector<uint8_t> anchorTail;
         int anchorTick;
         Span anchorSpan;
-        // the layer died soon after some kills: lets the next try through the places of those kills (revisits,
-        // flying exits, escapes, away zones)
+        // the layer died soon after some kills: lets the next try through the places of those kills (revisits, flying exits, escapes, away zones)
         void allowKilledZones();
         // states sent back by a loop trigger: remembers the zones of those loops
         void findLoopImpasse();
+        // the layer died soon after some portals: learns those portals as dead ends and restarts from before them
+        void checkDeadPortals();
         // counts what killed the states; when traps did, learns where the trap floor changes
         void findTrapImpasse();
-        // keeps the furthest path; in live mode, a dead end just after the beam was reduced retries at the nominal
-        // beam first
+        // keeps the furthest path; in live mode, a dead end just after the beam was reduced retries at the nominal beam first
         Flow retryNominalBeam();
         // after a trap impasse, restarts from before the trap
         Flow restartBeforeTrap();
@@ -2029,12 +2055,13 @@ namespace ap::sim::search_impl {
         int effFrom(int back);
         int effBeam(Rung const& rung, int from);
         bool skipRung(int k);
+        bool liveTryAllowed(int from);
+        static constexpr int kLiveRungLead = 480;
         bool touchOnlyDebt;
         bool flyDebt;
         // the rung reached at this spot, counted apart for misses of plain portals
         void findDebtRung();
-        // skips the rungs that would not change anything, and accepts the debt without a try when only touch
-        // triggers were missed or the flying exit tries already failed here
+        // skips the rungs that would not change anything, and accepts the debt without a try when only touch triggers were missed or the flying exit tries already failed here
         void skipDebtRungs();
         // live mode: no try for a plain portal miss when the search is short on time or close to the player
         void limitLiveDebtTries();

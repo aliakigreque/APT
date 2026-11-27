@@ -1,5 +1,4 @@
-// Live mode: builds the simulated world of the level, runs the path search in background threads,
-// feeds the found inputs to the real game and handles divergences, deaths and dead ends.
+// Live mode: builds the simulated world of the level, runs the path search in background threads, feeds the found inputs to the real game and handles divergences, deaths and dead ends.
 
 #include "simplanner.hpp"
 
@@ -139,7 +138,12 @@ namespace ap {
             m_frozenSince = now;
             m_frozenGen = generation;
             if (m_frozenFor > 0.75) m_starving = true;
-            double const limit = 4.0;
+            if (m_frontierTick.load() != m_holdSeenTick) {
+                m_holdSeenTick = m_frontierTick.load();
+                m_holdSeenAt = now;
+            }
+            bool const holdOn = m_holding.load() && std::chrono::duration<double>(now - m_holdSeenAt).count() < 30.0;
+            double const limit = holdOn ? 300.0 : 4.0;
             if (m_frozenFor > limit) {
                 m_giveUpGen = generation;
                 m_frozenSince = {};
@@ -180,8 +184,7 @@ namespace ap {
         if (window.wall < 1.0) return;
         double const fps = window.frames / window.wall;
         auto const now = std::chrono::steady_clock::now();
-        if (fps < 30.0 && (window.lastLog == std::chrono::steady_clock::time_point{} ||
-                           now - window.lastLog > std::chrono::seconds(5))) {
+        if (fps < 30.0 && (window.lastLog == std::chrono::steady_clock::time_point{} || now - window.lastLog > std::chrono::seconds(5))) {
             int const consumed = m_consumed.load();
             int const planLen = m_planLen.load();
             int const frontier = m_frontierTick.load();
@@ -482,8 +485,7 @@ namespace ap {
             }
         }
         if (previousPhase != Phase::Idle) {
-            m_phase = (previousPhase == Phase::OfflineDone || previousPhase == Phase::OfflineFailed) ? previousPhase
-                                                                                                     : Phase::Idle;
+            m_phase = (previousPhase == Phase::OfflineDone || previousPhase == Phase::OfflineFailed) ? previousPhase : Phase::Idle;
         }
         m_persistFrozen = false;
     }
@@ -515,9 +517,8 @@ namespace ap {
                         "diagnostic ({}): death at tick {} at ({:.2f}, {:.2f}) yv {:.4f}; killer uid {}{}",
                         mode ? "button held" : "no input", g.tick - 1, g.p1.x, g.p1.y, g.p1.yVelocity, g.killerUid,
                         killer ? fmt::format(" (id {}, type {}, at {:.1f},{:.1f}, rect {:.1f},{:.1f} {:.1f}x{:.1f})",
-                                             killer.o->id, killer.o->type, killer.o->x, killer.o->y, killer.o->rect.x,
-                                             killer.o->rect.y, killer.o->rect.w, killer.o->rect.h)
-                               : std::string(" (ground / ceiling / crushed)"));
+                                            killer.o->id, killer.o->type, killer.o->x, killer.o->y, killer.o->rect.x,
+                                            killer.o->rect.y, killer.o->rect.w, killer.o->rect.h) : std::string(" (ground / ceiling / crushed)"));
             } else {
                 Log::printf("diagnostic ({}): alive after {} ticks, x = {:.1f}{}", mode ? "button held" : "no input",
                             g.tick, g.p1.x, g.completed ? " (level complete)" : "");
@@ -557,8 +558,7 @@ namespace ap {
         options.threads = searchThreads(false);
         sim::Game g = freshGame();
         auto progress = [this](int tick, int layer) {
-            setStatus(fmt::format("Auto Pathing Tool: searching... tick {} ({:.1f} s of level), {} states", tick,
-                                  tick / 240.0, layer));
+            setStatus(fmt::format("Auto Pathing Tool: searching... tick {} ({:.1f} s of level), {} states", tick, tick / 240.0, layer));
         };
         if (sim::menuWanted(*m_world)) {
             sim::SearchOptions menuOptions = options;
@@ -888,14 +888,13 @@ namespace ap {
                 if (m_divergences == 0) {
                     std::string history;
                     for (int tick = std::max(0, sample.step - 12);
-                         tick < sample.step && static_cast<size_t>(tick) < inputs.size(); ++tick)
+                        tick < sample.step && static_cast<size_t>(tick) < inputs.size(); ++tick)
                         history += fmt::format(" {}:{}", tick, static_cast<int>(inputs[static_cast<size_t>(tick)] & 1));
                     Log::printf("divergence: buttons played before tick {}:{}", sample.step, history);
                 }
                 ++m_divergences;
                 bool const pastPlanEnd = m_searchComplete.load() && sample.step >= m_planLen.load() - 1;
-                bool const steady = !isPrev && m_lastDivStep == sample.step - 1 && std::fabs(dy) < 0.01f &&
-                                    std::fabs(dx) > 0.05f && std::fabs(dx) < 3.f && std::fabs(dx - m_lastDivDx) < 0.05f;
+                bool const steady = !isPrev && m_lastDivStep == sample.step - 1 && std::fabs(dy) < 0.01f && std::fabs(dx) > 0.05f && std::fabs(dx) < 3.f && std::fabs(dx - m_lastDivDx) < 0.05f;
                 bool spaced = m_resyncTicks.size() < 4;
                 for (int t : m_resyncTicks)
                     if (std::abs(t - sample.step) < 240) spaced = false;
@@ -974,8 +973,7 @@ namespace ap {
     }
 
     // live: plays an attempt that only sets the level's settings menu, returns false if not needed or not found
-    bool SimPlanner::startMenuAttempt(sim::SearchOptions const& options,
-                                      std::function<void(int, int)> const& progress) {
+    bool SimPlanner::startMenuAttempt(sim::SearchOptions const& options, std::function<void(int, int)> const& progress) {
         if (m_menuTried || !m_world || !sim::menuWanted(*m_world)) return false;
         m_menuTried = true;
         sim::SearchOptions menuOptions = options;
@@ -1003,8 +1001,7 @@ namespace ap {
                         break;
                     }
                 }
-                summary += fmt::format("{}refresh rate {} (item {} = {})", summary.empty() ? "" : ", ", label,
-                                       menu.item, menu.prefer);
+                summary += fmt::format("{}refresh rate {} (item {} = {})", summary.empty() ? "" : ", ", label, menu.item, menu.prefer);
             } else if (menu.kind == "ldm") {
                 summary += fmt::format("{}low detail avoided (item {})", summary.empty() ? "" : ", ", menu.item);
             }
@@ -1053,8 +1050,8 @@ namespace ap {
                         planLen, searchTick, layer > 0 ? fmt::format(", {} states", layer) : std::string());
             }
             return fmt::format("Auto Pathing Tool: live - tick {} / plan up to {} (+{:.1f} s), search at tick {}{}",
-                               consumed, planLen, (planLen - consumed) / 240.0, searchTick,
-                               layer > 0 ? fmt::format(" ({} states)", layer) : std::string());
+                            consumed, planLen, (planLen - consumed) / 240.0, searchTick,
+                            layer > 0 ? fmt::format(" ({} states)", layer) : std::string());
         };
         bool haveResult = false;
         sim::SearchResult result;
@@ -1087,6 +1084,7 @@ namespace ap {
                 options.commitInterval = 120;
                 options.playedTicks = &m_consumed;
                 options.starving = &m_starving;
+                options.holding = &m_holding;
                 options.minLead = 480;
                 options.maxLead = 0;
                 options.waitFor = &m_lostAt;
@@ -1214,8 +1212,7 @@ namespace ap {
                 }
                 if (result.success) {
                     m_doomed = false;
-                    setStatus(fmt::format("Auto Pathing Tool: live - replaying the full plan ({} presses)",
-                                          result.presses));
+                    setStatus(fmt::format("Auto Pathing Tool: live - replaying the full plan ({} presses)", result.presses));
                 } else {
                     haveResult = false;
                     continue;
@@ -1390,8 +1387,7 @@ namespace ap {
                 m_startY = pos.y;
                 m_haveStart = true;
             } else {
-                Log::printf("reset: suspicious start position ({:.1f}, {:.1f}), keeping the world's ({:.1f}, {:.1f})",
-                            pos.x, pos.y, m_world->startX, m_world->startY);
+                Log::printf("reset: suspicious start position ({:.1f}, {:.1f}), keeping the world's ({:.1f}, {:.1f})", pos.x, pos.y, m_world->startX, m_world->startY);
             }
         }
         startLock.unlock();
@@ -1413,9 +1409,7 @@ namespace ap {
                 }
             }
             for (auto const& entry : m_world->persistentItems) {
-                if (valueIn(items, entry.first) != entry.second &&
-                    std::none_of(items.begin(), items.end(),
-                                 [&](auto const& item) { return item.first == entry.first; }))
+                if (valueIn(items, entry.first) != entry.second && std::none_of(items.begin(), items.end(), [&](auto const& item) { return item.first == entry.first; }))
                     diff += fmt::format(" {}: {} -> 0", entry.first, entry.second);
             }
             if (!diff.empty() && diff != m_persistWarned) {
@@ -1464,8 +1458,7 @@ namespace ap {
         int held = -1;
         if (auto it = player->m_holdingButtons.find(1); it != player->m_holdingButtons.end()) held = it->second ? 1 : 0;
         if (m_real.size() < 4096) {
-            m_real.push_back(RealSample{step, player->getPositionX(), player->getPositionY(), player->m_yVelocity, held,
-                                        static_cast<uint32_t>(Engine::rng()), player->m_snapDistance});
+            m_real.push_back(RealSample{step, player->getPositionX(), player->getPositionY(), player->m_yVelocity, held, static_cast<uint32_t>(Engine::rng()), player->m_snapDistance});
         }
     }
 
@@ -1525,8 +1518,7 @@ namespace ap {
                 }
             }
             if (havePlanned) {
-                Log::printf("live: at death, real player at ({:.1f}, {:.1f}), planned at ({:.1f}, {:.1f})",
-                            p1->getPositionX(), p1->getPositionY(), planned.x, planned.y);
+                Log::printf("live: at death, real player at ({:.1f}, {:.1f}), planned at ({:.1f}, {:.1f})", p1->getPositionX(), p1->getPositionY(), planned.x, planned.y);
             } else {
                 Log::printf("live: at death, real player at ({:.1f}, {:.1f})", p1->getPositionX(), p1->getPositionY());
             }

@@ -1,5 +1,4 @@
-// Expansion of a layer: every live state is stepped with each of its inputs and every child is checked and
-// scored (the hot part of the search).
+// Expansion of a layer: every live state is stepped with each of its inputs and every child is checked and scored (the hot part of the search).
 
 #include "search_internal.hpp"
 
@@ -74,8 +73,7 @@ namespace ap::sim {
         int const prevTraps = cues.traps.empty() ? 0 : trapsTouchedNear(*parentGame, cues, prevX);
 
         int itemV0[4] = {0, 0, 0, 0};
-        for (size_t q = 0; q < itemTargets.size() && q < 4; ++q)
-            itemV0[q] = trigItemValue(*parentGame, itemTargets[q].item);
+        for (size_t q = 0; q < itemTargets.size() && q < 4; ++q) itemV0[q] = itemTargetGap(*parentGame, itemTargets[q]);
         int paceV0[8];
         for (size_t q = 0; q < paceItems.size() && q < 8; ++q)
             paceV0[q] = trigItemValue(*parentGame, paceItems[q].item);
@@ -96,13 +94,11 @@ namespace ap::sim {
         if (parentGame->isDualMode) prevRings2 = parentGame->p2.touchingRings;
         bool const nRing = parent.ringSincePress;
         int const gapHere = gapNow;
-        bool const canPress = holdingBefore || tick - nLastPress >= gapHere ||
-                              (nRing && tick - nLastPress >= std::min(gapHere, kRingGap));
+        bool const canPress = holdingBefore || tick - nLastPress >= gapHere || (nRing && tick - nLastPress >= std::min(gapHere, kRingGap));
 
         uint8_t acts[4];
         int nActs = 0;
-        bool const canPress2 = holding2Before || tick - nLastPress >= gapHere ||
-                               (nRing && tick - nLastPress >= std::min(gapHere, kRingGap));
+        bool const canPress2 = holding2Before || tick - nLastPress >= gapHere || (nRing && tick - nLastPress >= std::min(gapHere, kRingGap));
         bool const segMode = parentGame->p1.isDart && !twoButtons;
         int const minSeg = std::max(1, opt.minPressGap / 3);
         for (int buttons = 0; buttons < (twoButtons ? 4 : 2); ++buttons) {
@@ -118,16 +114,16 @@ namespace ap::sim {
                     portalTakenBy(*parentGame, deadPortals[q].idx))
                     deadTakenP |= 1u << q;
 
-        ParentInfo pn{i,           parent,         parentGame, holdingBefore,   holding2Before,
-                      nCost,       nFrag,          nLastPress, nLastRelease,    nDebt,
-                      nPdebt,      nOut,           nBound,     nAway,           nFlyMiss,
-                      parentMode,  nDebtX0,        nDebtX1,    nBackX,          nBackSig,
-                      nBackSigP,   nBackN,         nBackTick0, nSpan,           parentOwner,
-                      prevX,       prevTp1,        prevTp2,    prevItemChanges, persistWatch,
-                      prevPersist, prevTraps,      itemV0,     paceV0,          countV0,
-                      needMask,    prevObbFragile, prevHaz,    prevSpeed,       openPortals,
-                      prevRotAmb,  prevRings1,     prevRings2, nRing,           acts,
-                      nActs,       segMode,        minSeg,     relItemDelta,    deadTakenP};
+        ParentInfo pn{i,         parent,         parentGame, holdingBefore,   holding2Before,
+                    nCost,       nFrag,          nLastPress, nLastRelease,    nDebt,
+                    nPdebt,      nOut,           nBound,     nAway,           nFlyMiss,
+                    parentMode,  nDebtX0,        nDebtX1,    nBackX,          nBackSig,
+                    nBackSigP,   nBackN,         nBackTick0, nSpan,           parentOwner,
+                    prevX,       prevTp1,        prevTp2,    prevItemChanges, persistWatch,
+                    prevPersist, prevTraps,      itemV0,     paceV0,          countV0,
+                    needMask,    prevObbFragile, prevHaz,    prevSpeed,       openPortals,
+                    prevRotAmb,  prevRings1,     prevRings2, nRing,           acts,
+                    nActs,       segMode,        minSeg,     relItemDelta,    deadTakenP};
         for (int ai = 0; ai < nActs; ++ai) {
             expandAction(wk, pn, ai);
         }
@@ -168,11 +164,10 @@ namespace ap::sim {
         c.inEndZone = c.game->p1.x >= cues.endZoneX;
     }
 
-    // kills the child where the search learned it must not go: doomed void, dead portals, avoided objects,
-    // loop zones, trap corridors and jumps back into the part already played
+    // kills the child where the search learned it must not go: doomed void, dead portals, avoided objects, loop zones, trap corridors and jumps back into the part already played
     auto SearchRun::applyLearnedKills(ExpandWorker& wk, ParentInfo& pn, int ai, ChildStep& c) -> void {
-        if (!c.game->died && !c.game->isDualMode && !c.inEndZone && cues.voidHull.doomed(c.game->p1) &&
-            (c.game->p1.isUpsideDown || pn.nAway >= 0 || !cues.presence.ok()))
+        if (!c.game->died && !c.game->isDualMode && !c.inEndZone && c.game->p1.x < cues.voidEndX &&
+            cues.voidHull.doomed(c.game->p1) && (c.game->p1.isUpsideDown || pn.nAway >= 0 || !cues.presence.ok()))
             c.game->died = true;
 
         if (!c.game->died && !deadPortals.empty())
@@ -265,11 +260,10 @@ namespace ap::sim {
                     return (p.isUpsideDown ? p.yVelocity : -p.yVelocity) >= 10.0;
                 };
                 bool const fallOk1 = presence1 != 0 || falling(c.game->p1);
-                bool const fallOk2 =
-                        !c.game->isDualMode || presence1 == 0
-                                ? (!c.game->isDualMode || falling(c.game->p2) ||
-                                   cues.presence.any(*c.game, c.game->p2.x, c.game->p2.y, opt.awayRx, opt.awayRy) != 0)
-                                : (presence2 != 0 || falling(c.game->p2));
+                bool const fallOk2 = !c.game->isDualMode || presence1 == 0
+                                    ? (!c.game->isDualMode || falling(c.game->p2) ||
+                                    cues.presence.any(*c.game, c.game->p2.x, c.game->p2.y, opt.awayRx, opt.awayRy) != 0)
+                                    : (presence2 != 0 || falling(c.game->p2));
                 if (fallOk1 && fallOk2) c.cAway = pn.nAway;
             }
             if (!present &&
@@ -282,7 +276,13 @@ namespace ap::sim {
                         limit *= 4;
                         break;
                     }
-                if (c.cAway > limit) {
+                bool free = false;
+                for (auto const& z : awayFreeZones)
+                    if (c.game->p1.x >= z.first && c.game->p1.x <= z.second) {
+                        free = true;
+                        break;
+                    }
+                if (c.cAway > limit && !free) {
                     c.game->died = true;
                     c.game->killerUid = kAwayKiller;
                     awayKillsOf[static_cast<size_t>(wk.worker)].push_back(c.game->p1.x);
@@ -298,7 +298,7 @@ namespace ap::sim {
             c.cSpan.touchCheck(trigTouchSig(*c.game), c.game->tick);
         c.escCostNow = 0;
         if (!c.game->died && opt.stuckKill > 0 && !c.game->isPlatformer && !c.inEndZone &&
-            c.cSpan.step(c.game->p1.x, c.game->p1.y, c.game->tick, opt.stuckKill, opt.stuckMargin)) {
+            c.cSpan.step(c.game->p1.x, c.game->p1.y, c.game->tick, opt.stuckKill, opt.stuckMargin, c.game->p1.isGoingLeft)) {
             c.game->died = true;
             c.game->killerUid = kStuckKiller;
             stuckKillsOf[static_cast<size_t>(wk.worker)].push_back(c.game->p1.x);
@@ -390,8 +390,10 @@ namespace ap::sim {
         if (!c.game->died)
             for (size_t q = 0; q < itemTargets.size() && q < 4; ++q) {
                 ItemTarget const& target = itemTargets[q];
-                if (pn.prevX < target.x + 60.f && c.game->p1.x >= target.x + 60.f &&
-                    !trigGroupOn(*c.game, target.group)) {
+                bool const missed =(target.cmp >= 0 || target.avoid)
+                                ? pn.prevX < target.x && c.game->p1.x >= target.x && itemTargetGap(*c.game, target) != 0
+                                : pn.prevX < target.x + 60.f && c.game->p1.x >= target.x + 60.f && !trigGroupOn(*c.game, target.group);
+                if (missed) {
                     c.game->died = true;
                     c.game->killerUid = pn.parentGame->world->objs[static_cast<size_t>(target.idx)].uid;
                     break;
@@ -410,9 +412,7 @@ namespace ap::sim {
                     if (counter.id == ObjId::CountTrigger)
                         satisfied = counter.count >= 0 ? value >= counter.count : value <= counter.count;
                     else
-                        satisfied = counter.compare == 0   ? value == counter.count
-                                    : counter.compare == 1 ? value > counter.count
-                                                           : value < counter.count;
+                        satisfied = counter.compare == 0   ? value == counter.count : counter.compare == 1 ? value > counter.count : value < counter.count;
                     if (satisfied) ok = true;
                 }
                 if (!ok) {
@@ -430,6 +430,13 @@ namespace ap::sim {
         c.cBackSigP = pn.nBackSigP;
         c.cBackN = pn.nBackN;
         c.cBackTick0 = pn.nBackTick0;
+        if (!c.game->died && !c.game->isPlatformer && backPortalsOn && c.game->p1.x < pn.prevX - 300.f)
+            for (auto const& bp : backPortals)
+                if (std::fabs(pn.prevX - bp.sx) < 150.f && std::fabs(c.game->p1.x - bp.dx) < 150.f && std::fabs(c.game->p1.y - bp.dy) < 150.f) {
+                    c.game->died = true;
+                    c.game->killerUid = kSeedLoopKiller;
+                    return;
+                }
         if (!c.game->died && !c.game->isPlatformer && c.game->p1.x < pn.prevX - 300.f) {
             uint64_t const sigP = loopSig(*c.game, false);
             uint64_t const sig = loopSig(*c.game, true);
@@ -464,7 +471,7 @@ namespace ap::sim {
         if (c.game->died) {
             if (dbgHoldTrack && pn.parent.dbgHold && c.hold)
                 std::fprintf(stderr, "[hold] tick %d : the held lineage dies (uid %d) x=%.1f y=%.1f\n", tick,
-                             c.game->killerUid, c.game->p1.x, c.game->p1.y);
+                            c.game->killerUid, c.game->p1.x, c.game->p1.y);
             killersOf[static_cast<size_t>(wk.worker)].push_back(c.game->killerUid);
             if (c.cOwner == wk.worker)
                 wk.arena.release(c.game);
@@ -548,7 +555,7 @@ namespace ap::sim {
                         auto const& thresholds = paceItems[q].th;
                         auto it =
                                 std::lower_bound(thresholds.begin(), thresholds.end(),
-                                                 std::make_pair(c.game->p1.x - 60.f, std::numeric_limits<int>::min()));
+                                                std::make_pair(c.game->p1.x - 60.f, std::numeric_limits<int>::min()));
                         if (it == thresholds.end()) {
                             ahead = true;
                             continue;
@@ -570,10 +577,9 @@ namespace ap::sim {
                 for (size_t q = 0; q < itemTargets.size() && q < 4; ++q) {
                     ItemTarget const& target = itemTargets[q];
                     if (c.game->p1.x >= target.x + 60.f) continue;
-                    int const value = trigItemValue(*c.game, target.item);
-                    if (value == pn.itemV0[q]) continue;
-                    int const d0 = target.dist(pn.itemV0[q]);
-                    int const d1 = target.dist(value);
+                    int const d0 = pn.itemV0[q];
+                    int const d1 = itemTargetGap(*c.game, target);
+                    if (d1 == d0) continue;
                     if (d1 < d0)
                         rewarded = true;
                     else if (d1 > d0) {

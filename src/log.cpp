@@ -16,8 +16,7 @@ namespace ap {
         static bool tried = false;
         if (!tried) {
             tried = true;
-            auto* out = new std::ofstream(Mod::get()->getSaveDir() / "auto-pathing-tool.log",
-                                          std::ios::out | std::ios::trunc);
+            auto* out = new std::ofstream(Mod::get()->getSaveDir() / "auto-pathing-tool.log", std::ios::out | std::ios::trunc);
             if (out->is_open())
                 f = out;
             else

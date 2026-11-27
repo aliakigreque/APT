@@ -67,9 +67,7 @@ namespace ap::sim {
             }
             double const lastWidth = xAt(n - 1) - xAt(n - 2);
             spline.d[static_cast<size_t>(n - 1)] = 0.0;
-            spline.b[static_cast<size_t>(n - 1)] = 3.0 * spline.d[static_cast<size_t>(n - 2)] * lastWidth * lastWidth +
-                                                   2.0 * c[static_cast<size_t>(n - 2)] * lastWidth +
-                                                   spline.b[static_cast<size_t>(n - 2)];
+            spline.b[static_cast<size_t>(n - 1)] = 3.0 * spline.d[static_cast<size_t>(n - 2)] * lastWidth * lastWidth + 2.0 * c[static_cast<size_t>(n - 2)] * lastWidth + spline.b[static_cast<size_t>(n - 2)];
             spline.c0 = c[0];
         }
 
@@ -85,10 +83,7 @@ namespace ap::sim {
         }
 
         // entries of a keyframe animation, like GJEffectManager::createKeyframeCommand
-        void buildKeyframeAnim(World const& w, std::vector<int> const& keys,
-                               std::vector<World::KfKeyState> const& keyStates, World::KfAnim& anim,
-                               std::vector<World::KfSpline>& splines, float timeMod, float posXMod, float posYMod,
-                               float rotMod, float scaleXMod, float scaleYMod) {
+        void buildKeyframeAnim(World const& w, std::vector<int> const& keys, std::vector<World::KfKeyState> const& keyStates, World::KfAnim& anim, std::vector<World::KfSpline>& splines, float timeMod, float posXMod, float posYMod, float rotMod, float scaleXMod, float scaleYMod) {
             double const timeScale = std::max(0.0001f, timeMod);
             auto& entries = anim.e;
             entries.clear();
@@ -147,16 +142,13 @@ namespace ap::sim {
                     if (posXMod != 1.f) px = (px - firstX) * posXMod + firstX;
                     if (posYMod != 1.f) py = (py - firstY) * posYMod + firstY;
                     if (scaleXMod != 1.f) {
-                        scaleX = static_cast<double>(scaleXMod) * (scaleX - static_cast<double>(firstScaleX)) +
-                                 static_cast<double>(firstScaleX);
+                        scaleX = static_cast<double>(scaleXMod) * (scaleX - static_cast<double>(firstScaleX)) + static_cast<double>(firstScaleX);
                     }
                     if (scaleYMod != 1.f) {
-                        scaleY = static_cast<double>(scaleYMod) * (scaleY - static_cast<double>(firstScaleY)) +
-                                 static_cast<double>(firstScaleY);
+                        scaleY = static_cast<double>(scaleYMod) * (scaleY - static_cast<double>(firstScaleY)) + static_cast<double>(firstScaleY);
                     }
                     if (rotMod != 1.f) {
-                        rot = static_cast<double>(rotMod) * (rot - static_cast<double>(firstRot)) +
-                              static_cast<double>(firstRot);
+                        rot = static_cast<double>(rotMod) * (rot - static_cast<double>(firstRot)) + static_cast<double>(firstRot);
                     }
                     scaleXRatio = scaleX / static_cast<double>(firstScaleX);
                     scaleYRatio = scaleY / static_cast<double>(firstScaleY);
@@ -410,8 +402,7 @@ namespace ap::sim {
                 int const hz = numberOf(option.label);
                 if (hz < 0) continue;
                 ++numberCount;
-                if (bestHz < 0 || std::abs(hz - 240) < std::abs(bestHz - 240) ||
-                    (std::abs(hz - 240) == std::abs(bestHz - 240) && hz > bestHz)) {
+                if (bestHz < 0 || std::abs(hz - 240) < std::abs(bestHz - 240) || (std::abs(hz - 240) == std::abs(bestHz - 240) && hz > bestHz)) {
                     bestHz = hz;
                     bestValue = option.value;
                 }
@@ -430,8 +421,7 @@ namespace ap::sim {
         }
         auto isLdm = [&](std::string const& t) {
             std::string const text = lower(t);
-            return text.find("ldm") != std::string::npos || text.find("low detail") != std::string::npos ||
-                   text.find("lowdetail") != std::string::npos || text.find("low-detail") != std::string::npos;
+            return text.find("ldm") != std::string::npos || text.find("low detail") != std::string::npos || text.find("lowdetail") != std::string::npos || text.find("low-detail") != std::string::npos;
         };
         bool anyLdm = false;
         for (auto const& e : w.texts) {
@@ -443,8 +433,8 @@ namespace ap::sim {
         if (anyLdm) {
             auto isRing = [](Obj const& o) {
                 return o.type == YellowJumpRing || o.type == PinkJumpRing || o.type == GravityRing ||
-                       o.type == GreenRing || o.type == DropRing || o.type == RedJumpRing || o.type == CustomRing ||
-                       o.type == DashRing || o.type == GravityDashRing || o.type == SpiderOrb || o.type == TeleportOrb;
+                        o.type == GreenRing || o.type == DropRing || o.type == RedJumpRing || o.type == CustomRing ||
+                        o.type == DashRing || o.type == GravityDashRing || o.type == SpiderOrb || o.type == TeleportOrb;
             };
             auto inRange = [](Obj const& t, Obj const& o) {
                 float const dx = t.x - o.x;
@@ -492,8 +482,6 @@ namespace ap::sim {
 
     // level analysis on load: fills the World tables the trigger simulation needs
     namespace {
-        // The level analysis done on load, one pass after another; the tables a pass builds for the later ones are
-        // members.
         struct TriggerAnalysis {
             TriggerAnalysis(World& w) : w(w) {}
 
@@ -519,8 +507,7 @@ namespace ap::sim {
             void sortGroupMembers();
             // the triggers of each spawn order list (spawnLists), in the order the game fires them
             void listSpawnOrder();
-            // groups that move or toggle, where they first move, and which objects can move (movable, toggleable,
-            // lockX)
+            // groups that move or toggle, where they first move, and which objects can move (movable, toggleable, lockX)
             void markMovableGroups();
             // objects used as centers of rotations and scales (centerLike): they are not gameplay
             void findCenters();
@@ -538,8 +525,7 @@ namespace ap::sim {
             void findGroupMovers();
             // keyframe animations and their splines (kfAnims, kfSplines)
             void buildKeyframes();
-            // objects that can get their own position, rotation or scale (mayHaveDyn, scaleTarget), and whether the
-            // player can be moved (pPossible)
+            // objects that can get their own position, rotation or scale (mayHaveDyn, scaleTarget), and whether the player can be moved (pPossible)
             void markDynamicObjects();
             // definitions of the area triggers and of the objects they target (areaDefs)
             void buildAreas();
@@ -636,8 +622,7 @@ namespace ap::sim {
                 auto& members = w.groupAll[gr];
                 if (!sortGroup[gr] || members.size() < 2) continue;
                 crtQsort(members, [&](int a, int b) {
-                    return static_cast<int>(w.objs[static_cast<size_t>(a)].startX) -
-                           static_cast<int>(w.objs[static_cast<size_t>(b)].startX);
+                    return static_cast<int>(w.objs[static_cast<size_t>(a)].startX) - static_cast<int>(w.objs[static_cast<size_t>(b)].startX);
                 });
             }
         }
@@ -673,7 +658,7 @@ namespace ap::sim {
                 int const dir = (objDir == 2 || objDir == 3)   ? 3
                                 : (objDir == 4 || objDir == 7) ? 2
                                 : (objDir == 5 || objDir == 6) ? 1
-                                                               : 4;
+                                                                : 4;
                 channelDir.emplace_back(o.rgChannel, dir);
             }
         for (auto& e : w.spawnLists) {
@@ -685,10 +670,7 @@ namespace ap::sim {
                 Obj const& o = w.objs[static_cast<size_t>(idx)];
                 ord = o.ord;
                 float const f = static_cast<float>(o.ord);
-                posKey = dir == 1   ? static_cast<int>(f + o.startY)
-                         : dir == 2 ? static_cast<int>(f - o.startY)
-                         : dir == 3 ? static_cast<int>(f - o.startX)
-                                    : static_cast<int>(f + o.startX);
+                posKey = dir == 1   ? static_cast<int>(f + o.startY) : dir == 2 ? static_cast<int>(f - o.startY) : dir == 3 ? static_cast<int>(f - o.startX) : static_cast<int>(f + o.startX);
             };
             std::sort(list.begin(), list.end(), [&](int a, int b) {
                 int ordA;
@@ -704,8 +686,7 @@ namespace ap::sim {
         }
     }
 
-    // groups that move or toggle, where they first move, and which objects can move (movable, toggleable,
-    // lockX)
+    // groups that move or toggle, where they first move, and which objects can move (movable, toggleable, lockX)
     auto TriggerAnalysis::markMovableGroups() -> void {
         for (auto const& t : w.spawnRemaps)
             for (auto const& e : t)
@@ -943,11 +924,11 @@ namespace ap::sim {
             for (size_t i = 0; i < w.objs.size(); ++i) {
                 Obj const& o = w.objs[i];
                 w.lite[i] = World::ObjLite{o.posX,
-                                           o.posY,
-                                           o.groupSig,
-                                           o.groups.empty() ? short(-1) : o.groups[0],
-                                           static_cast<uint8_t>(o.lockX ? 1 : 0),
-                                           static_cast<uint8_t>(std::min<size_t>(o.groups.size(), 255))};
+                                            o.posY,
+                                            o.groupSig,
+                                            o.groups.empty() ? short(-1) : o.groups[0],
+                                            static_cast<uint8_t>(o.lockX ? 1 : 0),
+                                            static_cast<uint8_t>(std::min<size_t>(o.groups.size(), 255))};
             }
         }
     }
@@ -1309,8 +1290,7 @@ namespace ap::sim {
             bool usesRandom = false;
             for (auto const& o : w.objs) {
                 if (o.cls == 1 && (o.id == ObjId::RandomTrigger || o.id == ObjId::AdvancedRandomTrigger ||
-                                   (o.id == ObjId::SpawnTrigger && o.spawnDelayRange != 0.f)))
-                    usesRandom = true;
+                                (o.id == ObjId::SpawnTrigger && o.spawnDelayRange != 0.f))) usesRandom = true;
             }
             auto relIn = [&](std::vector<char> const& relevant, int gr0) {
                 bool found = false;
@@ -1445,10 +1425,7 @@ namespace ap::sim {
                     for (auto const& [effectId, areas] : areaByEffect) {
                         if (!w.areaEffectLiveAt(effectId)) effectCount += areas.size();
                     }
-                    std::fprintf(stderr,
-                                 "[decor] %zu triggers without effect on the game treated as decoration (of which %zu "
-                                 "area triggers with an effect id and no area that matters)\n",
-                                 inertCount, effectCount);
+                    std::fprintf(stderr, "[decor] %zu triggers without effect on the game treated as decoration (of which %zu area triggers with an effect id and no area that matters)\n", inertCount, effectCount);
                 }
             }
             {
@@ -1485,8 +1462,7 @@ namespace ap::sim {
                                     o.rotMaxX, o.rotMaxY})
                         keepMain(gr0, 64);
                     if (o.id == ObjId::RotateTrigger && (o.tf(Obj::TF_UseMoveTarget) || o.tf(Obj::TF_DirSnap))) {
-                        for (int gr0 :
-                             {o.centerGroup, o.targetGroup, o.rotTarget, o.rotMinX, o.rotMinY, o.rotMaxX, o.rotMaxY}) {
+                        for (int gr0 : {o.centerGroup, o.targetGroup, o.rotTarget, o.rotMinX, o.rotMinY, o.rotMaxX, o.rotMaxY}) {
                             forRemapped(gr0, [&](int gr) {
                                 if (gr > 0)
                                     for (int idx : w.allOfGroup(gr)) strongCenter[static_cast<size_t>(idx)] |= 8;
@@ -1544,13 +1520,10 @@ namespace ap::sim {
                 }
                 w.centerWhy.assign(w.objs.size(), 0);
                 for (size_t i = 0; i < w.objs.size(); ++i) {
-                    w.centerWhy[i] =
-                            static_cast<uint8_t>(static_cast<uint8_t>(strongCenter[i]) | (centerObj[i] ? 128 : 0) |
-                                                 ((i < w.areaRef.size() && w.areaRef[i]) ? 128 : 0));
+                    w.centerWhy[i] = static_cast<uint8_t>(static_cast<uint8_t>(strongCenter[i]) | (centerObj[i] ? 128 : 0) | ((i < w.areaRef.size() && w.areaRef[i]) ? 128 : 0));
                 }
                 if (debugOptions().check)
-                    std::fprintf(stderr, "[decor] %zu decorations are no longer possible centers (broad rule only)\n",
-                                 cleared);
+                    std::fprintf(stderr, "[decor] %zu decorations are no longer possible centers (broad rule only)\n", cleared);
             }
             for (size_t gr = 0; gr < w.groupAll.size(); ++gr) {
                 w.groupMovers[gr].clear();
@@ -1586,7 +1559,7 @@ namespace ap::sim {
             for (auto& e : keyGroups) {
                 std::stable_sort(e.second.begin(), e.second.end(), [&](int a, int b) {
                     return w.prop(w.objs[static_cast<size_t>(a)], 374, 0.0) <
-                           w.prop(w.objs[static_cast<size_t>(b)], 374, 0.0);
+                            w.prop(w.objs[static_cast<size_t>(b)], 374, 0.0);
                 });
             }
             if (anyKeys)
@@ -1634,7 +1607,7 @@ namespace ap::sim {
                                 keyStates[q].rotY = static_cast<double>(keyObj.rotY);
                             }
                             buildKeyframeAnim(w, anim.keys, keyStates, anim, w.kfSplines, timeMod, posXMod, posYMod,
-                                              rotMod, scaleXMod, scaleYMod);
+                                            rotMod, scaleXMod, scaleYMod);
                             for (auto const& e : anim.e)
                                 if (e.spawnGroup > 0) anim.spawns = true;
                             w.kfAnims.push_back(std::move(anim));
@@ -1655,8 +1628,7 @@ namespace ap::sim {
         }
     }
 
-    // objects that can get their own position, rotation or scale (mayHaveDyn, scaleTarget), and whether the
-    // player can be moved (pPossible)
+    // objects that can get their own position, rotation or scale (mayHaveDyn, scaleTarget), and whether the player can be moved (pPossible)
     auto TriggerAnalysis::markDynamicObjects() -> void {
         w.mayHaveDyn.assign(w.objs.size(), 0);
         for (auto const& o : w.objs) {
@@ -1721,8 +1693,7 @@ namespace ap::sim {
             auto intNum = [&](int k) {
                 return ex->has(k) ? static_cast<float>(static_cast<int>(ex->num(k))) : fallback;
             };
-            int const keys[28] = {222, 223, 220, 221, 263, 264, 282, 218, 219, 231, 232, 237, 238, 239,
-                                  240, 233, 234, 235, 236, 270, 271, 265, 285, 275, 286, 252, 253, 288};
+            int const keys[28] = {222, 223, 220, 221, 263, 264, 282, 218, 219, 231, 232, 237, 238, 239, 240, 233, 234, 235, 236, 270, 271, 265, 285, 275, 286, 252, 253, 288};
             bool const isInt[28] = {1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0};
             for (int k = 0; k < 28; ++k) area.v[k] = isInt[k] ? intNum(keys[k]) : num(keys[k]);
             auto rate = [&](int k) {
@@ -1906,9 +1877,7 @@ namespace ap::sim {
             for (auto const& follow : w.advDefs) {
                 if (!(follow.delay > 0.f || follow.delayV != 0.f)) continue;
                 int const size = static_cast<int>(
-                        std::ceil(static_cast<float>(static_cast<double>(follow.delayV + follow.delay) /
-                                                     0.004166666666666667)) +
-                        1.f);
+                        std::ceil(static_cast<float>(static_cast<double>(follow.delayV + follow.delay) / 0.004166666666666667)) + 1.f);
                 maxSize = std::max(maxSize, size);
                 if (follow.key < 0)
                     addKey(follow.key, size);
@@ -1921,7 +1890,7 @@ namespace ap::sim {
                         int const key = o.tf(Obj::TF_TargetP1)    ? -1
                                         : o.tf(Obj::TF_TargetP2)  ? -2
                                         : o.tf(Obj::TF_FollowCPP) ? -3
-                                                                  : o.centerGroup;
+                                        : o.centerGroup;
                         if (key < 0)
                             addKey(key, maxSize);
                         else if (key > 0)
@@ -2003,9 +1972,7 @@ namespace ap::sim {
             auto center = [&](int gr0) {
                 forRemapped(gr0, [&](int gr) {
                     if (gr <= 0 || gr > 9999) return;
-                    int const parent = static_cast<size_t>(gr) < w.exportParents.size()
-                                               ? w.exportParents[static_cast<size_t>(gr)]
-                                               : -1;
+                    int const parent = static_cast<size_t>(gr) < w.exportParents.size() ? w.exportParents[static_cast<size_t>(gr)] : -1;
                     if (parent >= 0) {
                         deopt[static_cast<size_t>(parent)] = 1;
                         return;
@@ -2111,8 +2078,7 @@ namespace ap::sim {
                 }
             }
             std::sort(w.collisionPairs.begin(), w.collisionPairs.end());
-            w.collisionPairs.erase(std::unique(w.collisionPairs.begin(), w.collisionPairs.end()),
-                                   w.collisionPairs.end());
+            w.collisionPairs.erase(std::unique(w.collisionPairs.begin(), w.collisionPairs.end()), w.collisionPairs.end());
             {
                 auto const& pairs = w.collisionPairs;
                 w.collPairRow.clear();
@@ -2211,9 +2177,7 @@ namespace ap::sim {
     auto TriggerAnalysis::findRandomness() -> void {
         w.tpMulti = false;
         for (auto const& o : w.objs) {
-            if (!((o.cls == 1 && o.id == ObjId::TeleportTrigger) || o.type == TeleportPortal ||
-                  o.type == TeleportOrb) ||
-                o.tpOrange || o.targetGroup <= 0)
+            if (!((o.cls == 1 && o.id == ObjId::TeleportTrigger) || o.type == TeleportPortal || o.type == TeleportOrb) || o.tpOrange || o.targetGroup <= 0)
                 continue;
             forRemapped(o.targetGroup, [&](int gr) {
                 if (gr > 0 && w.allOfGroup(gr).size() > 1) w.tpMulti = true;
@@ -2221,15 +2185,13 @@ namespace ap::sim {
         }
         w.hasRandom = false;
         for (auto const& o : w.objs) {
-            if (o.cls == 1 && (o.id == ObjId::RandomTrigger || o.id == ObjId::AdvancedRandomTrigger ||
-                               (o.id == ObjId::SpawnTrigger && o.spawnDelayRange != 0.f)))
+            if (o.cls == 1 && (o.id == ObjId::RandomTrigger || o.id == ObjId::AdvancedRandomTrigger || (o.id == ObjId::SpawnTrigger && o.spawnDelayRange != 0.f)))
                 w.hasRandom = true;
         }
         {
             auto multi = [&](int gr) { return gr > 0 && w.mainObjectOf(gr) < 0 && w.allOfGroup(gr).size() > 1; };
             for (auto const& follow : w.advDefs) {
-                if (follow.relevant && (follow.startSpeedV != 0.f || follow.startDirV != 0.f ||
-                                        multi(follow.startRef) || multi(follow.dirRef)))
+                if (follow.relevant && (follow.startSpeedV != 0.f || follow.startDirV != 0.f || multi(follow.startRef) || multi(follow.dirRef)))
                     w.hasRandom = true;
             }
         }
@@ -2284,8 +2246,7 @@ namespace ap::sim {
             for (auto const& o : w.objs) {
                 if (o.type == Decoration) continue;
                 if (o.cls == 1 && o.id == ObjId::AdvancedFollowTrigger && !w.relevantGroup(o.targetGroup)) continue;
-                bool const decoOnly = o.cls == 1 && (o.id == ObjId::MoveTrigger || o.id == ObjId::RotateTrigger) &&
-                                      !w.relevantGroup(o.targetGroup);
+                bool const decoOnly = o.cls == 1 && (o.id == ObjId::MoveTrigger || o.id == ObjId::RotateTrigger) && !w.relevantGroup(o.targetGroup);
                 if (char const* why = decoOnly ? nullptr : unsupportedReason(o)) {
                     std::string entry = std::to_string(o.id) + " (" + why + ")";
                     auto& list = (o.cls == 1 && cameraOnlyTrigger(o.id)) ? w.cameraUnsupported : w.unsupported;
@@ -2357,13 +2318,10 @@ namespace ap::sim {
                         if (w.areaRand.empty() && (follow.delayV != 0.f))
                             entry = "3016 (advanced follow with delay variance: the game's random values are not in "
                                     "the export)";
-                        else if (w.areaRand.empty() &&
-                                 (follow.maxSpeedV != 0.f || follow.accelV != 0.f || follow.rangeV != 0.f ||
-                                  follow.easingV != 0.f || follow.steerV != 0.f))
+                        else if (w.areaRand.empty() && (follow.maxSpeedV != 0.f || follow.accelV != 0.f || follow.rangeV != 0.f || follow.easingV != 0.f || follow.steerV != 0.f))
                             entry = "3016 (advanced follow with variance: the game's random values are not in the "
                                     "export)";
-                        if (!entry.empty() && std::find(w.approximations.begin(), w.approximations.end(), entry) ==
-                                                      w.approximations.end())
+                        if (!entry.empty() && std::find(w.approximations.begin(), w.approximations.end(), entry) == w.approximations.end())
                             w.approximations.push_back(entry);
                     }
                 }
@@ -2397,8 +2355,7 @@ namespace ap::sim {
                         auto const& objs = w.allOfGroup(gr);
                         if (objs.size() <= 1) return false;
                         for (size_t k = 1; k < objs.size(); ++k) {
-                            if (w.objs[static_cast<size_t>(objs[k])].posX !=
-                                        w.objs[static_cast<size_t>(objs[0])].posX ||
+                            if (w.objs[static_cast<size_t>(objs[k])].posX != w.objs[static_cast<size_t>(objs[0])].posX ||
                                 w.objs[static_cast<size_t>(objs[k])].posY != w.objs[static_cast<size_t>(objs[0])].posY)
                                 return true;
                         }
@@ -2469,9 +2426,7 @@ namespace ap::sim {
                 if (objs.size() < 48 || !targetable[static_cast<size_t>(gr)] || afTarget[static_cast<size_t>(gr)])
                     continue;
                 World::GroupFast fast;
-                std::map<std::vector<short>,
-                         std::pair<std::vector<std::pair<float, int>>, std::vector<std::pair<float, int>>>>
-                        byMovers;
+                std::map<std::vector<short>, std::pair<std::vector<std::pair<float, int>>, std::vector<std::pair<float, int>>>>byMovers;
                 for (int idx : objs) {
                     Obj const& o = w.objs[static_cast<size_t>(idx)];
                     bool const simple = !w.mayHaveDyn[static_cast<size_t>(idx)] && !o.lockX && o.posX > 1.0 &&

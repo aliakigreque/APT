@@ -1,6 +1,5 @@
 // Beam search for a full input path through the level, offline and live (several threads). This file has the
-// entry point, the setup of a run and its main loop; the other search_*.cpp files have the level maps, the costs
-// and the stages of one tick.
+// entry point, the setup of a run and its main loop; the other search_*.cpp files have the level maps, the costs and the stages of one tick.
 
 #include "search_internal.hpp"
 
@@ -83,8 +82,7 @@ namespace ap::sim {
         return out;
     }
 
-    // starts the clock and the result, and lists the speed portals that move triggers bring from afar
-    // (the search uses a finer grid near them)
+    // starts the clock and the result, and lists the speed portals that move triggers bring from afar (the search uses a finer grid near them)
     auto SearchRun::beginRun() -> void {
         startTime = std::chrono::steady_clock::now();
         res.startTick = start.tick;
@@ -113,10 +111,7 @@ namespace ap::sim {
         }
         std::sort(dynSpeedX.begin(), dynSpeedX.end());
         if (debugOptions().check && start.world)
-            std::fprintf(stderr,
-                         "[level] %zu speed portal cluster(s) brought from afar, %zu persistent item(s), %d inert "
-                         "interface object(s)\n",
-                         dynSpeedX.size(), start.world->persistItemIds.size(), start.world->uiObjects);
+            std::fprintf(stderr, "[level] %zu speed portal cluster(s) brought from afar, %zu persistent item(s), %d inert interface object(s)\n", dynSpeedX.size(), start.world->persistItemIds.size(), start.world->uiObjects);
     }
 
     // level maps that the costs read: portal clusters, objects to touch, structure, void and end zone
@@ -154,13 +149,9 @@ namespace ap::sim {
                     if (o.cls != 1 || !o.touchTriggered || o.multiTriggered || !isTrapTouch(w, o)) continue;
                     cues.traps.push_back(Trap{o.rect.x - 60.f, o.rect.x + o.rect.w + 60.f, static_cast<int>(i)});
                     if (debugOptions().check)
-                        std::fprintf(stderr,
-                                     "[trap] touch trigger uid %d (x %.0f, y %.0f): turns off a part of the level "
-                                     "ahead or turns a hidden wall back on, avoided\n",
-                                     o.uid, o.x, o.y);
+                        std::fprintf(stderr,"[trap] touch trigger uid %d (x %.0f, y %.0f): turns off a part of the level ahead or turns a hidden wall back on, avoided\n", o.uid, o.x, o.y);
                 }
-                std::sort(cues.traps.begin(), cues.traps.end(),
-                          [](Trap const& a, Trap const& b) { return a.x0 < b.x0; });
+                std::sort(cues.traps.begin(), cues.traps.end(), [](Trap const& a, Trap const& b) { return a.x0 < b.x0; });
             }
 
             for (int idx : toTouch) {
@@ -202,8 +193,17 @@ namespace ap::sim {
                 if (endX < std::numeric_limits<float>::infinity()) {
                     cues.endZoneX = endX - kEndSlack;
                     if (debugOptions().check)
-                        std::fprintf(stderr, "[end] End trigger fires at x %.0f: void rules lifted from x %.0f\n", endX,
-                                     cues.endZoneX);
+                        std::fprintf(stderr, "[end] End trigger fires at x %.0f: void rules lifted from x %.0f\n", endX, cues.endZoneX);
+                } else if (start.world->length > 0.f) {
+                    float const doneX = start.world->length - 300.f;
+                    cues.endZoneX = doneX - kEndSlack;
+                    cues.voidEndX = doneX - 2400.f;
+                    if (debugOptions().check)
+                        std::fprintf(
+                                stderr,
+                                "[end] level complete at x %.0f: void rules lifted from x %.0f, falls into the void "
+                                "allowed from x %.0f\n",
+                                doneX, cues.endZoneX, cues.voidEndX);
                 }
             }
         }
@@ -215,8 +215,7 @@ namespace ap::sim {
             for (auto const& o : start.world->objs)
                 if (o.cls == 1 && (o.id == ObjId::CountTrigger || o.id == ObjId::InstantCountTrigger) &&
                     !o.spawnTriggered && !o.touchTriggered)
-                    countTargets.push_back(CountTarget{std::clamp(o.itemID, 0, 9999), o.count, o.x,
-                                                       o.id == ObjId::InstantCountTrigger});
+                    countTargets.push_back(CountTarget{std::clamp(o.itemID, 0, 9999), o.count, o.x, o.id == ObjId::InstantCountTrigger});
         if (start.world && start.trig.on) {
             World const& w = *start.world;
             for (auto const& e : w.objs) {
@@ -235,15 +234,13 @@ namespace ap::sim {
             }
             if (debugOptions().check)
                 for (auto const& z : clickZones)
-                    std::fprintf(stderr, "[counter] clicks owed x %.0f .. %.0f (object %d -> %d)\n", z.x0, z.x1, z.item,
-                                 z.count);
+                    std::fprintf(stderr, "[counter] clicks owed x %.0f .. %.0f (object %d -> %d)\n", z.x0, z.x1, z.item, z.count);
         }
         itemRewardUntilX = std::numeric_limits<float>::infinity();
         if (start.world && start.trig.on) {
             float lastCounterX = -std::numeric_limits<float>::infinity();
             for (auto const& o : start.world->objs) {
-                if (o.cls != 1 || (o.id != ObjId::CountTrigger && o.id != ObjId::InstantCountTrigger &&
-                                   o.id != ObjId::ItemCompareTrigger))
+                if (o.cls != 1 || (o.id != ObjId::CountTrigger && o.id != ObjId::InstantCountTrigger && o.id != ObjId::ItemCompareTrigger))
                     continue;
                 if (o.spawnTriggered || o.touchTriggered) {
                     lastCounterX = std::numeric_limits<float>::infinity();
@@ -257,7 +254,8 @@ namespace ap::sim {
             std::map<int, PaceItem> byItem;
             std::set<int> unknownItems;
             for (auto const& o : start.world->objs) {
-                if (o.cls != 1 || (o.id != ObjId::CountTrigger && o.id != ObjId::InstantCountTrigger)) continue;
+                if (o.cls != 1 || (o.id != ObjId::CountTrigger && o.id != ObjId::InstantCountTrigger))
+                continue;
                 int const item = std::clamp(o.itemID, 0, 9999);
                 if (o.spawnTriggered || o.touchTriggered) {
                     unknownItems.insert(item);
@@ -282,6 +280,139 @@ namespace ap::sim {
             }
         }
     }
+
+    // drops jumps that send the player back to a far away part of the level
+    auto SearchRun::findBackPortals() -> void {
+        if (!start.world || start.world->platformer) return;
+        World const& w = *start.world;
+        for (auto const& o : w.objs) {
+            if (o.id != ObjId::TeleportArea || o.targetGroup <= 0 || o.spawnTriggered || o.disabled) continue;
+            auto const& dest = w.allOfGroup(o.targetGroup);
+            if (dest.empty()) continue;
+            Obj const& d = w.objs[static_cast<size_t>(dest.front())];
+            float const back = o.x - d.x;
+            if (!(back > 6000.f)) continue;
+            backPortals.push_back(BackPortal{o.x, o.y, d.x, d.y});
+            if (debugOptions().check)
+                std::fprintf(
+                        stderr,
+                        "[loop] teleport uid %d (x %.0f y %.0f) sends the player back to x %.0f y %.0f ; a lineage "
+                        "taking it is dropped\n",
+                        o.uid, o.x, o.y, d.x, d.y);
+            if (backPortals.size() >= 32) break;
+        }
+    }
+
+    // finds the item compare triggers that would have avoided the impasse, and returns them sorted by x
+    auto SearchRun::findDecisionZones() -> void {
+        if (!opt.playedTicks || !start.world || !start.trig.on || start.world->platformer) return;
+        World const& w = *start.world;
+        causeIx.build(w);
+        std::map<int, std::vector<float>> playerSources;
+        auto spawnedByPlayer = [&](Obj const& p) {
+            for (short g : p.groups) {
+                if (g <= 0 || g >= 10000) continue;
+                for (int a : causeIx.byTarget[static_cast<size_t>(g)]) {
+                    Obj const& act = w.objs[static_cast<size_t>(a)];
+                    if (act.id == 1595 || act.id == ObjId::ToggleOrb) return act.x;
+                }
+            }
+            return std::numeric_limits<float>::quiet_NaN();
+        };
+        for (auto const& o : w.objs) {
+            if ((o.type == Collectible || o.type == UserCoin) && o.tf(Obj::TF_PickupItem) && o.itemID > 0)
+                playerSources[o.itemID].push_back(o.x);
+            else if (o.id == ObjId::PickupTrigger && o.spawnTriggered && o.itemID > 0) {
+                float const x = spawnedByPlayer(o);
+                if (!std::isnan(x)) playerSources[o.itemID].push_back(x);
+            }
+        }
+        if (playerSources.empty()) return;
+        auto firstEffectX = [&](int group, float fromX) {
+            float best = std::numeric_limits<float>::infinity();
+            std::vector<char> seen(10000, 0);
+            std::vector<int> todo{group};
+            for (int depth = 0; depth < 6 && !todo.empty(); ++depth) {
+                std::vector<int> next;
+                for (int g : todo) {
+                    if (g <= 0 || g >= 10000 || seen[static_cast<size_t>(g)]) continue;
+                    seen[static_cast<size_t>(g)] = 1;
+                    for (int i : w.allOfGroup(g)) {
+                        Obj const& m = w.objs[static_cast<size_t>(i)];
+                        if (m.cls == 1) {
+                            if (m.id == ObjId::SpawnTrigger || m.id == ObjId::ToggleTrigger ||
+                                m.id == ObjId::MoveTrigger)
+                                next.push_back(m.targetGroup);
+                            continue;
+                        }
+                        if ((m.type == Solid || m.type == Hazard) && m.x > fromX) best = std::min(best, m.x);
+                    }
+                }
+                todo = std::move(next);
+            }
+            return best;
+        };
+        for (auto const& c : w.objs) {
+            if (c.cls != 1 || c.spawnTriggered || c.touchTriggered) continue;
+            bool const counter = c.id == ObjId::CountTrigger || c.id == ObjId::InstantCountTrigger;
+            if (!counter && c.id != ObjId::ItemCompareTrigger) continue;
+            float x0 = std::numeric_limits<float>::infinity();
+            for (int item : {c.itemID, c.id == ObjId::ItemCompareTrigger ? c.itemID2 : 0}) {
+                auto it = playerSources.find(item);
+                if (it == playerSources.end()) continue;
+                for (float x : it->second)
+                    if (x < c.x + 600.f && x > c.x - 6000.f) x0 = std::min(x0, x);
+            }
+            if (!std::isfinite(x0)) continue;
+            float x1 = firstEffectX(c.targetGroup, c.x);
+            if (c.id == ObjId::ItemCompareTrigger) x1 = std::min(x1, firstEffectX(c.centerGroup, c.x));
+            if (!std::isfinite(x1) || x1 - x0 > 15000.f || x1 - x0 < 1000.f) continue;
+            x0 -= 300.f;
+            x1 += 300.f;
+            bool merged = false;
+            for (auto& z : decisionZones)
+                if (x0 <= z.x1 && x1 >= z.x0) {
+                    z.x0 = std::min(z.x0, x0);
+                    z.x1 = std::max(z.x1, x1);
+                    merged = true;
+                    break;
+                }
+            if (!merged && decisionZones.size() < 32) decisionZones.push_back(DecisionZone{x0, x1});
+        }
+        if (debugOptions().check)
+            for (auto const& z : decisionZones)
+                std::fprintf(stderr,
+                            "[decision] x %.0f .. %.0f : the inputs here decide what happens there ; the plan only "
+                            "goes past x %.0f once the search has lived past x %.0f\n",
+                            z.x0, z.x1, z.x0, z.x1);
+    }
+
+    // updates the settled state of the decision zones: a zone is settled once the search has lived past its end
+    auto SearchRun::updateDecisionZones() -> void {
+        for (auto& z : decisionZones) {
+            if (lastLiveX < z.x0) {
+                z.settled = false;
+                z.crossTick = -1;
+            } else if (lastLiveX >= z.x1) {
+                if (z.crossTick < 0) z.crossTick = tick;
+                if (tick - z.crossTick >= kDecisionSettle) z.settled = true;
+            } else if (!z.settled)
+                z.crossTick = -1;
+        }
+    }
+
+    // how much of the prefix can be played: it stops before the first unsettled zone it would enter
+    auto SearchRun::decisionCut(Game g, std::vector<uint8_t> const& prefix) const -> size_t {
+        if (decisionZones.empty()) return prefix.size();
+        for (size_t i = 0; i < prefix.size(); ++i) {
+            float const before = g.p1.x;
+            stepTick(g, prefix[i]);
+            for (auto const& z : decisionZones)
+                if (!z.settled && before < z.x0 && g.p1.x >= z.x0) return i;
+        }
+        return prefix.size();
+    }
+
 
     // the rest of the state: checkpoints, beam ladder, kill and revisit tables, worker pool and buffers
     auto SearchRun::initState() -> void {
@@ -369,6 +500,8 @@ namespace ap::sim {
         beginRun();
         buildCues();
         findItemGoals();
+        findBackPortals();
+        findDecisionZones();
         initState();
         startFromLevel();
         while (true) {
@@ -398,8 +531,7 @@ namespace ap::sim {
         }
     }
 
-    SearchResult searchPath(Game const& start, SearchOptions const& opt, std::atomic<bool> const* cancel,
-                            std::function<void(int, int)> const& progress) {
+    SearchResult searchPath(Game const& start, SearchOptions const& opt, std::atomic<bool> const* cancel, std::function<void(int, int)> const& progress) {
         SearchRun run(start, opt, cancel, progress);
         return run.run();
     }

@@ -1,5 +1,4 @@
-// Restarts, results and publishing of the search: roots, restart points, path reconstruction, the final
-// result and the commits of the converged prefix.
+// Restarts, results and publishing of the search: roots, restart points, path reconstruction, the final result and the commits of the converged prefix.
 
 #include "search_internal.hpp"
 
@@ -21,7 +20,7 @@ namespace ap::sim {
     auto SearchRun::spanReplay(Span& span, Game const& g) -> void {
         if (g.died || g.isPlatformer || !(g.p1.x < cues.endZoneX)) return;
         if (g.trig.on) span.touchCheck(trigTouchSig(g), g.tick);
-        if (opt.stuckKill > 0) span.step(g.p1.x, g.p1.y, g.tick, opt.stuckKill, opt.stuckMargin);
+        if (opt.stuckKill > 0) span.step(g.p1.x, g.p1.y, g.tick, opt.stuckKill, opt.stuckMargin, g.p1.isGoingLeft);
         span.tpNote(g);
         if (opt.escapeKill > 0 || opt.escapeCost > 0) span.escStep(escapedNow(g, span), 0);
         if (opt.escapeRoofCost > 0) span.roofStep(escapeSide(g, span) == 1);
@@ -149,8 +148,7 @@ namespace ap::sim {
                 }
                 if (root.debt == minDebt) ++nMinDebt;
             }
-            std::fprintf(stderr, "[restart] tick %d : %zu roots, min debt %d (%d roots)\n", atTick, roots.size(),
-                         minDebt, nMinDebt);
+            std::fprintf(stderr, "[restart] tick %d : %zu roots, min debt %d (%d roots)\n", atTick, roots.size(), minDebt, nMinDebt);
         }
         if (debugOptions().check >= 2) {
             rootGamesDbg.clear();
@@ -199,9 +197,7 @@ namespace ap::sim {
             idx = history[static_cast<size_t>(depth)][static_cast<size_t>(idx)].first;
         }
         std::reverse(tail.begin(), tail.end());
-        std::vector<uint8_t> out = (idx >= 0 && static_cast<size_t>(idx) < rootTails.size())
-                                           ? rootTails[static_cast<size_t>(idx)]
-                                           : std::vector<uint8_t>{};
+        std::vector<uint8_t> out = (idx >= 0 && static_cast<size_t>(idx) < rootTails.size()) ? rootTails[static_cast<size_t>(idx)] : std::vector<uint8_t>{};
         out.insert(out.end(), tail.begin(), tail.end());
         return out;
     }
@@ -231,8 +227,7 @@ namespace ap::sim {
                     stderr, "[end] chosen: debt %d cost %d mode %c ; layer:", live[static_cast<size_t>(bestIdx)]->debt,
                     live[static_cast<size_t>(bestIdx)]->cost, modeCharOf(live[static_cast<size_t>(bestIdx)]->g->p1));
             for (auto const& entry : byDebtMode)
-                std::fprintf(stderr, " [debt %d %c : %d states, min cost %d]", entry.first.first, entry.first.second,
-                             entry.second.first, entry.second.second);
+                std::fprintf(stderr, " [debt %d %c : %d states, min cost %d]", entry.first.first, entry.first.second, entry.second.first, entry.second.second);
             std::fprintf(stderr, "\n");
         }
         res.inputs = bestIdx >= 0 ? pathTo(bestIdx) : furthest;
@@ -256,10 +251,8 @@ namespace ap::sim {
         res.stats.ticksSimulated = simulated.load();
         if (debugOptions().stats) {
             for (int worker = 0; worker < nThreads; ++worker)
-                std::fprintf(stderr, "  thread %d : %.2f s busy, %ld nodes\n", worker,
-                             busy[static_cast<size_t>(worker)], nodesDone[static_cast<size_t>(worker)]);
-            std::fprintf(stderr, "  pool : main thread wait %.2f s, %ld slow waits, %ld late starts\n",
-                         pool->waitSeconds, pool->slowWaits, pool->lateStarts);
+                std::fprintf(stderr, "  thread %d : %.2f s busy, %ld nodes\n", worker, busy[static_cast<size_t>(worker)], nodesDone[static_cast<size_t>(worker)]);
+                std::fprintf(stderr, "  pool : main thread wait %.2f s, %ld slow waits, %ld late starts\n", pool->waitSeconds, pool->slowWaits, pool->lateStarts);
             long nLocalized = 0;
             for (auto const& ctx : localCtx) nLocalized += ctx.localized;
             std::fprintf(stderr, "  localized shared states : %ld\n", nLocalized);
@@ -298,6 +291,13 @@ namespace ap::sim {
         std::vector<uint8_t> full = tailTo(best);
         if (cutDepth == 0 || cutDepth >= full.size()) return false;
         std::vector<uint8_t> prefix(full.begin(), full.begin() + static_cast<long>(cutDepth));
+        if (opt.playedTicks && !decisionZones.empty()) {
+            size_t const allowed = decisionCut(hard.back().g, prefix);
+            if (opt.holding) opt.holding->store(allowed < prefix.size(), std::memory_order_relaxed);
+            if (allowed == 0) return false;
+            prefix.resize(allowed);
+            cutDepth = allowed;
+        }
         Game g = hard.back().g;
         if (revisitOn) visitPurge(g.tick + 1);
         Span span = hard.back().span;
@@ -313,11 +313,9 @@ namespace ap::sim {
             Game replay = start;
             for (uint8_t act : inputs) stepTick(replay, act);
             if (replay.p1.x != g.p1.x || replay.p1.y != g.p1.y || replay.tick != g.tick)
-                std::fprintf(stderr,
-                             "[check] inconsistent published prefix : replay of inputs (%zu) -> (%.3f,%.3f) tick %d, "
-                             "hard point (%.3f,%.3f) tick %d (cut %zu, rootLen %zu, hist %zu)\n",
-                             inputs.size(), replay.p1.x, replay.p1.y, replay.tick, g.p1.x, g.p1.y, g.tick, cutDepth,
-                             rootTails.empty() ? size_t{0} : rootTails[0].size(), history.size());
+                std::fprintf(stderr, "[check] inconsistent published prefix : replay of inputs (%zu) -> (%.3f,%.3f) tick %d, hard point (%.3f,%.3f) tick %d (cut %zu, rootLen %zu, hist %zu)\n",
+                            inputs.size(), replay.p1.x, replay.p1.y, replay.tick, g.p1.x, g.p1.y, g.tick, cutDepth,
+                            rootTails.empty() ? size_t{0} : rootTails[0].size(), history.size());
         }
 
         if (hard.size() >= 3 && hard[hard.size() - 2].tick - hard[hard.size() - 3].tick < 120)
@@ -348,9 +346,7 @@ namespace ap::sim {
             size_t const before = live.size();
             keepLive([&](int idx) { return ancestorAt(idx, cutLayers) == ancestor; });
             if (debugOptions().check)
-                std::fprintf(stderr,
-                             "[check] publish tick %d : cut %zu rootLen %zu L %zu A %d hist %zu : %zu -> %zu states\n",
-                             tick, cutDepth, rootLen, cutLayers, ancestor, history.size(), before, live.size());
+                std::fprintf(stderr, "[check] publish tick %d : cut %zu rootLen %zu L %zu A %d hist %zu : %zu -> %zu states\n", tick, cutDepth, rootLen, cutLayers, ancestor, history.size(), before, live.size());
             history.erase(history.begin(), history.begin() + static_cast<long>(cutLayers));
             rootTails.assign(1, {});
         } else {
@@ -372,9 +368,7 @@ namespace ap::sim {
                     return root >= 0 && static_cast<size_t>(root) < rootOk.size() && rootOk[static_cast<size_t>(root)];
                 });
                 if (debugOptions().check)
-                    std::fprintf(stderr,
-                                 "[check] publish (roots) tick %d : cut %zu rootLen %zu hist %zu : %zu -> %zu states\n",
-                                 tick, cutDepth, rootLen, history.size(), before, live.size());
+                    std::fprintf(stderr, "[check] publish (roots) tick %d : cut %zu rootLen %zu hist %zu : %zu -> %zu states\n", tick, cutDepth, rootLen, history.size(), before, live.size());
                 if (history.empty()) {
                     std::vector<std::vector<uint8_t>> keptTails;
                     for (size_t root = 0; root < rootTails.size(); ++root)
@@ -407,11 +401,9 @@ namespace ap::sim {
                 for (uint8_t act : path) stepTick(replay, act);
                 Game const& ref = *live[static_cast<size_t>(bestNow)]->g;
                 if (replay.p1.x != ref.p1.x || replay.p1.y != ref.p1.y || replay.died)
-                    std::fprintf(stderr,
-                                 "[check] publish cut=%zu rootTail=%zu hist=%zu : replay (%.3f,%.3f dead=%d) != node "
-                                 "(%.3f,%.3f) tick %d\n",
-                                 cutDepth, rootTails.empty() ? size_t{0} : rootTails[0].size(), history.size(),
-                                 replay.p1.x, replay.p1.y, replay.died, ref.p1.x, ref.p1.y, tick);
+                    std::fprintf(stderr, "[check] publish cut=%zu rootTail=%zu hist=%zu : replay (%.3f,%.3f dead=%d) != node (%.3f,%.3f) tick %d\n",
+                                cutDepth, rootTails.empty() ? size_t{0} : rootTails[0].size(), history.size(),
+                                replay.p1.x, replay.p1.y, replay.died, ref.p1.x, ref.p1.y, tick);
             }
         }
         if (opt.onPrefix) opt.onPrefix(inputs);
@@ -435,8 +427,7 @@ namespace ap::sim {
         if (convA.size() == 1) return static_cast<int>(rootLen);
         size_t common = rootLen;
         for (size_t i = 1; i < convA.size(); ++i)
-            common = std::min(common, commonPrefixLen(rootTails[static_cast<size_t>(convA[0])],
-                                                      rootTails[static_cast<size_t>(convA[i])]));
+            common = std::min(common, commonPrefixLen(rootTails[static_cast<size_t>(convA[0])], rootTails[static_cast<size_t>(convA[i])]));
         return static_cast<int>(common);
     }
 
@@ -465,7 +456,7 @@ namespace ap::sim {
         for (size_t i = 0; i < live.size(); ++i) order[i] = static_cast<int>(i);
         std::sort(order.begin(), order.end(), [&](int a, int b) {
             return live[static_cast<size_t>(a)]->cost < live[static_cast<size_t>(b)]->cost ||
-                   (live[static_cast<size_t>(a)]->cost == live[static_cast<size_t>(b)]->cost &&
+                    (live[static_cast<size_t>(a)]->cost == live[static_cast<size_t>(b)]->cost &&
                     live[static_cast<size_t>(a)]->lastPress < live[static_cast<size_t>(b)]->lastPress);
         });
 
@@ -477,10 +468,8 @@ namespace ap::sim {
             Game const& game = *live[static_cast<size_t>(i)]->g;
             uint64_t const sig =
                     (static_cast<uint64_t>(live[static_cast<size_t>(i)]->cls) << 32) ^
-                    (static_cast<uint64_t>(static_cast<uint32_t>(static_cast<int>(std::floor(game.p1.y / 10.f)) + 4096))
-                     << 12) ^
-                    static_cast<uint64_t>(
-                            static_cast<uint32_t>(static_cast<int>(std::floor(game.p1.yVelocity)) + 2048) & 0xfffu);
+                    (static_cast<uint64_t>(static_cast<uint32_t>(static_cast<int>(std::floor(game.p1.y / 10.f)) + 4096)) << 12) ^
+                    static_cast<uint64_t>(static_cast<uint32_t>(static_cast<int>(std::floor(game.p1.yVelocity)) + 2048) & 0xfffu);
             if (std::find(classes.begin(), classes.end(), sig) != classes.end()) continue;
             classes.push_back(sig);
             taken[static_cast<size_t>(i)] = 1;
@@ -509,9 +498,7 @@ namespace ap::sim {
             softPoint.states.reserve(nChosen);
             for (size_t k = 0; k < nChosen; ++k) {
                 int const root = idx[k];
-                std::vector<uint8_t> out = (root >= 0 && static_cast<size_t>(root) < rootTails.size())
-                                                   ? rootTails[static_cast<size_t>(root)]
-                                                   : std::vector<uint8_t>{};
+                std::vector<uint8_t> out = (root >= 0 && static_cast<size_t>(root) < rootTails.size()) ? rootTails[static_cast<size_t>(root)] : std::vector<uint8_t>{};
                 out.insert(out.end(), tails[k].begin(), tails[k].end());
                 softPoint.states.push_back(SoftState{
                         *live[static_cast<size_t>(chosen[k])]->g, std::move(out),
@@ -526,11 +513,9 @@ namespace ap::sim {
                 for (uint8_t act : softPoint.states[k].tail) stepTick(replay, act);
                 Game const& ref = softPoint.states[k].g;
                 if (replay.p1.x != ref.p1.x || replay.p1.y != ref.p1.y || replay.tick != ref.tick)
-                    std::fprintf(stderr,
-                                 "[check2] soft point tick %d state %zu : replay (%.3f,%.3f tick %d) != state "
-                                 "(%.3f,%.3f tick %d) ; tail %zu\n",
-                                 tick, k, replay.p1.x, replay.p1.y, replay.tick, ref.p1.x, ref.p1.y, ref.tick,
-                                 softPoint.states[k].tail.size());
+                    std::fprintf(stderr, "[check2] soft point tick %d state %zu : replay (%.3f,%.3f tick %d) != state (%.3f,%.3f tick %d) ; tail %zu\n",
+                                tick, k, replay.p1.x, replay.p1.y, replay.tick, ref.p1.x, ref.p1.y, ref.tick,
+                                softPoint.states[k].tail.size());
             }
         }
         soft.push_back(std::move(softPoint));

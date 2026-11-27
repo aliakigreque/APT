@@ -27,8 +27,7 @@ namespace ap::sim {
         double signedGravity = gravity;
         if (p.unkA99) signedGravity = -gravity;
         if (!p.isUpsideDown)
-            return p.yVelocity <
-                   static_cast<double>(static_cast<float>(signedGravity) + static_cast<float>(signedGravity));
+            return p.yVelocity < static_cast<double>(static_cast<float>(signedGravity) + static_cast<float>(signedGravity));
         return gravity + gravity < p.yVelocity;
     }
 
@@ -697,8 +696,7 @@ namespace ap::sim {
     }
 
     // rotate gameplay trigger: turns the axes of the player
-    void playerRotateGameplay(Game& g, Player& p, int moveDir, int groundDir, bool editVel, float modX, float modY,
-                              bool overrideVel, bool dontSlide) {
+    void playerRotateGameplay(Game& g, Player& p, int moveDir, int groundDir, bool editVel, float modX, float modY, bool overrideVel, bool dontSlide) {
         double const yVelocity = p.yVelocity;
         double const speed = static_cast<double>(p.playerSpeed) * p.speedMultiplier;
         bool const wasUpside = p.isUpsideDown;
@@ -743,8 +741,7 @@ namespace ap::sim {
                 p.isAccelerating = false;
                 p.affectedByForces = false;
             }
-            bool const plainCube = !p.isShip && !p.isBird && !p.isDart && !p.isSwing && !p.isBall && !p.isRobot &&
-                                   !p.isSpider && !p.isRotating && !p.isLocked;
+            bool const plainCube = !p.isShip && !p.isBird && !p.isDart && !p.isSwing && !p.isBall && !p.isRobot && !p.isSpider && !p.isRotating && !p.isLocked;
             if (plainCube && !p.isDashing) {
                 p.isRotating = false;
                 p.isBallRotating2 = false;
@@ -869,8 +866,7 @@ namespace ap::sim {
                     if (!self.isSwing) {
                         int const gravSign = sgn(self);
                         int const holdDir = self.jumpBuffered ? 1 : -1;
-                        setYVelocity(self, static_cast<double>(static_cast<float>(gravSign) * 8.f *
-                                                               static_cast<float>(holdDir)));
+                        setYVelocity(self, static_cast<double>(static_cast<float>(gravSign) * 8.f * static_cast<float>(holdDir)));
                         setYVelocity(self, static_cast<double>(self.playerSpeed) * self.speedMultiplier *
                                                    static_cast<double>(gravSign) * static_cast<double>(holdDir));
                         if (self.wasJumpBuffered != self.jumpBuffered)
@@ -955,10 +951,7 @@ namespace ap::sim {
                 if (0.f <= fallScale) factor = gravityAccel;
                 gravityAccel = 0.4f;
                 if (holding && playerIsFallingBugged(self)) gravityAccel = 0.5f;
-                setYVelocity(self, static_cast<double>(
-                                           -((static_cast<float>(sgn(self)) * dt * factor * fallScale * gravityAccel) /
-                                             sizeScale)) +
-                                           self.yVelocity);
+                setYVelocity(self, static_cast<double>(-((static_cast<float>(sgn(self)) * dt * factor * fallScale * gravityAccel) / sizeScale)) + self.yVelocity);
                 holding = self.jumpBuffered;
                 if (holding) self.isOnGround2 = false;
                 if (self.wasJumpBuffered != holding)
@@ -1063,8 +1056,7 @@ namespace ap::sim {
         if (self.maybeIsBoosted) {
             if (self.isRobot && self.jumpBuffered && !self.touchedPad && self.accelerationOrSpeed < 1.5) {
                 self.accelerationOrSpeed = static_cast<double>(dt * 0.1f) + self.accelerationOrSpeed;
-                setYVelocity(self, static_cast<double>(static_cast<float>(sgn(self)) * dt * gravityAccel * factor) +
-                                           self.yVelocity);
+                setYVelocity(self, static_cast<double>(static_cast<float>(sgn(self)) * dt * gravityAccel * factor) + self.yVelocity);
             }
             setYVelocity(self, self.yVelocity -
                                        static_cast<double>(static_cast<float>(sgn(self)) * dt * gravityAccel * factor));
@@ -1616,9 +1608,7 @@ namespace ap::sim {
                         double const slopeY = slopeYPos(o, p.x);
                         Point const realPos = o.getRealPosition();
                         float const sign = p.isUpsideDown ? -1.f : 1.f;
-                        candidate = ((side ? unrotatedV : realPos.y) +
-                                     static_cast<float>(slopeY - static_cast<double>(realPos.y))) -
-                                    boxVLen * 0.5f * sign;
+                        candidate = ((side ? unrotatedV : realPos.y) + static_cast<float>(slopeY - static_cast<double>(realPos.y))) - boxVLen * 0.5f * sign;
                         slopeTarget = true;
                     }
                     g.rotOvN = savedRotOvN;

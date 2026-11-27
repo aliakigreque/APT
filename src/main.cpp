@@ -69,7 +69,7 @@ namespace {
         if (!obj) return false;
         int const type = static_cast<int>(obj->m_objectType);
         return type != static_cast<int>(GameObjectType::Decoration) &&
-               type != static_cast<int>(GameObjectType::Modifier);
+                type != static_cast<int>(GameObjectType::Modifier);
     }
 
     // fills s_tfCand once the level is loaded
@@ -147,10 +147,8 @@ namespace {
             ap::Overlay::setStatus(withRecording(planner.statusText()));
         } else if (engine.playing()) {
             ap::Overlay::setStatus(
-                    withRecording(fmt::format("Auto Pathing Tool: playing the macro ({} inputs) - {} to stop",
-                                              engine.playMacroInputs(), ap::keyName(ap::Action::Play))));
-        } else if (planner.phase() == SimPlanner::Phase::OfflineDone ||
-                   planner.phase() == SimPlanner::Phase::OfflineFailed) {
+                    withRecording(fmt::format("Auto Pathing Tool: playing the macro ({} inputs) - {} to stop", engine.playMacroInputs(), ap::keyName(ap::Action::Play))));
+        } else if (planner.phase() == SimPlanner::Phase::OfflineDone || planner.phase() == SimPlanner::Phase::OfflineFailed) {
             ap::Overlay::setStatus(withRecording(planner.statusText()));
         } else {
             ap::Overlay::setStatus(ap::Recorder::get().statusText());
@@ -170,14 +168,11 @@ namespace {
         }
         if (Engine::get().playing()) Engine::get().stopPlayback();
         if (pl->m_isPlatformer) {
-            Notification::create("Auto Pathing Tool: platformer levels are not supported", NotificationIcon::Error)
-                    ->show();
+            Notification::create("Auto Pathing Tool: platformer levels are not supported", NotificationIcon::Error)->show();
             return;
         }
         if (!planner.hasWorld()) {
-            Notification::create("Auto Pathing Tool: this level could not be loaded into the simulator",
-                                 NotificationIcon::Error)
-                    ->show();
+            Notification::create("Auto Pathing Tool: this level could not be loaded into the simulator", NotificationIcon::Error)->show();
             return;
         }
         bool started = live ? planner.startLive(pl) : planner.startOffline(pl);
@@ -198,10 +193,7 @@ namespace {
         auto const& macro = SimPlanner::get().macro();
         if (macro.empty()) {
             Notification::create(
-                    fmt::format("Auto Pathing Tool: no macro to play yet (run the bot first with {} or {})",
-                                ap::keyName(ap::Action::Offline), ap::keyName(ap::Action::Live)),
-                    NotificationIcon::Warning)
-                    ->show();
+                    fmt::format("Auto Pathing Tool: no macro to play yet (run the bot first with {} or {})", ap::keyName(ap::Action::Offline), ap::keyName(ap::Action::Live)), NotificationIcon::Warning)->show();
             return;
         }
         engine.startPlayback(macro);
@@ -217,17 +209,13 @@ namespace {
         }
         std::string levelName = pl->m_level ? std::string(pl->m_level->m_levelName) : "level";
         int levelId = pl->m_level ? static_cast<int>(pl->m_level->m_levelID.value()) : 0;
-        auto result = macro.exportGDR(Mod::get()->getSaveDir() / "macros", levelName, levelId,
-                                      Mod::get()->getVersion().toVString());
+        auto result = macro.exportGDR(Mod::get()->getSaveDir() / "macros", levelName, levelId, Mod::get()->getVersion().toVString());
         if (result) {
             ap::Log::printf("macro exported: {}", geode::utils::string::pathToString(result.unwrap()));
-            Notification::create("Auto Pathing Tool: macro exported (mod save folder, macros/)",
-                                 NotificationIcon::Success)
+            Notification::create("Auto Pathing Tool: macro exported (mod save folder, macros/)", NotificationIcon::Success)
                     ->show();
         } else {
-            Notification::create(fmt::format("Auto Pathing Tool: export failed: {}", result.unwrapErr()),
-                                 NotificationIcon::Error)
-                    ->show();
+            Notification::create(fmt::format("Auto Pathing Tool: export failed: {}", result.unwrapErr()), NotificationIcon::Error)->show();
         }
     }
 }
@@ -287,17 +275,19 @@ namespace {
     }
 }
 
-class $modify(APPlayLayer, PlayLayer){// level is fully built: load it into the simulator and attach the mod
-                                      void setupHasCompleted(){PlayLayer::setupHasCompleted();
-Engine::get().attach(this);
-Engine::get().captureFresh(this);
-collectTransformCandidates(this);
-ap::Overlay::attach(this);
-ap::Recorder::get().onLevelLoaded(this);
-SimPlanner::get().onLevelLoaded(this);
-ap::Editor::get().onLevelLoaded(this);
-ap::InputRecorder::get().onLevelLoaded(this);
-g_safe = SafeState{this};
+class $modify(APPlayLayer, PlayLayer){
+// called once the level is loaded, before the first frame
+void setupHasCompleted(){
+    PlayLayer::setupHasCompleted();
+    Engine::get().attach(this);
+    Engine::get().captureFresh(this);
+    collectTransformCandidates(this);
+    ap::Overlay::attach(this);
+    ap::Recorder::get().onLevelLoaded(this);
+    SimPlanner::get().onLevelLoaded(this);
+    ap::Editor::get().onLevelLoaded(this);
+    ap::InputRecorder::get().onLevelLoaded(this);
+    g_safe = SafeState{this};
 }
 
 //new attempt: keep the rng and the start state in sync with the simulator
@@ -471,18 +461,20 @@ namespace {
     // true for the modes where the icon spins during a dash (cube and ball)
     bool dashIconMode(PlayerObject* player) {
         return !player->m_isShip && !player->m_isBird && !player->m_isDart && !player->m_isSwing &&
-               !player->m_isRobot && !player->m_isSpider && !player->m_isPlatformer;
+                !player->m_isRobot && !player->m_isSpider && !player->m_isPlatformer;
     }
 }
 
-class $modify(APPlayerObject, PlayerObject){// dash start: remember the step and the direction of the icon rotation
-                                            void updateDashArt(){PlayerObject::updateDashArt();
-if (m_isDashing && dashIconMode(this)) {
-    if (auto* slot = dashArtOf(this, true)) {
-        slot->step = Engine::get().curStep();
-        slot->sign = ((m_isSideways != m_isUpsideDown) ? -1.f : 1.f) * m_gravityMod;
+class $modify(APPlayerObject, PlayerObject){
+// dash start: the game sets the icon rotation to 0 here, so save it first
+void updateDashArt(){
+    PlayerObject::updateDashArt();
+    if (m_isDashing && dashIconMode(this)) {
+        if (auto* slot = dashArtOf(this, true)) {
+            slot->step = Engine::get().curStep();
+            slot->sign = ((m_isSideways != m_isUpsideDown) ? -1.f : 1.f) * m_gravityMod;
+        }
     }
-}
 }
 
 // dash end: the game reads the icon rotation here, so set it to the simulator's value first
@@ -510,23 +502,23 @@ void spawnCircle() {
 }
 ;
 
-class $modify(APPauseLayer,
-              PauseLayer){// going to the editor leaves the level without onQuit, so do the same cleanup here
-                          void goEdit(){if (auto* pl = PlayLayer::get()) safeRestoreJumps(pl);
-g_safe = SafeState{};
-resumePlayerActions();
-s_tfCand.clear();
-s_tfLayer = nullptr;
-SimPlanner::get().onLayerGone();
-ap::Recorder::get().onLayerGone();
-ap::Editor::get().onLayerGone();
-ap::InputRecorder::get().onLayerGone();
-Engine::get().onLayerGone();
-ap::Overlay::detach();
-PauseLayer::goEdit();
-}
-}
-;
+class $modify(APPauseLayer, PauseLayer){
+    // going to the editor leaves the level without onQuit, so do the same cleanup here
+void goEdit(){
+    if (auto* pl = PlayLayer::get()) safeRestoreJumps(pl);
+    g_safe = SafeState{};
+    resumePlayerActions();
+    s_tfCand.clear();
+    s_tfLayer = nullptr;
+    SimPlanner::get().onLayerGone();
+    ap::Recorder::get().onLayerGone();
+    ap::Editor::get().onLayerGone();
+    ap::InputRecorder::get().onLayerGone();
+    Engine::get().onLayerGone();
+    ap::Overlay::detach();
+    PauseLayer::goEdit();
+    }
+};
 
 namespace {
     double g_frameGameSec = 0.0;
@@ -545,21 +537,19 @@ namespace {
             static std::chrono::steady_clock::time_point s_last{};
             auto const now = std::chrono::steady_clock::now();
             double const hookSec = std::chrono::duration<double>(now - t0).count();
-            double const frameSec = s_last == std::chrono::steady_clock::time_point{}
-                                            ? 0.0
-                                            : std::chrono::duration<double>(t0 - s_last).count();
+            double const frameSec = s_last == std::chrono::steady_clock::time_point{} ? 0.0 : std::chrono::duration<double>(t0 - s_last).count();
             s_last = t0;
-            SimPlanner::get().frameTiming(frameSec, g_frameGameSec, std::max(0.0, hookSec - g_frameGameSec),
-                                          Engine::get().stepCounter() - steps0);
+            SimPlanner::get().frameTiming(frameSec, g_frameGameSec, std::max(0.0, hookSec - g_frameGameSec), Engine::get().stepCounter() - steps0);
         }
     };
 }
 
-class $modify(APBaseGameLayer,
-              GJBaseGameLayer){// not a hook: the original update, timed for FrameScope
-                               void apGameUpdate(float delta){auto const start = std::chrono::steady_clock::now();
-GJBaseGameLayer::update(delta);
-g_frameGameSec += std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+class $modify(APBaseGameLayer, GJBaseGameLayer){
+// not a hook: the original update, timed for FrameScope
+void apGameUpdate(float delta){
+    auto const start = std::chrono::steady_clock::now();
+    GJBaseGameLayer::update(delta);
+    g_frameGameSec += std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
 }
 
 // game loop: decides how many physics steps the game plays this frame when the mod is playing
@@ -600,8 +590,7 @@ void update(float dt) {
                 s_acc = 0.0;
             }
             if (int const budget = planner.liveStepBudget(); budget < std::numeric_limits<int>::max()) {
-                double const neededSteps =
-                        (static_cast<double>(dt) + pl->m_extraDelta) * 240.0 / static_cast<double>(timeWarp);
+                double const neededSteps = (static_cast<double>(dt) + pl->m_extraDelta) * 240.0 / static_cast<double>(timeWarp);
                 if (neededSteps > static_cast<double>(budget) + 0.5) {
                     pl->m_extraDelta = 0.0;
                     if (budget >= 1) apGameUpdate(static_cast<float>(budget) * timeWarp / 240.f);
@@ -702,24 +691,18 @@ EnhancedGameObject::updateSyncedAnimation(totalTime, frameIndex);
 ;
 
 class $modify(APFMOD, FMODAudioEngine){
-        // no sound effects while the engine drives the ticks
-        int playEffectAdvanced(gd::string path, float speed, float unknown, float volume, float pitch,
-                               bool fastFourierTransform, bool reverb, int startMillis, int endMillis, int fadeIn,
-                               int fadeOut, bool loopEnabled, int effectID, bool override, bool noPreload,
-                               int channelID, int uniqueID, float minInterval,
-                               int sfxGroup){if (Engine::get().active()) return 0;
-return FMODAudioEngine::playEffectAdvanced(path, speed, unknown, volume, pitch, fastFourierTransform, reverb,
-                                           startMillis, endMillis, fadeIn, fadeOut, loopEnabled, effectID, override,
-                                           noPreload, channelID, uniqueID, minInterval, sfxGroup);
+    int playEffectAdvanced(gd::string path, float speed, float unknown, float volume, float pitch, bool fastFourierTransform, bool reverb, int startMillis, int endMillis, int fadeIn,
+                            int fadeOut, bool loopEnabled, int effectID, bool override, bool noPreload, int channelID, int uniqueID, float minInterval, int sfxGroup){
+        if (Engine::get().active()) return 0;
+        return FMODAudioEngine::playEffectAdvanced(path, speed, unknown, volume, pitch, fastFourierTransform, reverb, startMillis, endMillis, fadeIn, fadeOut, loopEnabled, effectID, override, noPreload, channelID, uniqueID, minInterval, sfxGroup);
 }
 
 // same as playEffectAdvanced
-int playEffect(gd::string path) {
-    if (Engine::get().active()) return 0;
-    return FMODAudioEngine::playEffect(path);
-}
-}
-;
+    int playEffect(gd::string path) {
+        if (Engine::get().active()) return 0;
+        return FMODAudioEngine::playEffect(path);
+    }
+};
 
 namespace ap::actions {
     // starts or stops the search
@@ -741,9 +724,7 @@ namespace ap::actions {
     void playFile(MacroFile const& file) {
         auto* pl = PlayLayer::get();
         if (!pl) {
-            Notification::create("Auto Pathing Tool: open the level first, then play the macro",
-                                 NotificationIcon::Warning)
-                    ->show();
+            Notification::create("Auto Pathing Tool: open the level first, then play the macro", NotificationIcon::Warning)->show();
             return;
         }
         if (SimPlanner::get().running()) {
@@ -752,45 +733,36 @@ namespace ap::actions {
         }
         int const levelId = pl->m_level ? static_cast<int>(pl->m_level->m_levelID.value()) : 0;
         if (file.levelId != 0 && levelId != 0 && file.levelId != levelId) {
-            Notification::create(fmt::format("Auto Pathing Tool: this macro was made for {}",
-                                             file.levelName.empty() ? "another level" : file.levelName),
-                                 NotificationIcon::Warning, 3.f)
-                    ->show();
+            Notification::create(fmt::format("Auto Pathing Tool: this macro was made for {}", file.levelName.empty() ? "another level" : file.levelName), NotificationIcon::Warning, 3.f) ->show();
         }
         if (Engine::get().playing()) Engine::get().stopPlayback();
         Engine::get().startPlayback(file.macro);
     }
 }
 
-class $modify(APKeyboardDispatcher,
-              CCKeyboardDispatcher){// handles the mod keys, and the path editor keys while it is open
-                                    bool dispatchKeyboardMSG(enumKeyCodes key, bool down, bool repeat,
-                                                             double timestamp){auto& editor = ap::Editor::get();
-if (editor.active()) {
-    bool const move = key == KEY_Left || key == KEY_Right || key == KEY_A || key == KEY_D;
-    if (!repeat) editor.onKey(key, down);
-    if (move) return true;
-}
-return CCKeyboardDispatcher::dispatchKeyboardMSG(key, down, repeat, timestamp);
-}
-}
-;
+class $modify(APKeyboardDispatcher, CCKeyboardDispatcher){
+    // handles the mod keys, and the path editor keys while it is open
+    bool dispatchKeyboardMSG(enumKeyCodes key, bool down, bool repeat, double timestamp){auto& editor = ap::Editor::get();
+    if (editor.active()) {
+        bool const move = key == KEY_Left || key == KEY_Right || key == KEY_A || key == KEY_D;
+        if (!repeat) editor.onKey(key, down);
+        if (move) return true;
+    }
+    return CCKeyboardDispatcher::dispatchKeyboardMSG(key, down, repeat, timestamp);
+    }
+};
 
 // builds the settings menu entries once the game has loaded
 $on_game(Loaded) {
-    KeyboardInputEvent()
-            .listen(
-                    [](KeyboardInputData& data) {
-                        auto& editor = ap::Editor::get();
-                        if (!editor.active()) return ListenerResult::Propagate;
-                        bool const move =
-                                data.key == KEY_Left || data.key == KEY_Right || data.key == KEY_A || data.key == KEY_D;
-                        if (data.action != KeyboardInputData::Action::Repeat)
-                            editor.onKey(data.key, data.action == KeyboardInputData::Action::Press);
-                        return move ? ListenerResult::Stop : ListenerResult::Propagate;
-                    },
-                    -1000000)
-            .leak();
+    KeyboardInputEvent().listen([](KeyboardInputData& data) {
+        auto& editor = ap::Editor::get();
+        if (!editor.active()) return ListenerResult::Propagate;
+        bool const move = data.key == KEY_Left || data.key == KEY_Right || data.key == KEY_A || data.key == KEY_D;
+        if (data.action != KeyboardInputData::Action::Repeat)
+            editor.onKey(data.key, data.action == KeyboardInputData::Action::Press);
+        return move ? ListenerResult::Stop : ListenerResult::Propagate;
+    },
+    -1000000).leak();
     auto bind = [](char const* key, void (*action)()) {
         listenForKeybindSettingPresses(key, [action](Keybind const&, bool down, bool repeat, double) {
             if (!down || repeat || ap::ui::menuOpen()) return;

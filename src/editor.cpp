@@ -1,5 +1,4 @@
-// F3 path editor: freezes the level, lets the player step through ticks, change the inputs,
-// and hands the edited prefix back to the live search.
+// F3 path editor: freezes the level, lets the player step through ticks, change the inputs, and hands the edited prefix back to the live search.
 
 #include "editor.hpp"
 
@@ -57,10 +56,10 @@ namespace ap {
         // in 2 player mode, game option "0010" swaps the players
         bool playersSwapped(PlayLayer* pl) {
             return pl && pl->m_levelSettings && pl->m_levelSettings->m_twoPlayerMode &&
-                   GameManager::sharedState()->getGameVariable("0010");
+                GameManager::sharedState()->getGameVariable("0010");
         }
 
-        // shows a Geode notification with the mod name
+        // shows a notification in the game
         void notify(std::string const& text, NotificationIcon icon = NotificationIcon::Info) {
             Notification::create("Auto Pathing Tool: " + text, icon)->show();
         }
@@ -164,9 +163,7 @@ namespace ap {
             m_source = Source::Playback;
             m_inputs = inputsOf(engine.playbackMacro());
         } else {
-            notify(fmt::format("start the bot ({}) or play a macro first, then press {} to edit its path",
-                               keyName(Action::Live), keyName(Action::Edit)),
-                   NotificationIcon::Warning);
+            notify(fmt::format("start the bot ({}) or play a macro first, then press {} to edit its path", keyName(Action::Live), keyName(Action::Edit)), NotificationIcon::Warning);
             return;
         }
         if (!pl->m_player1 || pl->m_player1->m_isDead) {
@@ -202,8 +199,7 @@ namespace ap {
             notify("the player is dead here: go back before the death first", NotificationIcon::Warning);
             return;
         }
-        std::vector<uint8_t> prefix(m_inputs.begin(),
-                                    m_inputs.begin() + std::min<long>(m_cursor, static_cast<long>(m_inputs.size())));
+        std::vector<uint8_t> prefix(m_inputs.begin(), m_inputs.begin() + std::min<long>(m_cursor, static_cast<long>(m_inputs.size())));
         prefix.resize(static_cast<size_t>(m_cursor), inputAt(m_cursor - 1));
 
         auto& engine = Engine::get();
@@ -428,11 +424,7 @@ namespace ap {
         m_info->setPosition({winSize.width / 2.f, winSize.height - 36.f});
         m_hud->addChild(m_info);
 
-        auto* keys = CCLabelBMFont::create(fmt::format("Left / A: back    Right / D: forward (hold to go faster)    "
-                                                       "Jump held: press on those ticks    {}: let the bot go on",
-                                                       keyName(Action::Edit))
-                                                   .c_str(),
-                                           "chatFont.fnt");
+        auto* keys = CCLabelBMFont::create(fmt::format("Left / A: back    Right / D: forward (hold to go faster) Jump held: press on those ticks    {}: let the bot go on", keyName(Action::Edit)).c_str(), "chatFont.fnt");
         keys->setScale(.42f);
         keys->setPosition({winSize.width / 2.f, 12.f});
         keys->setOpacity(220);
@@ -452,10 +444,7 @@ namespace ap {
         m_title->setString(fmt::format("EDIT - tick {} ({:.2f} s, {}%)", m_cursor, seconds, percent).c_str());
         bool const twoPlayer = m_layer->m_levelSettings && m_layer->m_levelSettings->m_twoPlayerMode;
         uint8_t const jump = held();
-        std::string info = twoPlayer
-                                   ? fmt::format("player 1: {}    player 2: {}", (jump & 1) ? "jump held" : "released",
-                                                 (jump & 2) ? "jump held" : "released")
-                                   : ((jump & 1) ? "jump held" : "jump released");
+        std::string info = twoPlayer ? fmt::format("player 1: {}    player 2: {}", (jump & 1) ? "jump held" : "released", (jump & 2) ? "jump held" : "released") : ((jump & 1) ? "jump held" : "jump released");
         if (m_backHeld) info = "<< " + info;
         if (m_forwardHeld) info += " >>";
         if (m_dead)
@@ -480,8 +469,7 @@ namespace ap {
             if (!(inputAt(tick) & 1)) continue;
             bool const edited = m_firstEdit >= 0 && tick >= m_firstEdit && tick < m_cursor;
             float const px = xOf(tick);
-            m_timeline->drawSegment({px, y - 5.f}, {px, y + 5.f}, .6f,
-                                    edited ? ccc4f(1.f, .68f, .2f, 1.f) : ccc4f(1.f, .85f, .3f, .8f));
+            m_timeline->drawSegment({px, y - 5.f}, {px, y + 5.f}, .6f, edited ? ccc4f(1.f, .68f, .2f, 1.f) : ccc4f(1.f, .85f, .3f, .8f));
         }
         float const cx = xOf(m_cursor);
         m_timeline->drawSegment({cx, y - 9.f}, {cx, y + 9.f}, 1.2f, ccc4f(1.f, 1.f, 1.f, 1.f));

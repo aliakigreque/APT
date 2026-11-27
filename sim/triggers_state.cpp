@@ -126,8 +126,7 @@ namespace ap::sim {
             if (!motion.blkCell.items.empty()) {
                 hash = mix64(hash, motion.blkCell.size());
                 for (auto const& e : motion.blkCell.items) {
-                    hash = mix64(mix64(hash, static_cast<uint64_t>(static_cast<uint32_t>(e.first))),
-                                 static_cast<uint64_t>(static_cast<uint32_t>(e.second)));
+                    hash = mix64(mix64(hash, static_cast<uint64_t>(static_cast<uint32_t>(e.first))), static_cast<uint64_t>(static_cast<uint32_t>(e.second)));
                 }
             }
             motion.hashValue = hash;
@@ -169,8 +168,7 @@ namespace ap::sim {
         hash = hashVec(hash, H.collisions);
         hash = hashVec(hash, H.touches);
         hash = mix64(hash, trigAreasHash(H));
-        hash = mix64(hash, static_cast<uint64_t>(static_cast<uint32_t>(H.areaCounter)) |
-                                   (static_cast<uint64_t>(H.areasUnsorted) << 40));
+        hash = mix64(hash, static_cast<uint64_t>(static_cast<uint32_t>(H.areaCounter)) | (static_cast<uint64_t>(H.areasUnsorted) << 40));
         hash = mix64(hash, H.items.size());
         for (auto const& e : H.items.items) {
             hash = mix64(hash, static_cast<uint64_t>(static_cast<uint32_t>(e.first)));
@@ -246,8 +244,7 @@ namespace ap::sim {
 
     // true if the trigger has an activated bit slot
     bool trigHasSlot(Game const& g, int idx) {
-        return g.trig.on && idx >= 0 && static_cast<size_t>(idx) < g.world->trigSlot.size() &&
-               g.world->trigSlot[static_cast<size_t>(idx)] >= 0;
+        return g.trig.on && idx >= 0 && static_cast<size_t>(idx) < g.world->trigSlot.size() && g.world->trigSlot[static_cast<size_t>(idx)] >= 0;
     }
 
     // number of persistent items that changed from their start value
@@ -431,9 +428,7 @@ namespace ap::sim {
         {
             unsigned const cmdIndex = g.commandIndex;
             auto& stamps = trig.evStamps;
-            stamps.erase(std::remove_if(stamps.begin(), stamps.end(),
-                                        [cmdIndex](auto const& e) { return e.second != cmdIndex; }),
-                         stamps.end());
+            stamps.erase(std::remove_if(stamps.begin(), stamps.end(), [cmdIndex](auto const& e) { return e.second != cmdIndex; }), stamps.end());
         }
         for (auto& pair : trig.collided.items) pair.second = 0;
         if (trig.r().spawnQueue.empty()) return;
@@ -528,8 +523,7 @@ namespace ap::sim {
                     double const after = static_cast<double>(dt * timer.mod) + before;
                     TimerItem& writable = trig.w().timers[static_cast<size_t>(index)];
                     writable.time = after;
-                    if (writable.stopEnabled && ((before < writable.target && writable.target <= after) ||
-                                                 (writable.target < before && after <= writable.target))) {
+                    if (writable.stopEnabled && ((before < writable.target && writable.target <= after) || (writable.target < before && after <= writable.target))) {
                         writable.time = writable.target;
                         writable.running = false;
                         if (0 < writable.group) {
@@ -552,8 +546,7 @@ namespace ap::sim {
                 if (!event.done) {
                     float const last = event.last;
                     float const target = event.target;
-                    bool const fire = (last < target && static_cast<double>(target) <= now && 0.f < current.mod) ||
-                                      (target < last && now <= static_cast<double>(target) && current.mod < 0.f);
+                    bool const fire = (last < target && static_cast<double>(target) <= now && 0.f < current.mod) || (target < last && now <= static_cast<double>(target) && current.mod < 0.f);
                     if (fire) {
                         bool erased = false;
                         if (!event.multi) {
@@ -620,19 +613,12 @@ namespace ap::sim {
 
     // debug: prints the player part, tracked objects and memo commit counters, returns this thread's tl_dbg
     long const* trigMemoDbg() {
-        std::fprintf(stderr, "[player part, all threads] %ld hits, %ld computations\n", g_pStatAll[0].load(),
-                     g_pStatAll[1].load());
-        std::fprintf(stderr,
-                     "[player part] shared : %ld hits, %ld computations ; fallback : %ld misses, %ld direct ; side "
-                     "effects %ld ; without memo %ld\n",
+        std::fprintf(stderr, "[player part, all threads] %ld hits, %ld computations\n", g_pStatAll[0].load(), g_pStatAll[1].load());
+        std::fprintf(stderr, "[player part] shared : %ld hits, %ld computations ; fallback : %ld misses, %ld direct ; side effects %ld ; without memo %ld\n",
                      tl_pStat[0], tl_pStat[1], tl_pStat[2], tl_pStat[3], tl_pStat[4], tl_pStat[5]);
-        std::fprintf(stderr,
-                     "[tracked objects touched] dynEntry %ld, group %ld, resection %ld, moveGroup %ld, toggle %ld, "
-                     "access %ld, rotation %ld\n",
+        std::fprintf(stderr, "[tracked objects touched] dynEntry %ld, group %ld, resection %ld, moveGroup %ld, toggle %ld, access %ld, rotation %ld\n",
                      tl_fySite[1], tl_fySite[2], tl_fySite[3], tl_fySite[4], tl_fySite[5], tl_fySite[6], tl_fySite[7]);
-        std::fprintf(stderr,
-                     "[commits refused] full %ld, tracked object touched %ld, difference not representable %ld, no "
-                     "state before %ld\n",
+        std::fprintf(stderr, "[commits refused] full %ld, tracked object touched %ld, difference not representable %ld, no state before %ld\n",
                      tl_commitFail[0], tl_commitFail[1], tl_commitFail[2], tl_commitFail[3]);
         return tl_dbg;
     }
@@ -650,14 +636,13 @@ namespace ap::sim {
                 hashY = hashPod(hashY, e.first);
                 hashY = hashPod(hashY, e.second);
             }
-            if (hashX != hashY) std::fprintf(stderr, "    differs : %s (%zu / %zu)\n", name, x.size(), y.size());
+            if (hashX != hashY) std::fprintf(stderr, "differs : %s (%zu / %zu)\n", name, x.size(), y.size());
         };
         cmpMap("groupOff", a.M().groupOff, b.M().groupOff);
         for (auto const& e : a.M().groupOff.items) {
             auto const* other = b.M().groupOff.find(e.first);
             if (!other || hashPod(0, *other) != hashPod(0, e.second)) {
-                std::fprintf(stderr, "      group %d : (%.3f, %.3f) / (%.3f, %.3f)\n", e.first, e.second.x, e.second.y,
-                             other ? other->x : 0.0, other ? other->y : 0.0);
+                std::fprintf(stderr, "group %d : (%.3f, %.3f) / (%.3f, %.3f)\n", e.first, e.second.x, e.second.y, other ? other->x : 0.0, other ? other->y : 0.0);
             }
         }
         for (auto const& e : a.items.items) {
@@ -672,11 +657,9 @@ namespace ap::sim {
                 if (hashPod(0, a.M().cmds[i]) != hashPod(0, b.M().cmds[i])) {
                     auto const& c = a.M().cmds[i];
                     auto const& d = b.M().cmds[i];
-                    std::fprintf(stderr,
-                                 "      cmd %zu : uid %d type %d target %d lockPX %d lockPY %d | dx %.3f/%.3f dy "
-                                 "%.3f/%.3f curX %.3f/%.3f curY %.3f/%.3f end %d/%d\n",
-                                 i, c.uid, c.type, c.target, c.lockPX, c.lockPY, c.deltaX, d.deltaX, c.deltaY, d.deltaY,
-                                 c.curX, d.curX, c.curY, d.curY, c.finished, d.finished);
+                    std::fprintf(stderr, "cmd %zu : uid %d type %d target %d lockPX %d lockPY %d | dx %.3f/%.3f dy %.3f/%.3f curX %.3f/%.3f curY %.3f/%.3f end %d/%d\n",
+                                i, c.uid, c.type, c.target, c.lockPX, c.lockPY, c.deltaX, d.deltaX, c.deltaY, d.deltaY,
+                                c.curX, d.curX, c.curY, d.curY, c.finished, d.finished);
                     break;
                 }
             }
@@ -690,11 +673,10 @@ namespace ap::sim {
                         return;
                     }
                     std::fprintf(stderr, " [g %d obj %d uid %d delay %.6f el %.6f end %d pause %d ord %d keys %d]",
-                                 x->group, x->obj, x->uid, x->delay, x->elapsed, x->finished, x->paused, x->ordered,
-                                 x->keys.n);
+                                x->group, x->obj, x->uid, x->delay, x->elapsed, x->finished, x->paused, x->ordered, x->keys.n);
                     for (int k : x->keys) std::fprintf(stderr, " %d", k);
                 };
-                std::fprintf(stderr, "      %zu :", i);
+                std::fprintf(stderr, " %zu :", i);
                 print(i < a.spawnQueue.size() ? &a.spawnQueue[i] : nullptr);
                 std::fprintf(stderr, " /");
                 print(i < b.spawnQueue.size() ? &b.spawnQueue[i] : nullptr);
@@ -817,12 +799,10 @@ namespace ap::sim {
         }
         h = mix64(h, bits64(T.queuedTimeWarp));
         for (auto const& e : T.stateBlk) {
-            h = mix64(h,
-                      (static_cast<uint64_t>(static_cast<uint32_t>(e.first)) << 32) | static_cast<uint32_t>(e.second));
+            h = mix64(h, (static_cast<uint64_t>(static_cast<uint32_t>(e.first)) << 32) | static_cast<uint32_t>(e.second));
         }
         if (!T.afRing.empty()) {
-            h = mix64(mix64(mix64(h, T.afHashObj ^ T.afHashP), (static_cast<uint64_t>(T.afU5) << 32) | T.afU6),
-                      static_cast<uint64_t>(static_cast<uint32_t>(T.afN)));
+            h = mix64(mix64(mix64(h, T.afHashObj ^ T.afHashP), (static_cast<uint64_t>(T.afU5) << 32) | T.afU6), static_cast<uint64_t>(static_cast<uint32_t>(T.afN)));
         }
         for (auto const& e : T.evStamps) {
             if (e.second == g.commandIndex) h = mix64(h, static_cast<uint64_t>(e.first) ^ 0x5eedull);
@@ -832,8 +812,7 @@ namespace ap::sim {
             h = hashPod(h, e.second);
         }
         if (g.mirrorOn || g.mirrorT != 0.f || g.mirrorDir != 1.f) {
-            h = mix64(mix64(h, bits64(g.mirrorT)),
-                      (g.mirrorOn ? 1u : 0u) | (g.mirrorBack ? 2u : 0u) | (g.mirrorDir < 0.f ? 4u : 0u));
+            h = mix64(mix64(h, bits64(g.mirrorT)), (g.mirrorOn ? 1u : 0u) | (g.mirrorBack ? 2u : 0u) | (g.mirrorDir < 0.f ? 4u : 0u));
         }
         if (g.cam.on) h = mix64(h, cameraHash(g.cam));
         if (g.world->hasRandom) h = mix64(h, g.rng);

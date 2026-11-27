@@ -1,5 +1,4 @@
-// Moves of one step: applies the move, rotate, follow and transform commands to the groups
-// (GJBaseGameLayer::processMoveActions, processRotationActions, processTransformActions).
+// Moves of one step: applies the move, rotate, follow and transform commands to the groups (GJBaseGameLayer::processMoveActions, processRotationActions, processTransformActions).
 
 #include "triggers_internal.hpp"
 
@@ -7,12 +6,10 @@ namespace ap::sim {
     namespace trigger_impl {
         // the move step (prepareMoveActions and what follows), dtSec = trigger step, dtPhys = physics step
         namespace {
-            // The moves of one step (processMoveActions and the rotate, follow and transform actions), done in stages;
-            // the state that several stages share is members.
+            // The moves of one step (processMoveActions and the rotate, follow and transform actions), done in stages; the state that several stages share is members.
             struct MoveStep {
                 MoveStep(Game& g, double dtSec, float dtPhys) : g(g), dtSec(dtSec), dtPhys(dtPhys) {}
 
-                // arguments of trigMoveActionsImpl
                 Game& g;
                 double dtSec;
                 float dtPhys;
@@ -55,8 +52,7 @@ namespace ap::sim {
                 uint64_t mkey;
                 uint64_t keysBefore;
                 std::shared_ptr<TrigDyn> fullBefore;
-                // how far the player moved this step, for the moves locked to the player (zero after a death or a big
-                // jump)
+                // how far the player moved this step, for the moves locked to the player (zero after a death or a big jump)
                 Flow measurePlayerMove();
                 // which commands lock to the player or the camera, and which follow or advanced follow the player
                 void findLocks();
@@ -134,8 +130,7 @@ namespace ap::sim {
                 int rotCenterOf(int target, int center);
                 // saves the state before the step for the memo and empties the tables of the step
                 void prepareCommands();
-                // steps every command (move, rotate, follow, transform, keyframe) and registers what it does to its
-                // group
+                // steps every command (move, rotate, follow, transform, keyframe) and registers what it does to its group
                 void stepCommands();
                 // rotations of the rotate triggers that aim at or follow an object
                 void stepDynamicRotations();
@@ -252,8 +247,7 @@ namespace ap::sim {
             if (useMemo) {
                 key = mix64(mix64(mix64(trigHeavyHash(T->r()), bits64(dtSec)), bits64(dtPhys)), 0x3011ull);
                 if (!T->afRing.empty())
-                    key = mix64(mix64(key, T->afHashObj),
-                                (static_cast<uint64_t>(T->afU6 - T->afU5) << 32) | static_cast<uint32_t>(T->afN));
+                    key = mix64(mix64(key, T->afHashObj), (static_cast<uint64_t>(T->afU6 - T->afU5) << 32) | static_cast<uint32_t>(T->afN));
                 if (pruneTick) key = mix64(key, static_cast<uint64_t>(static_cast<uint32_t>(cellBehind)));
                 if (lockPX) key = mix64(key, bits64(T->playerDx));
                 if (lockPY) key = mix64(key, bits64(T->playerDy));
@@ -278,8 +272,7 @@ namespace ap::sim {
                     }
                     mkey = mix64(mix64(mix64(motionHash(T->r(), withOff), bits64(dtSec)), bits64(dtPhys)), 0x4d07ull);
                     if (!T->afRing.empty())
-                        mkey = mix64(mix64(mkey, T->afHashObj),
-                                     (static_cast<uint64_t>(T->afU6 - T->afU5) << 32) | static_cast<uint32_t>(T->afN));
+                        mkey = mix64(mix64(mkey, T->afHashObj), (static_cast<uint64_t>(T->afU6 - T->afU5) << 32) | static_cast<uint32_t>(T->afN));
                     if (pruneTick) mkey = mix64(mkey, static_cast<uint64_t>(static_cast<uint32_t>(cellBehind)));
                     if (lockPX) mkey = mix64(mkey, bits64(T->playerDx));
                     if (lockPY) mkey = mix64(mkey, bits64(T->playerDy));
@@ -380,8 +373,7 @@ namespace ap::sim {
             return (std::fabs(v) <= 0.01 && std::fabs(v) != 0.01) ? (v < 0.0 ? -0.01 : 0.01) : v;
         }
 
-        auto MoveStep::applyTransform(int target, int centerGroup, int centerIdx, double fxN, double fxO, double fyN,
-                                      double fyO, bool onlyMove, bool relRot) -> void {
+        auto MoveStep::applyTransform(int target, int centerGroup, int centerIdx, double fxN, double fxO, double fyN, double fyO, bool onlyMove, bool relRot) -> void {
             PSet const* const psS = canon ? psetOf(g) : nullptr;
             bool const targetP = psS && bitOf(psS->memberGroupBits, target);
             if (centerIdx < 0) {
@@ -598,10 +590,8 @@ namespace ap::sim {
                 stampLast(g, d);
                 float const rx = static_cast<float>((d.x - static_cast<double>(o.posOffX)) - static_cast<double>(cx));
                 float const ry = static_cast<float>((d.y - static_cast<double>(o.posOffY)) - static_cast<double>(cy));
-                float const px = static_cast<float>(static_cast<double>(ta) * rx + static_cast<double>(tcf) * ry +
-                                                    static_cast<double>(cx));
-                float const py = static_cast<float>(static_cast<double>(tb) * rx + static_cast<double>(td) * ry +
-                                                    static_cast<double>(cy));
+                float const px = static_cast<float>(static_cast<double>(ta) * rx + static_cast<double>(tcf) * ry + static_cast<double>(cx));
+                float const py = static_cast<float>(static_cast<double>(tb) * rx + static_cast<double>(td) * ry + static_cast<double>(cy));
                 d.x = (static_cast<double>(pdx + px) - d.x) + static_cast<double>(o.posOffX) + d.x;
                 d.y = (static_cast<double>(pdy + py) - d.y) + static_cast<double>(o.posOffY) + d.y;
                 if (rotObj != 0.f && o.canRotateFree()) {
@@ -719,8 +709,7 @@ namespace ap::sim {
                             ObjDyn const* centerDyn = dynOf(g, kfCenter);
                             if (trigRotation(g, kfCenter) != 0.f ||
                                 (centerDyn && (centerDyn->sclOffX != 0.f || centerDyn->sclOffY != 0.f))) {
-                                kfDmc.push_back(KfDmc{c.target, static_cast<float>(out.dx), static_cast<float>(out.dy),
-                                                      kfCenter});
+                                kfDmc.push_back(KfDmc{c.target, static_cast<float>(out.dx), static_cast<float>(out.dy), kfCenter});
                                 pn.refused = true;
                             }
                         }
@@ -877,8 +866,7 @@ namespace ap::sim {
                         fxO = s.sOld;
                         fyO = s.tOld;
                     }
-                    applyTransform(s.target, s.target, w->mainObjectOf(s.target), fxN, clampF(fxO), fyN, clampF(fyO),
-                                   false, true);
+                    applyTransform(s.target, s.target, w->mainObjectOf(s.target), fxN, clampF(fxO), fyN, clampF(fyO), false, true);
                 }
             }
         }
@@ -967,9 +955,7 @@ namespace ap::sim {
                             pending.push_back(Pending{e.target, 0.0, 0.0, false, false, {}});
                             pn = &pending.back();
                         }
-                        bool const endP = canon && tl_jr &&
-                                          ((e.c >= 0 && isPO(g, e.c)) || (e.a >= 0 && isPO(g, e.a)) || e.a == kRefP1 ||
-                                           e.a == kRefP2 || e.c == kRefP1 || e.c == kRefP2);
+                        bool const endP = canon && tl_jr && ((e.c >= 0 && isPO(g, e.c)) || (e.a >= 0 && isPO(g, e.a)) || e.a == kRefP1 || e.a == kRefP2 || e.c == kRefP1 || e.c == kRefP2);
                         if (endP && isPG(g, e.target)) {
                             DMove const dm{e.c, e.a, f, k, dir};
                             tl_jr->dm.push_back(dm);
@@ -1021,8 +1007,7 @@ namespace ap::sim {
             }
             if (g_trace) {
                 for (auto& p : pending) {
-                    std::printf("      [trig] tick %d : group %d dx %.6f dy %.6f%s%s\n", g.tick, p.group, p.dx, p.dy,
-                                p.claimed ? " (claimed)" : "", p.stampOnly ? " (end)" : "");
+                    std::printf("[trig] tick %d : group %d dx %.6f dy %.6f%s%s\n", g.tick, p.group, p.dx, p.dy, p.claimed ? " (claimed)" : "", p.stampOnly ? " (end)" : "");
                 }
             }
         }
@@ -1200,14 +1185,11 @@ namespace ap::sim {
                 }
                 {
                     auto& cmds = H4.Mw().cmds;
-                    cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](GroupCmd const& c) { return c.doUpdate; }),
-                               cmds.end());
+                    cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](GroupCmd const& c) { return c.doUpdate; }), cmds.end());
                 }
                 if (pruneTick && H4.M().cellOv.size() > 32) {
                     auto& cells = H4.Mw().cellOv.items;
-                    cells.erase(std::remove_if(cells.begin(), cells.end(),
-                                               [&](auto const& e) { return e.first / 4096 < cellBehind; }),
-                                cells.end());
+                    cells.erase(std::remove_if(cells.begin(), cells.end(), [&](auto const& e) { return e.first / 4096 < cellBehind; }), cells.end());
                 }
             }
         }
@@ -1311,10 +1293,8 @@ namespace ap::sim {
                 stampLast(g, d);
                 float const rx = static_cast<float>((d.x - static_cast<double>(o.posOffX)) - static_cast<double>(cx));
                 float const ry = static_cast<float>((d.y - static_cast<double>(o.posOffY)) - static_cast<double>(cy));
-                float const px = static_cast<float>(static_cast<double>(ta) * rx + static_cast<double>(tcf) * ry +
-                                                    static_cast<double>(cx));
-                float const py = static_cast<float>(static_cast<double>(tb) * rx + static_cast<double>(td) * ry +
-                                                    static_cast<double>(cy));
+                float const px = static_cast<float>(static_cast<double>(ta) * rx + static_cast<double>(tcf) * ry + static_cast<double>(cx));
+                float const py = static_cast<float>(static_cast<double>(tb) * rx + static_cast<double>(td) * ry + static_cast<double>(cy));
                 d.x = (static_cast<double>(pdx + px) - d.x) + static_cast<double>(o.posOffX) + d.x;
                 d.y = (static_cast<double>(pdy + py) - d.y) + static_cast<double>(o.posOffY) + d.y;
                 if (op.rotObj != 0.f && o.canRotateFree()) {
@@ -1490,8 +1470,7 @@ namespace ap::sim {
                 case JOp::DMOVE: {
                     DMove const& d = jr.dm[static_cast<size_t>(o.t0)];
                     if (tl_dmVal.size() < jr.dm.size()) tl_dmVal.resize(jr.dm.size());
-                    dynMoveDelta(g, d.c, d.a, d.f, d.dir, d.k, tl_dmVal[static_cast<size_t>(o.t0)].first,
-                                 tl_dmVal[static_cast<size_t>(o.t0)].second);
+                    dynMoveDelta(g, d.c, d.a, d.f, d.dir, d.k, tl_dmVal[static_cast<size_t>(o.t0)].first, tl_dmVal[static_cast<size_t>(o.t0)].second);
                     break;
                 }
                 case JOp::PFOLLOW: {
@@ -1599,6 +1578,43 @@ namespace ap::sim {
                 pruneDyn(g);
                 return;
             }
+            uint64_t mkey = 0;
+            {
+                bool withOff = false;
+                for (auto const& I : T.r().M().advs) {
+                    if (g.world->advDefs[static_cast<size_t>(I.def)].ignoreDisabled) {
+                        withOff = true;
+                        break;
+                    }
+                }
+                mkey = mix64(mix64(mix64(motionHash(T.r(), withOff), bits64(dtSec)), bits64(dtPhys)), 0x3017ull);
+                if (!T.afRing.empty()) {
+                    World const& w = *g.world;
+                    uint64_t ringHash = 0x51a9e7ull;
+                    for (size_t r = 0; r < w.afRings.size() && r < T.afRingH.size(); ++r) {
+                        auto const& ring = w.afRings[r];
+                        if (ring.key <= 0) continue;
+                        if (ring.obj >= 0 &&
+                            (bitOf(pset->objBits, ring.obj) || w.areaTarget[static_cast<size_t>(ring.obj)]))
+                            continue;
+                        ringHash = mix64(ringHash ^ static_cast<uint64_t>(r), T.afRingH[r]);
+                    }
+                    mkey = mix64(mix64(mkey, ringHash),
+                                (static_cast<uint64_t>(T.afU6 - T.afU5) << 32) | static_cast<uint32_t>(T.afN));
+                }
+                if (pruneTick) mkey = mix64(mkey, static_cast<uint64_t>(static_cast<uint32_t>(cellBehind)));
+                if (lockPX) mkey = mix64(mkey, bits64(T.playerDx));
+                if (lockCX) mkey = mix64(mkey, bits64(g.cam.sdx));
+                if (MemoEntry const* m = motionLookup(T, mkey)) {
+                    ++tl_pStat[0];
+                    g_pStatAll[0].fetch_add(1, std::memory_order_relaxed);
+                    for (uint64_t gr : m->spawned) T.spawnedThisTick.insert(gr);
+                    g.itemChanges += m->itemDelta;
+                    if (m->jr) phaseB(g, *m->jr, dtSec);
+                    pruneDyn(g);
+                    return;
+                }
+            }
             Game const snap = g;
             auto jr = std::make_shared<Journal>();
             uint64_t const keysBefore = dynKeysHash(T.rd());
@@ -1624,10 +1640,13 @@ namespace ap::sim {
                 g_pStatAll[1].fetch_add(1, std::memory_order_relaxed);
                 if (!tl_pHitUntil.empty()) tl_pHitUntil.erase(psig);
                 std::stable_sort(jr->undo.begin(), jr->undo.end(),
-                                 [](UndoE const& a, UndoE const& b) { return a.group < b.group; });
+                                [](UndoE const& a, UndoE const& b) { return a.group < b.group; });
                 if (!tl_sideEffect) {
                     tl_commitJr = jr;
+                    int const dep = tl_dynDep;
                     memoCommit(key, T, keysBefore, fullBefore, nullptr);
+                    tl_dynDep = dep;
+                    memoCommit(mkey, T, keysBefore, fullBefore, nullptr);
                     tl_commitJr.reset();
                 } else
                     ++tl_pStat[4];

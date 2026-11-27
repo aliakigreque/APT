@@ -340,17 +340,17 @@ namespace ap::sim {
         // copies everything except owner, which becomes the copying thread
         TrigDyn(TrigDyn const& o)
             : objDyn(o.objDyn),
-              afPhys(o.afPhys),
-              afObjs(o.afObjs),
-              dynGroups(o.dynGroups),
-              hashValue(o.hashValue),
-              hashValid(o.hashValid),
-              keysValue(o.keysValue),
-              keysValid(o.keysValid),
-              exclValue(o.exclValue),
-              exclSet(o.exclSet),
-              ver(o.ver),
-              owner(trigThreadId()) {}
+            afPhys(o.afPhys),
+            afObjs(o.afObjs),
+            dynGroups(o.dynGroups),
+            hashValue(o.hashValue),
+            hashValid(o.hashValid),
+            keysValue(o.keysValue),
+            keysValid(o.keysValid),
+            exclValue(o.exclValue),
+            exclSet(o.exclSet),
+            ver(o.ver),
+            owner(trigThreadId()) {}
         TrigDyn& operator=(TrigDyn const&) = default;
     };
 
@@ -670,6 +670,7 @@ namespace ap::sim {
     bool trigActivatedBit(Game const& g, int idx);
     int trigPersistChanged(Game const& g);
     int trigItemValue(Game const& g, int item);
+    int trigCompareGap(Game const& g, Obj const& o);
     extern std::atomic<long> g_areaMemoStat[5];
     extern std::atomic<long> g_areaSplitStat[4];
     void trigSetActivatedBit(Game& g, int idx);

@@ -1,5 +1,4 @@
-// The stages of one tick around the expansion: stop checks, layer setup, merging and sorting the children,
-// beam width and pruning, tracking and moving to the next tick.
+// The stages of one tick around the expansion: stop checks, layer setup, merging and sorting the children, beam width and pruning, tracking and moving to the next tick.
 
 #include "search_internal.hpp"
 
@@ -39,16 +38,13 @@ namespace ap::sim {
             } else if (std::chrono::duration<double>(now - recordTime).count() > opt.stallSeconds) {
                 if (static_cast<size_t>(tick - res.startTick) + 1 > furthest.size()) furthest = pathTo(bestOf(false));
                 {
-                    finalResult = finish(-1, false,
-                                         "no progress for " + std::to_string(static_cast<int>(opt.stallSeconds)) +
-                                                 " s (record tick " + std::to_string(recordTick) + ")");
+                    finalResult = finish(-1, false, "no progress for " + std::to_string(static_cast<int>(opt.stallSeconds)) + " s (record tick " + std::to_string(recordTick) + ")");
                     return Flow::Return;
                 }
             }
         }
         if ((opt.maxTicks > 0 && simulated.load() > opt.maxTicks) ||
-            (opt.timeLimit > 0 && (tick & 63) == 0 &&
-             std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count() > opt.timeLimit)) {
+            (opt.timeLimit > 0 && (tick & 63) == 0 && std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count() > opt.timeLimit)) {
             if (static_cast<size_t>(tick - res.startTick) + 1 > furthest.size()) furthest = pathTo(bestOf(false));
             {
                 finalResult = finish(-1, false, "time budget used up (tick " + std::to_string(tick) + ")");
@@ -58,8 +54,7 @@ namespace ap::sim {
         return Flow::Next;
     }
 
-    // stops when a live state finished the level (the lowest portal debt first, when debts count) or at the
-    // horizon
+    // stops when a live state finished the level (the lowest portal debt first, when debts count) or at the horizon
     auto SearchRun::checkCompleted() -> Flow {
         anyCompleted = false;
         for (Node* node : live)
@@ -83,8 +78,7 @@ namespace ap::sim {
         return Flow::Next;
     }
 
-    // setup of the tick: front x, forced exits already passed, finer grid near moved speed portals and in the fine
-    // zones, and the split of the live states among the workers
+    // setup of the tick: front x, forced exits already passed, finer grid near moved speed portals and in the fine zones, and the split of the live states among the workers
     auto SearchRun::prepareLayer() -> void {
         nLive = live.size();
         lastLiveX = (nLive && live[0]->g) ? live[0]->g->p1.x : 0.f;
@@ -101,8 +95,7 @@ namespace ap::sim {
             float minLiveX = 1e30f;
             for (size_t i = 0; i < nLive; ++i)
                 if (live[i]->g) minLiveX = std::min(minLiveX, live[i]->g->p1.x);
-            mustTakes.erase(std::remove_if(mustTakes.begin(), mustTakes.end(),
-                                           [&](MustTake const& mustTake) { return minLiveX > mustTake.x1; }),
+            mustTakes.erase(std::remove_if(mustTakes.begin(), mustTakes.end(), [&](MustTake const& mustTake) { return minLiveX > mustTake.x1; }),
                             mustTakes.end());
         }
         layerQY = qY;
@@ -137,12 +130,8 @@ namespace ap::sim {
         if (nThreads > 1) {
             for (size_t i = 0; i < nLive; ++i) {
                 Game const* game = live[i]->g;
-                uint64_t const hash = (game && game->trig.on && game->trig.h) ? trigHeavyHash(*game->trig.h)
-                                                                              : static_cast<uint64_t>(i);
-                // states with the same trigger state go to the same worker, so its trigger memo gets the hits
-                // (Fibonacci hashing: multiply by 2^64 / golden ratio, keep the high bits)
-                part[static_cast<size_t>((hash * 0x9e3779b97f4a7c15ull) >> 40) % static_cast<size_t>(nThreads)]
-                        .push_back(i);
+                uint64_t const hash = (game && game->trig.on && game->trig.h) ? trigHeavyHash(*game->trig.h) : static_cast<uint64_t>(i);
+                part[static_cast<size_t>((hash * 0x9e3779b97f4a7c15ull) >> 40) % static_cast<size_t>(nThreads)].push_back(i);
             }
         } else
             for (size_t i = 0; i < nLive; ++i)
@@ -203,18 +192,14 @@ namespace ap::sim {
             }
             if (nRevK) {
                 if (debugOptions().check && tick - lastRevisitKillTick > 240)
-                    std::fprintf(stderr,
-                                 "[back] tick %d : %zu lineage(s) brought back to x %.0f in the part already played, "
-                                 "dropped\n",
-                                 tick, nRevK, lastRevisitX);
+                    std::fprintf(stderr, "[back] tick %d : %zu lineage(s) brought back to x %.0f in the part already played, dropped\n", tick, nRevK, lastRevisitX);
                 lastRevisitKillTick = tick;
                 res.stats.revisitKills += static_cast<long>(nRevK);
             }
         }
     }
 
-    // puts the children of all workers in the next layer; children with the same key and trigger state are merged
-    // into the cheapest one
+    // puts the children of all workers in the next layer; children with the same key and trigger state are merged into the cheapest one
     auto SearchRun::mergeChildren() -> void {
         seen.clear();
         liveNext.clear();
@@ -302,8 +287,7 @@ namespace ap::sim {
                     }
                 if (!merged) passed.push_back(Passed{spotX, beam, qY, qV, gapNow});
                 if (debugOptions().check)
-                    std::fprintf(stderr, "[passed] tick %d : dead end x %.0f passed (beam %d, q %.2f, gap %d)\n", tick,
-                                 spotX, beam, qY, gapNow);
+                    std::fprintf(stderr, "[passed] tick %d : dead end x %.0f passed (beam %d, q %.2f, gap %d)\n", tick, spotX, beam, qY, gapNow);
                 if (!opt.playedTicks) {
                     bool nearPrev = false;
                     for (auto const& pass : passed)
@@ -324,8 +308,7 @@ namespace ap::sim {
                         zoneX1 = std::max(zoneX1, spotX + kZoneLen);
                         holdX = std::max(holdX, zoneX1);
                         if (debugOptions().check)
-                            std::fprintf(stderr, "[zone] x %.0f .. %.0f : beam %d, q %.2f, gap %d kept\n", zoneX0,
-                                         zoneX1, zoneSet.beam, zoneSet.qY, zoneSet.gap);
+                            std::fprintf(stderr, "[zone] x %.0f .. %.0f : beam %d, q %.2f, gap %d kept\n", zoneX0, zoneX1, zoneSet.beam, zoneSet.qY, zoneSet.gap);
                     }
                 }
             }
@@ -400,9 +383,7 @@ namespace ap::sim {
                                     0xfffu))
                             << 30;
                     if (node->g->isDualMode)
-                        cell ^= KeyHash::splitmix(static_cast<uint64_t>(static_cast<uint32_t>(
-                                                          static_cast<int>(std::floor(node->g->p2.y / 12.f)))) +
-                                                  0x1234567ull);
+                        cell ^= KeyHash::splitmix(static_cast<uint64_t>(static_cast<uint32_t>(static_cast<int>(std::floor(node->g->p2.y / 12.f)))) + 0x1234567ull);
                     cellsBuf.push_back(cell);
                 }
                 std::sort(cellsBuf.begin(), cellsBuf.end());
@@ -447,8 +428,7 @@ namespace ap::sim {
                     divF.resize(nNodes);
                     for (size_t i = 0; i < nNodes; ++i) {
                         Player const& p = liveNext[i]->g->p1;
-                        divF[i] = DivF{(p.isSideways ? p.x : p.y) * 0.125f, static_cast<float>(p.yVelocity) * 0.5f,
-                                       liveNext[i]->cls & 0x3ffu};
+                        divF[i] = DivF{(p.isSideways ? p.x : p.y) * 0.125f, static_cast<float>(p.yVelocity) * 0.5f, liveNext[i]->cls & 0x3ffu};
                     }
                     for (int slot = 0; slot < reserve; ++slot) {
                         size_t pick = static_cast<size_t>(slot);
@@ -471,9 +451,7 @@ namespace ap::sim {
                         DivF const picked = divF[slotIdx];
                         for (size_t i = slotIdx + 1; i < nNodes; ++i) {
                             DivF const& other = divF[i];
-                            float const dist = other.mode != picked.mode ? 1e6f
-                                                                         : std::fabs(other.v - picked.v) +
-                                                                                   std::fabs(other.vy - picked.vy);
+                            float const dist = other.mode != picked.mode ? 1e6f : std::fabs(other.v - picked.v) + std::fabs(other.vy - picked.vy);
                             if (dist < divDist[i]) divDist[i] = dist;
                         }
                     }
@@ -563,16 +541,9 @@ namespace ap::sim {
                 int const minCost = liveNext.empty() ? 0 : liveNext.front()->cost;
                 if (rank < 0 && track.alive) {
                     if (track.rankPre >= 0)
-                        std::fprintf(stderr,
-                                     "[track] tick %d (x %.0f y %.1f) : pruned (rank %d / %d before pruning, cost %d ; "
-                                     "kept : %zu, costs %d..%d, beam %d)\n",
-                                     tick + 1, trackedGame->p1.x, trackedGame->p1.y, track.rankPre, track.nPre,
-                                     track.costPre, liveNext.size(), minCost, maxCost, beam);
+                        std::fprintf(stderr, "[track] tick %d (x %.0f y %.1f) : pruned (rank %d / %d before pruning, cost %d ; kept : %zu, costs %d..%d, beam %d)\n", tick + 1, trackedGame->p1.x, trackedGame->p1.y, track.rankPre, track.nPre, track.costPre, liveNext.size(), minCost, maxCost, beam);
                     else
-                        std::fprintf(stderr,
-                                     "[track] tick %d (x %.0f y %.1f) : missing before pruning (merged, or parent lost "
-                                     "/ press not allowed) ; layer %d\n",
-                                     tick + 1, trackedGame->p1.x, trackedGame->p1.y, track.nPre);
+                        std::fprintf(stderr, "[track] tick %d (x %.0f y %.1f) : missing before pruning (merged, or parent lost/press not allowed) ; layer %d\n", tick + 1, trackedGame->p1.x, trackedGame->p1.y, track.nPre);
                     for (Node* node : liveNext) {
                         Game const& twin = *node->g;
                         if (std::fabs(twin.p1.x - trackedGame->p1.x) > 0.01f ||
@@ -583,35 +554,30 @@ namespace ap::sim {
                         {
                             Key const twinKey = makeKey(twin, qY, qV);
                             Key const trackedKey = makeKey(*trackedGame, qY, qV);
-                            std::fprintf(stderr,
-                                         "    [twin] keys x %d/%d y %d/%d v %d/%d flags %08x/%08x extra %08x/%08x\n",
-                                         twinKey.x, trackedKey.x, twinKey.y, trackedKey.y, twinKey.v, trackedKey.v,
-                                         twinKey.flags, trackedKey.flags, twinKey.extra, trackedKey.extra);
+                            std::fprintf(stderr, "[twin] keys x %d/%d y %d/%d v %d/%d flags %08x/%08x extra %08x/%08x\n", twinKey.x, trackedKey.x, twinKey.y, trackedKey.y, twinKey.v, trackedKey.v, twinKey.flags, trackedKey.flags, twinKey.extra, trackedKey.extra);
                         }
-                        std::fprintf(stderr,
-                                     "    [twin] cost %d held %d/%d objects %zu/%zu touched %zu/%zu orbs %zu/%zu :",
-                                     node->cost, twin.p1.holdingJump, trackedGame->p1.holdingJump,
-                                     static_cast<size_t>(twin.objState.size()),
-                                     static_cast<size_t>(trackedGame->objState.size()),
-                                     static_cast<size_t>(twin.triggeredIDs.size()),
-                                     static_cast<size_t>(trackedGame->triggeredIDs.size()),
-                                     static_cast<size_t>(twin.p1.touchingRings.size()),
-                                     static_cast<size_t>(trackedGame->p1.touchingRings.size()));
+                        std::fprintf(stderr, "    [twin] cost %d held %d/%d objects %zu/%zu touched %zu/%zu orbs %zu/%zu :", node->cost, twin.p1.holdingJump, trackedGame->p1.holdingJump,
+                                    static_cast<size_t>(twin.objState.size()),
+                                    static_cast<size_t>(trackedGame->objState.size()),
+                                    static_cast<size_t>(twin.triggeredIDs.size()),
+                                    static_cast<size_t>(trackedGame->triggeredIDs.size()),
+                                    static_cast<size_t>(twin.p1.touchingRings.size()),
+                                    static_cast<size_t>(trackedGame->p1.touchingRings.size()));
                         int shown = 0;
                         for (auto const& e : trackedGame->objState.items)
                             if (!twin.objState.find(e.first) && shown < 8) {
                                 std::fprintf(stderr, " +%d(id %d x %.0f)",
-                                             twin.world->objs[static_cast<size_t>(e.first)].uid,
-                                             twin.world->objs[static_cast<size_t>(e.first)].id,
-                                             twin.world->objs[static_cast<size_t>(e.first)].x);
+                                            twin.world->objs[static_cast<size_t>(e.first)].uid,
+                                            twin.world->objs[static_cast<size_t>(e.first)].id,
+                                            twin.world->objs[static_cast<size_t>(e.first)].x);
                                 ++shown;
                             }
                         for (auto const& e : twin.objState.items)
                             if (!trackedGame->objState.find(e.first) && shown < 12) {
                                 std::fprintf(stderr, " -%d(id %d x %.0f)",
-                                             twin.world->objs[static_cast<size_t>(e.first)].uid,
-                                             twin.world->objs[static_cast<size_t>(e.first)].id,
-                                             twin.world->objs[static_cast<size_t>(e.first)].x);
+                                            twin.world->objs[static_cast<size_t>(e.first)].uid,
+                                            twin.world->objs[static_cast<size_t>(e.first)].id,
+                                            twin.world->objs[static_cast<size_t>(e.first)].x);
                                 ++shown;
                             }
                         for (auto const& e : trackedGame->triggeredIDs.items)
@@ -627,11 +593,9 @@ namespace ap::sim {
                         std::fprintf(stderr, "\n");
                     }
                 } else if (rank >= 0 && !track.alive)
-                    std::fprintf(stderr, "[track] tick %d : found again (rank %d, cost %d)\n", tick + 1, rank,
-                                 liveNext[static_cast<size_t>(rank)]->cost);
+                    std::fprintf(stderr, "[track] tick %d : found again (rank %d, cost %d)\n", tick + 1, rank, liveNext[static_cast<size_t>(rank)]->cost);
                 else if (rank >= 0 && (tick + 1) % 100 == 0)
-                    std::fprintf(stderr, "[track] tick %d : rank %d / %zu, cost %d (min %d)\n", tick + 1, rank,
-                                 liveNext.size(), liveNext[static_cast<size_t>(rank)]->cost, minCost);
+                    std::fprintf(stderr, "[track] tick %d : rank %d / %zu, cost %d (min %d)\n", tick + 1, rank, liveNext.size(), liveNext[static_cast<size_t>(rank)]->cost, minCost);
                 if (rank < 0 && !track.alive) {
                     int nTwins = 0;
                     for (Node* node : liveNext) {
@@ -642,31 +606,26 @@ namespace ap::sim {
                             continue;
                         Key const twinKey = makeKey(twin, qY, qV);
                         Key const trackedKey = makeKey(*trackedGame, qY, qV);
-                        std::fprintf(stderr,
-                                     "    [twin t%d] y %.3f/%.3f yv %.3f/%.3f held %d/%d flags %08x/%08x extra "
-                                     "%08x/%08x cost %d last press %d\n",
-                                     tick + 1, twin.p1.y, trackedGame->p1.y, twin.p1.yVelocity,
-                                     trackedGame->p1.yVelocity, twin.p1.holdingJump, trackedGame->p1.holdingJump,
-                                     twinKey.flags, trackedKey.flags, twinKey.extra, trackedKey.extra, node->cost,
-                                     node->lastPress);
+                        std::fprintf(stderr, "[twin t%d] y %.3f/%.3f yv %.3f/%.3f held %d/%d flags %08x/%08x extra %08x/%08x cost %d last press %d\n",
+                                    tick + 1, twin.p1.y, trackedGame->p1.y, twin.p1.yVelocity,
+                                    trackedGame->p1.yVelocity, twin.p1.holdingJump, trackedGame->p1.holdingJump,
+                                    twinKey.flags, trackedKey.flags, twinKey.extra, trackedKey.extra, node->cost,
+                                    node->lastPress);
                         for (uint8_t button = 0; button < 2; ++button) {
                             Game twinNext = twin;
                             Game trackedNext = *trackedGame;
                             stepTick(twinNext, button);
                             stepTick(trackedNext, button);
-                            std::fprintf(stderr,
-                                         "      button %d : twin y %.3f yv %.3f dash %d dead %d orbs %d | tracked y "
-                                         "%.3f yv %.3f dash %d dead %d orbs %d\n",
-                                         button, twinNext.p1.y, twinNext.p1.yVelocity, twinNext.p1.isDashing,
-                                         twinNext.died, twinNext.p1.touchingRings.size(), trackedNext.p1.y,
-                                         trackedNext.p1.yVelocity, trackedNext.p1.isDashing, trackedNext.died,
-                                         trackedNext.p1.touchingRings.size());
+                            std::fprintf(stderr, "button %d : twin y %.3f yv %.3f dash %d dead %d orbs %d | tracked y %.3f yv %.3f dash %d dead %d orbs %d\n",
+                                        button, twinNext.p1.y, twinNext.p1.yVelocity, twinNext.p1.isDashing,
+                                        twinNext.died, twinNext.p1.touchingRings.size(), trackedNext.p1.y,
+                                        trackedNext.p1.yVelocity, trackedNext.p1.isDashing, trackedNext.died,
+                                        trackedNext.p1.touchingRings.size());
                         }
                         ++nTwins;
                     }
                     if (!nTwins)
-                        std::fprintf(stderr, "    [twin t%d] none (y %.3f yv %.3f held %d)\n", tick + 1,
-                                     trackedGame->p1.y, trackedGame->p1.yVelocity, trackedGame->p1.holdingJump);
+                        std::fprintf(stderr, "    [twin t%d] none (y %.3f yv %.3f held %d)\n", tick + 1, trackedGame->p1.y, trackedGame->p1.yVelocity, trackedGame->p1.holdingJump);
                 }
                 track.alive = rank >= 0;
             }
@@ -728,30 +687,24 @@ namespace ap::sim {
                 for (uint8_t act : path) stepTick(replay, act);
                 Game const& ref = *live[static_cast<size_t>(best)]->g;
                 if (replay.p1.x != ref.p1.x || replay.p1.y != ref.p1.y || replay.died) {
-                    std::fprintf(stderr,
-                                 "[check2] tick %d : path replay (%zu) -> (%.3f,%.3f dead=%d tick %d) != node %d "
-                                 "(%.3f,%.3f) ; inputs %zu rootLen %zu hist %zu roots %zu\n",
-                                 tick, path.size(), replay.p1.x, replay.p1.y, replay.died, replay.tick, best, ref.p1.x,
-                                 ref.p1.y, inputs.size(), rootTails.empty() ? size_t{0} : rootTails[0].size(),
-                                 history.size(), rootTails.size());
+                    std::fprintf(stderr, "[check2] tick %d : path replay (%zu) -> (%.3f,%.3f dead=%d tick %d) != node %d (%.3f,%.3f) ; inputs %zu rootLen %zu hist %zu roots %zu\n",
+                                tick, path.size(), replay.p1.x, replay.p1.y, replay.died, replay.tick, best, ref.p1.x,
+                                ref.p1.y, inputs.size(), rootTails.empty() ? size_t{0} : rootTails[0].size(),
+                                history.size(), rootTails.size());
                     int const root = history.empty() ? best : ancestorAt(best, 0);
                     if (root >= 0 && static_cast<size_t>(root) < rootGamesDbg.size()) {
                         Game rootReplay = start;
                         for (uint8_t act : inputs) stepTick(rootReplay, act);
                         for (uint8_t act : rootTails[static_cast<size_t>(root)]) stepTick(rootReplay, act);
                         Game const& rootGame = rootGamesDbg[static_cast<size_t>(root)];
-                        std::fprintf(stderr,
-                                     "         root %d : replay inputs+tail -> (%.3f,%.3f tick %d) ; root state "
-                                     "(%.3f,%.3f tick %d)\n",
-                                     root, rootReplay.p1.x, rootReplay.p1.y, rootReplay.tick, rootGame.p1.x,
-                                     rootGame.p1.y, rootGame.tick);
+                        std::fprintf(stderr, "root %d : replay inputs+tail -> (%.3f,%.3f tick %d) ; root state (%.3f,%.3f tick %d)\n",
+                                    root, rootReplay.p1.x, rootReplay.p1.y, rootReplay.tick, rootGame.p1.x, rootGame.p1.y, rootGame.tick);
                         Game fromRoot = rootGame;
                         std::vector<uint8_t> tail = tailTo(best);
                         for (size_t q = rootTails[static_cast<size_t>(root)].size(); q < tail.size(); ++q)
                             stepTick(fromRoot, tail[q]);
-                        std::fprintf(stderr, "         from the root + history (%zu) -> (%.3f,%.3f tick %d)\n",
-                                     tail.size() - rootTails[static_cast<size_t>(root)].size(), fromRoot.p1.x,
-                                     fromRoot.p1.y, fromRoot.tick);
+                        std::fprintf(stderr, "from the root + history (%zu) -> (%.3f,%.3f tick %d)\n",
+                                    tail.size() - rootTails[static_cast<size_t>(root)].size(), fromRoot.p1.x, fromRoot.p1.y, fromRoot.tick);
                     }
                 }
             }
@@ -766,14 +719,14 @@ namespace ap::sim {
             beam = opt.beamWidth;
             qY = opt.quantY;
             qV = opt.quantV;
-        } else if (opt.softInterval > 0 && tick - lastSoft >= opt.softInterval && live.size() > 1 &&
-                   tick >= noSoftBefore) {
+        } else if (opt.softInterval > 0 && tick - lastSoft >= opt.softInterval && live.size() > 1 && tick >= noSoftBefore) {
             makeSoft();
         }
     }
 
     // publishes the part of the path all states agree on, and in live mode the path to play
     auto SearchRun::publishPrefix() -> void {
+        if (!decisionZones.empty()) updateDecisionZones();
         if (opt.commitInterval > 0 && tick - lastPublishCheck >= opt.commitInterval) {
             lastPublishCheck = tick;
             int const depthAvail = tick - hard.back().tick;
@@ -789,8 +742,7 @@ namespace ap::sim {
     auto SearchRun::waitForPlayer() -> void {
         if (opt.playedTicks && opt.maxLead > 0 && (tick & 15) == 0 && tick - leadBase() > opt.maxLead) {
             auto const pauseStart = std::chrono::steady_clock::now();
-            while (!(cancel && cancel->load()) && tick - leadBase() > opt.maxLead - opt.leadResume &&
-                   !(opt.starving && opt.starving->load(std::memory_order_relaxed))) {
+            while (!(cancel && cancel->load()) && tick - leadBase() > opt.maxLead - opt.leadResume && !(opt.starving && opt.starving->load(std::memory_order_relaxed))) {
                 livePublish();
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }

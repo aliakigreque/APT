@@ -1,5 +1,4 @@
-// Follow, player-follow and advanced follow triggers, the set of groups that depend on the player, and the
-// transform helpers (GJBaseGameLayer::processAdvancedFollowActions, processFollowActions).
+// Follow, player-follow and advanced follow triggers, the set of groups that depend on the player, and the transform helpers (GJBaseGameLayer::processAdvancedFollowActions, processFollowActions).
 
 #include "triggers_internal.hpp"
 
@@ -75,9 +74,8 @@ namespace ap::sim {
                     forward += w.groupFutureFwd(gr, g.p1.x);
                     int const first = w.grFirst[static_cast<size_t>(gr)];
                     int const last = w.grFirst[static_cast<size_t>(gr) + 1];
-                    for (int k = static_cast<int>(
-                                 std::lower_bound(w.grX.begin() + first, w.grX.begin() + last, g.p1.x) - w.grX.begin());
-                         k < last; ++k) {
+                    for (int k = static_cast<int>(std::lower_bound(w.grX.begin() + first, w.grX.begin() + last, g.p1.x) - w.grX.begin()); 
+                    k < last; ++k) {
                         int const centerGroup = w.grCenter[static_cast<size_t>(k)];
                         int const centerIdx = centerGroup > 0 ? w.mainObjectOf(centerGroup) : -1;
                         if (centerIdx < 0) continue;
@@ -103,7 +101,7 @@ namespace ap::sim {
                 float const px = std::max(static_cast<float>(e.second.x), static_cast<float>(obj.posX));
                 if (!(px < xBehind)) return false;
                 return !mayMove(e.first, static_cast<float>(e.second.x), static_cast<float>(e.second.y)) &&
-                       !mayMove(e.first, static_cast<float>(obj.posX), static_cast<float>(obj.posY));
+                        !mayMove(e.first, static_cast<float>(obj.posX), static_cast<float>(obj.posY));
             };
             bool any = false;
             for (auto const& e : g.trig.rd().objDyn) {
@@ -114,8 +112,7 @@ namespace ap::sim {
             }
             if (!any) return;
             auto& entries = g.trig.wd().objDyn.items;
-            entries.erase(std::remove_if(entries.begin(), entries.end(), [&](auto const& e) { return prunable(e); }),
-                          entries.end());
+            entries.erase(std::remove_if(entries.begin(), entries.end(), [&](auto const& e) { return prunable(e); }), entries.end());
         }
 
         // current position of the followed key (-1 p1, -2 p2, -3 camera, else a group), false if unknown or (0, 0)
@@ -162,8 +159,7 @@ namespace ap::sim {
             TrigState const& T = g.trig;
             x = 0.f;
             y = 0.f;
-            double const backD = static_cast<double>(delay) / 0.004166666666666667 -
-                                 static_cast<double>(static_cast<float>(T.afU6 - T.afU5) / 1000.f);
+            double const backD = static_cast<double>(delay) / 0.004166666666666667 - static_cast<double>(static_cast<float>(T.afU6 - T.afU5) / 1000.f);
             float const back = static_cast<float>(backD > 0.0 ? backD : 0.0);
             int const steps = static_cast<int>(std::ceil(back));
             if (steps >= T.afN) return false;
@@ -457,9 +453,7 @@ namespace ap::sim {
                     rot = afWrap(targetRot - curRot, 180.f) * 0.25f;
                 }
                 {
-                    float speed = A.xOnly   ? std::fabs(phys->vx)
-                                  : A.yOnly ? std::fabs(phys->vy)
-                                            : std::sqrt(phys->vx * phys->vx + phys->vy * phys->vy);
+                    float speed = A.xOnly ? std::fabs(phys->vx) : A.yOnly ? std::fabs(phys->vy) : std::sqrt(phys->vx * phys->vx + phys->vy * phys->vy);
                     if (maxSpeed < speed && 0.f < maxSpeed) {
                         float const scale = maxSpeed / speed;
                         if (A.xOnly)
@@ -641,8 +635,7 @@ namespace ap::sim {
                     }
                     if (any) {
                         auto& items = g.trig.wd().afPhys.items;
-                        items.erase(std::remove_if(items.begin(), items.end(),
-                                                   [&](auto const& e) { return e.second.last < cmd; }),
+                        items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) { return e.second.last < cmd; }),
                                     items.end());
                     }
                 }
@@ -656,8 +649,7 @@ namespace ap::sim {
                     }
                     if (anyP) {
                         auto& items = g.trig.wp().af.items;
-                        items.erase(std::remove_if(items.begin(), items.end(),
-                                                   [&](auto const& e) { return e.second.last < cmd; }),
+                        items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) { return e.second.last < cmd; }),
                                     items.end());
                     }
                 }
@@ -760,22 +752,14 @@ namespace ap::sim {
                     } else if (c.type == CmdType::FollowY) {
                         seedSig = mix64(seedSig, static_cast<uint64_t>(c.target) * 8u + 3u);
                     } else if (c.type == CmdType::Follow) {
-                        seedSig = mix64(seedSig, ((static_cast<uint64_t>(static_cast<uint32_t>(c.target)) << 20) ^
-                                                  static_cast<uint32_t>(c.center)) *
-                                                                 8u +
-                                                         2u);
+                        seedSig = mix64(seedSig, ((static_cast<uint64_t>(static_cast<uint32_t>(c.target)) << 20) ^ static_cast<uint32_t>(c.center)) * 8u + 2u);
                     }
                 }
                 if (prev) {
                     for (auto const& e : M.drots) {
                         if (e.kind == 1 &&
                             ((e.c >= 0 && bitOf(prev->objBits, e.c)) || (e.a >= 0 && bitOf(prev->objBits, e.a)))) {
-                            seedSig =
-                                    mix64(mix64(seedSig, (static_cast<uint64_t>(static_cast<uint32_t>(e.target)) << 32 ^
-                                                          static_cast<uint32_t>(e.c)) *
-                                                                         8u +
-                                                                 6u),
-                                          static_cast<uint32_t>(e.a));
+                            seedSig = mix64(mix64(seedSig, (static_cast<uint64_t>(static_cast<uint32_t>(e.target)) << 32 ^ static_cast<uint32_t>(e.c)) * 8u + 6u), static_cast<uint32_t>(e.a));
                         }
                     }
                 }
@@ -786,9 +770,7 @@ namespace ap::sim {
                     int const centerIdx = closureCenterOf(w, c);
                     if (centerIdx < 0 || (prev && !bitOf(prev->objBits, centerIdx))) continue;
                     seedSig = mix64(seedSig, ((static_cast<uint64_t>(static_cast<uint32_t>(c.target)) << 32) ^
-                                              static_cast<uint32_t>(centerIdx)) *
-                                                             8u +
-                                                     4u + static_cast<uint64_t>(c.type) * 0x10000u);
+                                              static_cast<uint32_t>(centerIdx)) * 8u + 4u + static_cast<uint64_t>(c.type) * 0x10000u);
                 }
                 for (auto const& e : M.drots) {
                     if (e.kind == 1 && (e.a == kRefP1 || e.a == kRefP2 || e.c == kRefP1 || e.c == kRefP2) &&
@@ -800,9 +782,7 @@ namespace ap::sim {
                 }
                 for (auto const& I : M.advs) {
                     seedSig = mix64(seedSig, ((static_cast<uint64_t>(static_cast<uint32_t>(I.target)) << 24) ^
-                                              static_cast<uint64_t>(static_cast<uint32_t>(I.key))) *
-                                                             8u +
-                                                     5u);
+                                                static_cast<uint64_t>(static_cast<uint32_t>(I.key))) * 8u + 5u);
                     if (I.rngOnly) continue;
                     if (I.key < 0)
                         ++nAdv;
@@ -900,18 +880,14 @@ namespace ap::sim {
                                 if (setO(i)) changed = true;
                         }
                         for (auto const& e : M.drots) {
-                            if (e.kind == 1 &&
-                                ((e.c >= 0 && hasO(e.c)) || (e.a >= 0 && hasO(e.a)) || e.a == kRefP1 || e.a == kRefP2 ||
-                                 e.c == kRefP1 || e.c == kRefP2) &&
-                                setG(e.target))
+                            if (e.kind == 1 && ((e.c >= 0 && hasO(e.c)) || (e.a >= 0 && hasO(e.a)) || e.a == kRefP1 || e.a == kRefP2 || e.c == kRefP1 || e.c == kRefP2) && setG(e.target))
                                 changed = true;
                         }
                         for (auto const& c : M.cmds) {
                             if (c.disabled) continue;
                             if (c.type == CmdType::Follow) {
                                 if (hasO(w.mainObjectOf(c.center)) && setG(c.target)) changed = true;
-                            } else if (c.type == CmdType::Rotate || c.type == CmdType::Transform ||
-                                       c.type == CmdType::Keyframe) {
+                            } else if (c.type == CmdType::Rotate || c.type == CmdType::Transform || c.type == CmdType::Keyframe) {
                                 int const centerIdx = closureCenterOf(w, c);
                                 if (hasO(centerIdx))
                                     for (int i : physOfGroup(w, c.target))
@@ -1068,14 +1044,12 @@ namespace ap::sim {
         }
 
         // applies a matrix to an object and reads back its scale and rotation
-        void tfObj(Obj const& o, ObjDyn& d, Aff const& P, float cx, float cy, float pdx, float pdy, bool onlyMove,
-                   float rotOff) {
+        void tfObj(Obj const& o, ObjDyn& d, Aff const& P, float cx, float cy, float pdx, float pdy, bool onlyMove, float rotOff) {
             double const bx = d.x - static_cast<double>(o.posOffX);
             double const by = d.y - static_cast<double>(o.posOffY);
             float const rX = o.rotX + d.rotAcc;
             float const rY = o.rotY + d.rotAccY;
-            Aff const N = nodeAff(static_cast<float>(bx - static_cast<double>(cx)),
-                                  static_cast<float>(by - static_cast<double>(cy)), rX, rY, d.sclX, d.sclY);
+            Aff const N = nodeAff(static_cast<float>(bx - static_cast<double>(cx)), static_cast<float>(by - static_cast<double>(cy)), rX, rY, d.sclX, d.sclY);
             Aff const M = affConcat(N, P);
             double newX = (static_cast<double>(M.tx + pdx) - bx) + d.x;
             double newY = (static_cast<double>(M.ty + pdy) - by) + d.y;
@@ -1096,10 +1070,8 @@ namespace ap::sim {
                 float const angleY = (M.b == 0.f && M.a > 0.f) ? std::copysign(0.f, M.b) : std::atan2(M.b, M.a);
                 float const newRotX = -static_cast<float>(static_cast<double>(angleX) * 57.29577951308232 - 90.0);
                 float const newRotY = -static_cast<float>(static_cast<double>(angleY) * 57.29577951308232);
-                d.rotAcc = static_cast<float>(static_cast<double>(d.rotAcc) +
-                                              (static_cast<double>(newRotX) - static_cast<double>(rX)));
-                d.rotAccY = static_cast<float>(static_cast<double>(d.rotAccY) +
-                                               (static_cast<double>(newRotY) - static_cast<double>(rY)));
+                d.rotAcc = static_cast<float>(static_cast<double>(d.rotAcc) + (static_cast<double>(newRotX) - static_cast<double>(rX)));
+                d.rotAccY = static_cast<float>(static_cast<double>(d.rotAccY) + (static_cast<double>(newRotY) - static_cast<double>(rY)));
                 if (o.type != Decoration) d.outerOb = true;
                 float const ex = (newSclX - d.sclX) + 0.f;
                 float const ey = (newSclY - d.sclY) + 0.f;

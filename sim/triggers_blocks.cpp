@@ -125,23 +125,20 @@ namespace ap::sim {
                     });
                 }
             }
-            int const xEnd = std::max(std::min(cellX1, static_cast<int>(w.blockMovCells.size()) - 1),
-                                      blkSmall ? (hitCount ? hit[hitCount - 1].first / 4096 : -1) : cellX1);
+            int const xEnd = std::max(std::min(cellX1, static_cast<int>(w.blockMovCells.size()) - 1), blkSmall ? (hitCount ? hit[hitCount - 1].first / 4096 : -1) : cellX1);
             for (int cx = cellX0; cx <= xEnd; ++cx) {
                 if (static_cast<size_t>(cx) < w.blockMovCells.size()) {
                     auto const& col = w.blockMovCells[static_cast<size_t>(cx)];
                     for (int cy = cellY0; cy <= cellY1 && static_cast<size_t>(cy) < col.size(); ++cy) {
                         for (int idx : col[static_cast<size_t>(cy)]) {
-                            if (anyBlkMoved && (blkSmall ? motion->blkCell.find(idx) != nullptr
-                                                         : bix.outStamp[static_cast<size_t>(idx)] == bix.stamp))
+                            if (anyBlkMoved && (blkSmall ? motion->blkCell.find(idx) != nullptr : bix.outStamp[static_cast<size_t>(idx)] == bix.stamp))
                                 continue;
                             take(idx);
                         }
                     }
                 }
                 if (anyBlkMoved && !blkSmall) {
-                    auto it = std::lower_bound(bix.byCell.begin(), bix.byCell.end(),
-                                               std::make_pair(World::cellKey(cx, cellY0), INT32_MIN));
+                    auto it = std::lower_bound(bix.byCell.begin(), bix.byCell.end(), std::make_pair(World::cellKey(cx, cellY0), INT32_MIN));
                     for (; it != bix.byCell.end() && it->first <= World::cellKey(cx, cellY1); ++it) take(it->second);
                 } else if (blkSmall) {
                     while (hitPos < hitCount && hit[hitPos].first / 4096 == cx) take(hit[hitPos++].second);
@@ -349,8 +346,7 @@ namespace ap::sim {
             int const blockItem = objAt(g, blockIdx).itemID;
             auto pairOk = [&](int other) {
                 int const otherItem = objAt(g, other).itemID;
-                return w.collisionItem(otherItem) && otherItem < 10002 && blockItem < 10002 &&
-                       w.collisionPairListened(blockItem, otherItem) && !alreadyCollided(g, blockItem, otherItem);
+                return w.collisionItem(otherItem) && otherItem < 10002 && blockItem < 10002 && w.collisionPairListened(blockItem, otherItem) && !alreadyCollided(g, blockItem, otherItem);
             };
             Rect const blockRect = dRect[k];
             bool const useObb = true;
@@ -371,8 +367,7 @@ namespace ap::sim {
                     if (blockItem >= 0 && blockItem < 10002) {
                         for (int const partnerItem : w.collisionPartners[static_cast<size_t>(blockItem)]) {
                             auto range =
-                                    std::lower_bound(dRanges.begin(), dRanges.end(), partnerItem,
-                                                     [](BlkPass::ItemRange const& a, int v) { return a.item < v; });
+                                    std::lower_bound(dRanges.begin(), dRanges.end(), partnerItem, [](BlkPass::ItemRange const& a, int v) { return a.item < v; });
                             if (range == dRanges.end() || range->item != partnerItem) continue;
                             if (alreadyCollided(g, blockItem, partnerItem)) continue;
                             auto const xBegin = dSortX.begin() + range->b;
@@ -387,14 +382,12 @@ namespace ap::sim {
                 }
                 for (size_t q = mode == 2 ? pos : 0; q < dCand.size(); ++q) {
                     uint32_t const j = dCand[q];
-                    checkBlockAgainst(g, blockIdx, blockRect, useObb, w.dynamicBlocks[j], false, dRect[j], obbOf(j),
-                                      obbOf(k));
+                    checkBlockAgainst(g, blockIdx, blockRect, useObb, w.dynamicBlocks[j], false, dRect[j], obbOf(j), obbOf(k));
                 }
             } else {
                 for (size_t j = mode == 2 ? pos : 0; j < dynCount; ++j) {
                     if (j == k || dOff[j] || !overlap(dRect[j], blockRect) || !pairOk(w.dynamicBlocks[j])) continue;
-                    checkBlockAgainst(g, blockIdx, blockRect, useObb, w.dynamicBlocks[j], false, dRect[j], obbOf(j),
-                                      obbOf(k));
+                    checkBlockAgainst(g, blockIdx, blockRect, useObb, w.dynamicBlocks[j], false, dRect[j], obbOf(j), obbOf(k));
                 }
             }
         };
@@ -419,16 +412,14 @@ namespace ap::sim {
                     enumOthers(k, blockRect, [&](int other, int ord) {
                         Obj const& otherObj = objAt(g, other);
                         int const otherItem = otherObj.itemID;
-                        if (!(w.collisionItem(otherItem) && otherItem < 10002 && blockItem < 10002 &&
-                              w.collisionPairListened(blockItem, otherItem)))
+                        if (!(w.collisionItem(otherItem) && otherItem < 10002 && blockItem < 10002 && w.collisionPairListened(blockItem, otherItem)))
                             return;
                         GObj otherG = g.obj(other);
                         Rect const otherRect = otherG.getObjectRect();
                         if (!overlap(otherRect, blockRect)) return;
                         OBB const otherObb = objectObb(otherG);
                         bool const pass = cache.obb[k].overlaps1Way(otherObb) && otherObb.overlaps1Way(cache.obb[k]);
-                        cache.a.push_back(BlkPass::EA{other, ord, otherItem, static_cast<uint8_t>(pass ? 1 : 0),
-                                                      static_cast<uint8_t>(otherObj.uid == blockObj.uid ? 1 : 0)});
+                        cache.a.push_back(BlkPass::EA{other, ord, otherItem, static_cast<uint8_t>(pass ? 1 : 0), static_cast<uint8_t>(otherObj.uid == blockObj.uid ? 1 : 0)});
                     });
                     entry.aE = static_cast<uint32_t>(cache.a.size());
                     entry.bB = static_cast<uint32_t>(cache.b.size());
@@ -439,8 +430,7 @@ namespace ap::sim {
                         if (blockItem >= 0 && blockItem < 10002) {
                             for (int const partnerItem : w.collisionPartners[static_cast<size_t>(blockItem)]) {
                                 auto range =
-                                        std::lower_bound(dRanges.begin(), dRanges.end(), partnerItem,
-                                                         [](BlkPass::ItemRange const& a, int v) { return a.item < v; });
+                                        std::lower_bound(dRanges.begin(), dRanges.end(), partnerItem, [](BlkPass::ItemRange const& a, int v) { return a.item < v; });
                                 if (range == dRanges.end() || range->item != partnerItem) continue;
                                 auto const xBegin = dSortX.begin() + range->b;
                                 auto const xEnd = dSortX.begin() + range->e;
@@ -452,14 +442,12 @@ namespace ap::sim {
                                 }
                             }
                         }
-                        std::stable_sort(cache.b.begin() + static_cast<std::ptrdiff_t>(bStart), cache.b.end(),
-                                         [](BlkPass::EB const& x, BlkPass::EB const& y) { return x.j < y.j; });
+                        std::stable_sort(cache.b.begin() + static_cast<std::ptrdiff_t>(bStart), cache.b.end(), [](BlkPass::EB const& x, BlkPass::EB const& y) { return x.j < y.j; });
                     } else {
                         for (size_t j = 0; j < dynCount; ++j) {
                             if (j == k || dOff[j] || !overlap(dRect[j], blockRect)) continue;
                             int const otherItem = objAt(g, w.dynamicBlocks[j]).itemID;
-                            if (!(w.collisionItem(otherItem) && otherItem < 10002 && blockItem < 10002 &&
-                                  w.collisionPairListened(blockItem, otherItem)))
+                            if (!(w.collisionItem(otherItem) && otherItem < 10002 && blockItem < 10002 && w.collisionPairListened(blockItem, otherItem)))
                                 continue;
                             cache.b.push_back(BlkPass::EB{static_cast<uint32_t>(j), otherItem, 0, 0, 0});
                         }
@@ -471,10 +459,7 @@ namespace ap::sim {
                         OBB const& otherObb = cache.obb[pair.j];
                         pair.pass = (blockObb.overlaps1Way(otherObb) && otherObb.overlaps1Way(blockObb)) ? 1 : 0;
                         pair.uidEq = otherObj.uid == blockObj.uid ? 1 : 0;
-                        pair.ok = (blockItem < 10002 && otherObj.itemID < 10002 &&
-                                   w.collisionPairListened(blockItem, otherObj.itemID))
-                                          ? 1
-                                          : 0;
+                        pair.ok = (blockItem < 10002 && otherObj.itemID < 10002 && w.collisionPairListened(blockItem, otherObj.itemID)) ? 1 : 0;
                     }
                     entry.bE = static_cast<uint32_t>(cache.b.size());
                     if (entry.aE > entry.aB || entry.bE > entry.bB) cache.blocks.push_back(entry);
@@ -614,8 +599,7 @@ namespace ap::sim {
                 GObj otherG = g.obj(other);
                 if (otherG.disabled()) return;
                 Rect const otherRect = otherG.getObjectRect();
-                if (!(otherRect.x <= playerRect.x + playerRect.w && playerRect.x <= otherRect.x + otherRect.w &&
-                      otherRect.y <= playerRect.y + playerRect.h && playerRect.y <= otherRect.y + otherRect.h))
+                if (!(otherRect.x <= playerRect.x + playerRect.w && playerRect.x <= otherRect.x + otherRect.w && otherRect.y <= playerRect.y + playerRect.h && playerRect.y <= otherRect.y + otherRect.h))
                     return;
                 OBB const otherObb = objectObb(otherG);
                 if (!playerObb.overlaps1Way(otherObb) || !otherObb.overlaps1Way(playerObb)) return;
@@ -675,9 +659,7 @@ namespace ap::sim {
         uint64_t keysBefore = 0;
         std::shared_ptr<TrigDyn> fullBefore;
         if (memoActive) {
-            key = mix64(mix64(mix64(trigHeavyHash(T.r()), bits64(side ? py : px)),
-                              static_cast<uint64_t>(static_cast<uint32_t>(startChannel)) | (side ? 1ull << 40 : 0) |
-                                      (startReversed ? 1ull << 41 : 0)),
+            key = mix64(mix64(mix64(trigHeavyHash(T.r()), bits64(side ? py : px)), static_cast<uint64_t>(static_cast<uint32_t>(startChannel)) | (side ? 1ull << 40 : 0) | (startReversed ? 1ull << 41 : 0)),
                         0x7707ull);
             if (MemoEntry const* entry = memoLookup(T, key)) {
                 g.itemChanges += entry->itemDelta;
@@ -708,9 +690,8 @@ namespace ap::sim {
                 T.w().spawnCursors[ch] = cursor;
             if (g_trace) {
                 std::printf(
-                        "      [spawn] channel %d%s cursor %d : uid %d id %d start (%.1f, %.1f) player (%.1f, %.1f)\n",
-                        ch, (g.reversedChannels.contains(ch)) ? " reversed" : "", cursor - 1, o.uid, o.id, o.startX,
-                        o.startY, px, py);
+                        "[spawn] channel %d%s cursor %d : uid %d id %d start (%.1f, %.1f) player (%.1f, %.1f)\n",
+                        ch, (g.reversedChannels.contains(ch)) ? " reversed" : "", cursor - 1, o.uid, o.id, o.startX, o.startY, px, py);
             }
             if (!trigGroupDisabled(g, o)) triggerObject(g, idx, 0);
         }
@@ -724,8 +705,7 @@ namespace ap::sim {
         TrigState& T = g.trig;
         float const warp = std::round(g.timeWarp * 1000.f);
         if (half) {
-            T.afU6 = static_cast<unsigned>(static_cast<long long>(static_cast<float>(static_cast<int>(warp)) * 0.5f +
-                                                                  static_cast<float>(T.afU6)));
+            T.afU6 = static_cast<unsigned>(static_cast<long long>(static_cast<float>(static_cast<int>(warp)) * 0.5f + static_cast<float>(T.afU6)));
         } else
             T.afU6 = T.afU6 + static_cast<unsigned>(static_cast<int>(warp));
     }

@@ -23,9 +23,7 @@ namespace ap::sim {
 
     // prints an rng draw with its call site, relative to this function
     void rngLogDraw(int tick, void const* site) {
-        std::fprintf(stderr, "[draw] tick %d site %p (rngLogDraw%+lld)\n", tick, site,
-                     static_cast<long long>(reinterpret_cast<char const*>(site) -
-                                            reinterpret_cast<char const*>(reinterpret_cast<void const*>(&rngLogDraw))));
+        std::fprintf(stderr, "[draw] tick %d site %p (rngLogDraw%+lld)\n", tick, site, static_cast<long long>(reinterpret_cast<char const*>(site) - reinterpret_cast<char const*>(reinterpret_cast<void const*>(&rngLogDraw))));
     }
 
     static thread_local std::vector<int> tl_solids;
@@ -154,8 +152,7 @@ namespace ap::sim {
         uint64_t cellDepKey(Game const& g, int cellKey, std::vector<int> const& list) {
             uint64_t content = 0;
             ListGroups const& listGroups = groupsOfList(g, list, content);
-            uint64_t hash = mixKey(mixKey(content, static_cast<uint64_t>(static_cast<uint32_t>(cellKey))),
-                                   g.isBetweenSteps ? 7u : 3u);
+            uint64_t hash = mixKey(mixKey(content, static_cast<uint64_t>(static_cast<uint32_t>(cellKey))), g.isBetweenSteps ? 7u : 3u);
             auto const& groupOffsets = g.trig.r().M().groupOff;
             for (short group : listGroups.groups) {
                 if (auto const* offset = groupOffsets.find(group)) {
@@ -163,8 +160,7 @@ namespace ap::sim {
                     uint64_t bitsY;
                     std::memcpy(&bitsX, &offset->x, 8);
                     std::memcpy(&bitsY, &offset->y, 8);
-                    hash = mixKey(mixKey(mixKey(hash, static_cast<uint64_t>(static_cast<uint16_t>(group))), bitsX),
-                                  bitsY);
+                    hash = mixKey(mixKey(mixKey(hash, static_cast<uint64_t>(static_cast<uint16_t>(group))), bitsX), bitsY);
                 }
             }
             return hash;
@@ -426,8 +422,7 @@ namespace ap::sim {
                 return box;
             }
             if (o.o->obbGen) {
-                box.fromHalfAxes(Point{pos.x + o.o->boxOffX, pos.y + o.o->boxOffY}, o.o->obbHx, o.o->obbHy, o.o->obbVx,
-                                 o.o->obbVy);
+                box.fromHalfAxes(Point{pos.x + o.o->boxOffX, pos.y + o.o->boxOffY}, o.o->obbHx, o.o->obbHy, o.o->obbVx, o.o->obbVy);
                 return box;
             }
             dx = pos.x - static_cast<float>(o.o->posX);
@@ -439,8 +434,7 @@ namespace ap::sim {
         if (auto* key = o.cur()) {
             if (o.o->obbGen && key->rot == o.o->rot &&
                 (key->x != static_cast<float>(o.o->posX) || key->y != static_cast<float>(o.o->posY))) {
-                box.fromHalfAxes(Point{key->x + o.o->boxOffX, key->y + o.o->boxOffY}, o.o->obbHx, o.o->obbHy,
-                                 o.o->obbVx, o.o->obbVy);
+                box.fromHalfAxes(Point{key->x + o.o->boxOffX, key->y + o.o->boxOffY}, o.o->obbHx, o.o->obbHy, o.o->obbVx, o.o->obbVy);
                 return box;
             }
             dx = key->x - static_cast<float>(o.o->posX);
@@ -466,8 +460,7 @@ namespace ap::sim {
             p.obbScaleH = p.spriteHeightScale;
             p.obbDirty = false;
         }
-        box.calculateWithCenter(Point{p.x, p.y}, p.obbScaleW * p.width * p.scaleX, p.obbScaleH * p.height * p.scaleY,
-                                -p.rotation * 0.017453292f);
+        box.calculateWithCenter(Point{p.x, p.y}, p.obbScaleW * p.width * p.scaleX, p.obbScaleH * p.height * p.scaleY, -p.rotation * 0.017453292f);
         return box;
     }
 
@@ -594,8 +587,7 @@ namespace ap::sim {
     }
 
     // collisionCheckObjects on the objects close to the player on y only
-    static void collisionCheckObjectsFiltered(Game& g, Player& player, std::vector<int> const& objects,
-                                              World::CellIndex const& index, float dt) {
+    static void collisionCheckObjectsFiltered(Game& g, Player& player, std::vector<int> const& objects, World::CellIndex const& index, float dt) {
         Rect const playerBox = playerRect(player);
         float const lo = getMinY(playerBox) - kFilterMargin;
         float const hi = getMaxY(playerBox) + kFilterMargin;
@@ -689,8 +681,8 @@ namespace ap::sim {
                 }
                 tl_mrg.resize(runStop);
                 std::merge(tl_cand.begin(), tl_cand.begin() + static_cast<long>(runStart),
-                           tl_cand.begin() + static_cast<long>(runStart), tl_cand.begin() + static_cast<long>(runStop),
-                           tl_mrg.begin());
+                        tl_cand.begin() + static_cast<long>(runStart), tl_cand.begin() + static_cast<long>(runStop),
+                        tl_mrg.begin());
                 std::copy(tl_mrg.begin(), tl_mrg.begin() + static_cast<long>(runStop), tl_cand.begin());
                 runStart = runStop;
             }
@@ -708,8 +700,7 @@ namespace ap::sim {
             size_t from = 0;
             for (; from < objects.size(); ++from) {
                 int const idx = objects[from];
-                unsigned const key = index.byPos ? static_cast<unsigned>(from)
-                                                 : static_cast<unsigned>(g.world->objs[static_cast<size_t>(idx)].uid);
+                unsigned const key = index.byPos ? static_cast<unsigned>(from) : static_cast<unsigned>(g.world->objs[static_cast<size_t>(idx)].uid);
                 if (key > lastKey) break;
                 GObj object = g.obj(idx);
                 int const type = object.getType();
@@ -765,8 +756,7 @@ namespace ap::sim {
             Rect objRect = (type == Slope) ? object.getObjectRectWH(2.f, 2.f) : object.getObjectRect();
             bool touching;
             if (object.o->radius <= 0.f) {
-                touching = getMinX(objRect) <= playerMaxX && playerMinX <= getMaxX(objRect) &&
-                           getMinY(objRect) <= playerMaxY && playerMinY <= getMaxY(objRect);
+                touching = getMinX(objRect) <= playerMaxX && playerMinX <= getMaxX(objRect) && getMinY(objRect) <= playerMaxY && playerMinY <= getMaxY(objRect);
             } else {
                 touching = playerCircleCollision(g, player, object);
             }
@@ -1125,8 +1115,7 @@ namespace ap::sim {
     static std::string fmt_circle(Game& g, GObj o) {
         Point const center = o.getRealPosition();
         char buf[160];
-        std::snprintf(buf, sizeof buf, " circle center (%.2f, %.2f) radius %.2f option %d", center.x, center.y,
-                      o.circleRadius(), g.circleOption ? 1 : 0);
+        std::snprintf(buf, sizeof buf, " circle center (%.2f, %.2f) radius %.2f option %d", center.x, center.y, o.circleRadius(), g.circleOption ? 1 : 0);
         return buf;
     }
 
@@ -1217,8 +1206,7 @@ namespace ap::sim {
             bool const shipHolding = player.isShip && player.jumpBuffered;
             limitY = (limitY - halfHitbox) + sizeOffset;
             sizeOffset = (halfHitbox + minPortalY) - sizeOffset;
-            bool const flyLike = player.isShip || player.isBird || player.isDart || player.isSwing || player.isBall ||
-                                 player.isSpider;
+            bool const flyLike = player.isShip || player.isBird || player.isDart || player.isSwing || player.isBall || player.isSpider;
             if (g_trace)
                 std::printf(
                         "      [trace] corridor : y=%.3f floor=%.3f ceiling=%.3f (min %.2f max %.2f lastMax %.2f) "
@@ -1247,9 +1235,7 @@ namespace ap::sim {
                         } else {
                             savedYVelocity = static_cast<float>(player.yVelocity);
                             stopVelocity = false;
-                            keepVelocity = !(player.isUpsideDown ||
-                                             ((player.isShip || player.isDart) && player.stateRingJump) ||
-                                             maxPortalYDelta == 0.f);
+                            keepVelocity = !(player.isUpsideDown || ((player.isShip || player.isDart) && player.stateRingJump) || maxPortalYDelta == 0.f);
                         }
                         if (die) {
                             outOfBounds = true;
@@ -1290,10 +1276,8 @@ namespace ap::sim {
                     float savedYVelocity;
                     bool die = false;
                     if (!flyLike && player.stateHitHead < 1 && !player.isUpsideDown) {
-                        if ((player.lastFlipTime == 0.0 ||
-                             0.20000000298023224 <= player.totalTime - player.lastFlipTime) &&
-                            (player.gameModeChangedTime == 0.0 ||
-                             0.20000000298023224 <= player.totalTime - player.gameModeChangedTime))
+                        if ((player.lastFlipTime == 0.0 || 0.20000000298023224 <= player.totalTime - player.lastFlipTime) &&
+                            (player.gameModeChangedTime == 0.0 || 0.20000000298023224 <= player.totalTime - player.gameModeChangedTime))
                             die = true;
                         savedYVelocity = static_cast<float>(player.yVelocity);
                         stopVelocity = true;
@@ -1302,8 +1286,7 @@ namespace ap::sim {
                         savedYVelocity = static_cast<float>(player.yVelocity);
                         stopVelocity = false;
                         keepVelocity =
-                                !(!player.isUpsideDown || ((player.isShip || player.isDart) && player.stateRingJump) ||
-                                  maxPortalYDelta == 0.f);
+                                !(!player.isUpsideDown || ((player.isShip || player.isDart) && player.stateRingJump) || maxPortalYDelta == 0.f);
                     }
                     if (die) {
                         outOfBounds = true;
@@ -1406,8 +1389,7 @@ namespace ap::sim {
                     if (areaCell) {
                         auto const& objs = g.world->objs;
                         std::sort(tl_dyn.begin(), tl_dyn.end(), [&](int a, int b) {
-                            return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) <
-                                   static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
+                            return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) < static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
                         });
                         tl_merged.clear();
                         size_t staticPos = 0;
@@ -1419,9 +1401,8 @@ namespace ap::sim {
                                 continue;
                             }
                             if (dynPos >= tl_dyn.size() ||
-                                (staticPos < staticCount &&
-                                 static_cast<unsigned>(objs[static_cast<size_t>((*staticList)[staticPos])].uid) <
-                                         static_cast<unsigned>(objs[static_cast<size_t>(tl_dyn[dynPos])].uid)))
+                                (staticPos < staticCount && static_cast<unsigned>(objs[static_cast<size_t>((*staticList)[staticPos])].uid) <
+                                                            static_cast<unsigned>(objs[static_cast<size_t>(tl_dyn[dynPos])].uid)))
                                 tl_merged.push_back((*staticList)[staticPos++]);
                             else
                                 tl_merged.push_back(tl_dyn[dynPos++]);
@@ -1460,9 +1441,8 @@ namespace ap::sim {
                         size_t const staticCount = staticList ? staticList->size() : 0;
                         while (staticPos < staticCount || dynPos < tl_dyn.size()) {
                             if (dynPos >= tl_dyn.size() ||
-                                (staticPos < staticCount &&
-                                 static_cast<unsigned>(objs[static_cast<size_t>((*staticList)[staticPos])].uid) <
-                                         static_cast<unsigned>(objs[static_cast<size_t>(tl_dyn[dynPos])].uid)))
+                                (staticPos < staticCount &&static_cast<unsigned>(objs[static_cast<size_t>((*staticList)[staticPos])].uid) <
+                                                            static_cast<unsigned>(objs[static_cast<size_t>(tl_dyn[dynPos])].uid)))
                                 tl_merged.push_back((*staticList)[staticPos++]);
                             else
                                 tl_merged.push_back(tl_dyn[dynPos++]);
@@ -1527,8 +1507,7 @@ namespace ap::sim {
                                     }
                                 }
                                 for (int i : add) tmp.push_back(i);
-                                std::stable_sort(tmp.begin(), tmp.end(),
-                                                 [&](int a, int b) { return uidOf(a) < uidOf(b); });
+                                std::stable_sort(tmp.begin(), tmp.end(), [&](int a, int b) { return uidOf(a) < uidOf(b); });
                                 take(tmp);
                                 continue;
                             }
@@ -1539,7 +1518,7 @@ namespace ap::sim {
                             auto const& objs = g.world->objs;
                             std::stable_sort(srt.begin(), srt.end(), [&](int a, int b) {
                                 return static_cast<unsigned>(objs[static_cast<size_t>(a)].uid) <
-                                       static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
+                                        static_cast<unsigned>(objs[static_cast<size_t>(b)].uid);
                             });
                             take(srt);
                         }
@@ -1603,8 +1582,7 @@ namespace ap::sim {
                         "      [trace] solid uid %d id %d rect [%.2f %.2f %.2f %.2f] %s (player [%.2f %.2f %.2f "
                         "%.2f])\n",
                         o.uid(), o.o->id, box.x, box.y, box.w, box.h,
-                        (getMinX(box) <= playerMaxX && playerMinX <= getMaxX(box) && getMinY(box) <= playerMaxY &&
-                         playerMinY <= getMaxY(box))
+                        (getMinX(box) <= playerMaxX && playerMinX <= getMaxX(box) && getMinY(box) <= playerMaxY && playerMinY <= getMaxY(box))
                                 ? "TOUCHED"
                                 : "not touched",
                         playerMinX, playerMinY, playerMaxX - playerMinX, playerMaxY - playerMinY);
@@ -1647,8 +1625,7 @@ namespace ap::sim {
         auto spikeHit = [&]() -> bool {
             spikeTodo = false;
             Rect const spikeBox{g.spikeX - 3.f, g.spikeY - 6.f, 6.f, 12.f};
-            if (!(getMinX(spikeBox) <= playerMaxX && playerMinX <= getMaxX(spikeBox) &&
-                  getMinY(spikeBox) <= playerMaxY && playerMinY <= getMaxY(spikeBox)))
+            if (!(getMinX(spikeBox) <= playerMaxX && playerMinX <= getMaxX(spikeBox) && getMinY(spikeBox) <= playerMaxY && playerMinY <= getMaxY(spikeBox)))
                 return false;
             g.spikeVerified = true;
             return true;
@@ -1669,8 +1646,7 @@ namespace ap::sim {
             bool hit = false;
             if (o.o->radius <= 0.f) {
                 Rect const& box = o.getObjectRect();
-                hit = getMinX(box) <= playerMaxX && playerMinX <= getMaxX(box) && getMinY(box) <= playerMaxY &&
-                      playerMinY <= getMaxY(box);
+                hit = getMinX(box) <= playerMaxX && playerMinX <= getMaxX(box) && getMinY(box) <= playerMaxY && playerMinY <= getMaxY(box);
                 g.tickGap = std::min(g.tickGap, rectGap(playerBox, box));
                 g.hazGap = std::min(g.hazGap, rectGap(playerBox, box));
             } else {

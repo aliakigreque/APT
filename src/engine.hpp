@@ -56,14 +56,11 @@ namespace ap {
         // player (1 or 2) that died during the last step
         // could be used to show what killed the player in the path editor, keep
         int deadPlayer() const { return m_deadPlayer; }
-        // unique id of the object that killed the player
-        // could be used to show what killed the player in the path editor, keep
+        // unique id of the object that killed the player could be used to show what killed the player in the path editor, keep
         int killerId() const { return m_killerId; }
-        // object id of the object that killed the player
-        // could be used to show what killed the player in the path editor, keep
+        // object id of the object that killed the player could be used to show what killed the player in the path editor, keep
         int killerObjectId() const { return m_killerObjectId; }
-        // position of the player when it died
-        // could be used to show where the player died in the path editor, keep
+        // position of the player when it died could be used to show where the player died in the path editor, keep
         cocos2d::CCPoint deathPos() const { return m_deathPos; }
 
         // clears the death, completion and stall flags

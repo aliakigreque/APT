@@ -415,8 +415,8 @@ namespace ap::sim {
         // true for every kind of orb
         bool isRing() const {
             return type == YellowJumpRing || type == PinkJumpRing || type == GravityRing || type == GreenRing ||
-                   type == DropRing || type == RedJumpRing || type == CustomRing || type == DashRing ||
-                   type == GravityDashRing || type == SpiderOrb || type == TeleportOrb;
+                    type == DropRing || type == RedJumpRing || type == CustomRing || type == DashRing ||
+                    type == GravityDashRing || type == SpiderOrb || type == TeleportOrb;
         }
 
         // true for every kind of pad
@@ -439,10 +439,10 @@ namespace ap::sim {
         // every portal except speed portals
         bool isPortal() const {
             return type == InverseGravityPortal || type == NormalGravityPortal || type == ShipPortal ||
-                   type == CubePortal || type == InverseMirrorPortal || type == NormalMirrorPortal ||
-                   type == BallPortal || type == RegularSizePortal || type == MiniSizePortal || type == UfoPortal ||
-                   type == DualPortal || type == SoloPortal || type == WavePortal || type == RobotPortal ||
-                   type == TeleportPortal || type == SpiderPortal || type == SwingPortal || type == GravityTogglePortal;
+                    type == CubePortal || type == InverseMirrorPortal || type == NormalMirrorPortal ||
+                    type == BallPortal || type == RegularSizePortal || type == MiniSizePortal || type == UfoPortal ||
+                    type == DualPortal || type == SoloPortal || type == WavePortal || type == RobotPortal ||
+                    type == TeleportPortal || type == SpiderPortal || type == SwingPortal || type == GravityTogglePortal;
         }
     };
 
@@ -757,9 +757,7 @@ namespace ap::sim {
         // fast access of group, or nullptr
         GroupFast const* fastOf(int group) const {
             return (group >= 0 && static_cast<size_t>(group) < groupFast.size() &&
-                    !groupFast[static_cast<size_t>(group)].buckets.empty())
-                           ? &groupFast[static_cast<size_t>(group)]
-                           : nullptr;
+                    !groupFast[static_cast<size_t>(group)].buckets.empty()) ? &groupFast[static_cast<size_t>(group)] : nullptr;
         }
 
         std::vector<std::vector<int>> groupAll;
@@ -785,8 +783,7 @@ namespace ap::sim {
 
         // true if itemId is part of a listened pair
         bool collisionItem(int itemId) const {
-            return itemId >= 0 && static_cast<size_t>(itemId) < collisionItemListened.size() &&
-                   collisionItemListened[static_cast<size_t>(itemId)];
+            return itemId >= 0 && static_cast<size_t>(itemId) < collisionItemListened.size() && collisionItemListened[static_cast<size_t>(itemId)];
         }
 
         std::vector<int> collPairRow;
@@ -800,8 +797,7 @@ namespace ap::sim {
             if (key >= 0 && !collPairRow.empty()) {
                 int const q = key / 10000 - collPairQ0;
                 if (q < 0 || q + 1 >= static_cast<int>(collPairRow.size())) return false;
-                for (int i = collPairRow[static_cast<size_t>(q)], e = collPairRow[static_cast<size_t>(q) + 1]; i < e;
-                     ++i)
+                for (int i = collPairRow[static_cast<size_t>(q)], e = collPairRow[static_cast<size_t>(q) + 1]; i < e; ++i)
                     if (collisionPairs[static_cast<size_t>(i)] == key) return true;
                 return false;
             }
@@ -819,8 +815,7 @@ namespace ap::sim {
 
         // true if an area trigger with this effect id has a target that matters
         bool areaEffectLiveAt(int effectId) const {
-            return effectId > 0 && static_cast<size_t>(effectId) < areaEffectLive.size() &&
-                   areaEffectLive[static_cast<size_t>(effectId)];
+            return effectId > 0 && static_cast<size_t>(effectId) < areaEffectLive.size() && areaEffectLive[static_cast<size_t>(effectId)];
         }
 
         std::vector<uint8_t> centerWhy;
@@ -837,9 +832,7 @@ namespace ap::sim {
         // members of a group that matter for tracking, empty if none
         std::vector<int> const& moversOfGroup(int group) const {
             static std::vector<int> const kEmpty;
-            return (group >= 0 && group < static_cast<int>(groupMovers.size()))
-                           ? groupMovers[static_cast<size_t>(group)]
-                           : kEmpty;
+            return (group >= 0 && group < static_cast<int>(groupMovers.size())) ? groupMovers[static_cast<size_t>(group)] : kEmpty;
         }
 
         std::vector<char> groupRelevant;
@@ -1080,8 +1073,7 @@ namespace ap::sim {
 
         // true if the group can change the gameplay
         bool relevantGroup(int group) const {
-            return group >= 0 && group < static_cast<int>(groupRelevant.size()) &&
-                   groupRelevant[static_cast<size_t>(group)];
+            return group >= 0 && group < static_cast<int>(groupRelevant.size()) && groupRelevant[static_cast<size_t>(group)];
         }
 
         // positional triggers of a channel, or nullptr
@@ -1093,30 +1085,24 @@ namespace ap::sim {
 
         // exported parent of group, or -1
         int exportParentOf(int group) const {
-            return (group >= 0 && group < static_cast<int>(exportParents.size()))
-                           ? exportParents[static_cast<size_t>(group)]
-                           : -1;
+            return (group >= 0 && group < static_cast<int>(exportParents.size())) ? exportParents[static_cast<size_t>(group)] : -1;
         }
 
         // parent object of a group, -1 if none
         int parentOf(int group) const {
-            return (group >= 0 && group < static_cast<int>(groupParent.size()))
-                           ? groupParent[static_cast<size_t>(group)]
-                           : -1;
+            return (group >= 0 && group < static_cast<int>(groupParent.size())) ? groupParent[static_cast<size_t>(group)] : -1;
         }
 
         // objects of group without decorations
         std::vector<int> const& objsOfGroup(int group) const {
             static std::vector<int> const kEmpty;
-            return (group >= 0 && group < static_cast<int>(groupObjs.size())) ? groupObjs[static_cast<size_t>(group)]
-                                                                              : kEmpty;
+            return (group >= 0 && group < static_cast<int>(groupObjs.size())) ? groupObjs[static_cast<size_t>(group)] : kEmpty;
         }
 
         // objects of group, decorations included
         std::vector<int> const& allOfGroup(int group) const {
             static std::vector<int> const kEmpty;
-            return (group >= 0 && group < static_cast<int>(groupAll.size())) ? groupAll[static_cast<size_t>(group)]
-                                                                             : kEmpty;
+            return (group >= 0 && group < static_cast<int>(groupAll.size())) ? groupAll[static_cast<size_t>(group)] : kEmpty;
         }
 
         // GJBaseGameLayer::tryGetMainObject: group parent, else the only member, else -1

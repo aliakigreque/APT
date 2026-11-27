@@ -120,8 +120,7 @@ namespace ap::sim {
     }
 
     // set static camera to x and y
-    void cameraStaticPos(Game& g, float x, float y, bool affectsX, bool affectsY, bool follow, float time, int easing,
-                         float rate) {
+    void cameraStaticPos(Game& g, float x, float y, bool affectsX, bool affectsY, bool follow, float time, int easing, float rate) {
         CameraState& camera = g.cam;
         camera.staticYPortal = false;
         float const halfWidth = (winW(g) * 0.5f) / g.cameraZoom;
@@ -158,8 +157,7 @@ namespace ap::sim {
     }
 
     // static camera centered on the main object of a group (static camera trigger)
-    void cameraStaticToGroup(Game& g, int group, bool affectsX, bool affectsY, bool follow, float followEase,
-                             float time, int easing, float rate, bool smooth, float velMod) {
+    void cameraStaticToGroup(Game& g, int group, bool affectsX, bool affectsY, bool follow, float followEase, float time, int easing, float rate, bool smooth, float velMod) {
         CameraState& camera = g.cam;
         if (!g.world || g.world->mainObjectOf(group) < 0) return;
         float objX;
@@ -189,8 +187,7 @@ namespace ap::sim {
     }
 
     //leaves static camera, the smooth return to the player starts on the next cameraUpdate, tto be tested might bug
-    void cameraExitStatic(Game& g, bool exitX, bool exitY, float time, int easing, float rate, bool smooth,
-                          float velMod, bool instant) {
+    void cameraExitStatic(Game& g, bool exitX, bool exitY, float time, int easing, float rate, bool smooth, float velMod, bool instant) {
         CameraState& camera = g.cam;
         if (instant) {
             if (exitX) camera.instX = true;
@@ -304,13 +301,13 @@ namespace ap::sim {
                 camera.gp27[0],   camera.gp27[1],    camera.gp28[0],    camera.gp28[1],  camera.ease32[0],
                 camera.ease32[1], camera.exitTimer,  camera.easing,     camera.padding,  camera.dualProg};
         for (float f : fields) h = mix(h, bits(f));
-        h = mix(h, static_cast<uint64_t>(static_cast<uint32_t>(camera.gpX)) |
-                           (static_cast<uint64_t>(static_cast<uint32_t>(camera.gpY)) << 32));
+        h = mix(h, static_cast<uint64_t>(static_cast<uint32_t>(camera.gpX)) | (static_cast<uint64_t>(static_cast<uint32_t>(camera.gpY)) << 32));
         h = mix(h, static_cast<uint64_t>(camera.gpLockX) | (static_cast<uint64_t>(camera.gpLockY) << 1) |
-                           (static_cast<uint64_t>(camera.staticYPortal) << 2) |
-                           (static_cast<uint64_t>(camera.lastSideways) << 3) |
-                           (static_cast<uint64_t>(camera.lastLeft) << 4) | (static_cast<uint64_t>(camera.instX) << 5) |
-                           (static_cast<uint64_t>(camera.instY) << 6));
+                        (static_cast<uint64_t>(camera.staticYPortal) << 2) |
+                        (static_cast<uint64_t>(camera.lastSideways) << 3) |
+                        (static_cast<uint64_t>(camera.lastLeft) << 4) |
+                        (static_cast<uint64_t>(camera.instX) << 5) |
+                        (static_cast<uint64_t>(camera.instY) << 6));
         for (int e : camera.edge) h = mix(h, static_cast<uint64_t>(static_cast<uint32_t>(e)));
         return h;
     }
@@ -525,8 +522,7 @@ namespace ap::sim {
                         camera.s6[i] = c1[i] * 3.f * u * v * v + v * camera.s5[i] * v * v + c2 * 3.f * u * u * v +
                                        end[i] * u * u * u;
                     } else if (progress != camera.s13[i]) {
-                        camera.s6[i] = (end[i] - camera.s6[i]) / ((1.f - camera.s13[i]) / (progress - camera.s13[i])) +
-                                       camera.s6[i];
+                        camera.s6[i] = (end[i] - camera.s6[i]) / ((1.f - camera.s13[i]) / (progress - camera.s13[i])) + camera.s6[i];
                         camera.s13[i] = progress;
                     }
                     if (follow) {

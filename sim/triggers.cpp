@@ -590,8 +590,7 @@ namespace ap::sim {
 
     //camera triggers, read from the recorded track when the camera can't be simulated
     bool cameraOnlyTrigger(int id) {
-        return id == ObjId::StaticCameraTrigger || id == ObjId::RotateCameraTrigger || id == ObjId::EdgeCameraTrigger ||
-               id == ObjId::CameraModeTrigger || id == ObjId::GameplayOffsetTrigger;
+        return id == ObjId::StaticCameraTrigger || id == ObjId::RotateCameraTrigger || id == ObjId::EdgeCameraTrigger || id == ObjId::CameraModeTrigger || id == ObjId::GameplayOffsetTrigger;
     }
 
 }

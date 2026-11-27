@@ -29,7 +29,6 @@ namespace ap::sim {
         bool validated = false;
     };
 
-    std::vector<uint8_t> robustifyPlan(Game const& start, std::vector<uint8_t> const& inputs, RobustOptions const& opt,
-                                       RobustReport* report = nullptr, std::atomic<bool> const* cancel = nullptr);
+    std::vector<uint8_t> robustifyPlan(Game const& start, std::vector<uint8_t> const& inputs, RobustOptions const& opt, RobustReport* report = nullptr, std::atomic<bool> const* cancel = nullptr);
 
 }

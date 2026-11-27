@@ -12,9 +12,7 @@ namespace ap {
     namespace {
         std::mutex s_keyMx;
         std::array<std::string, static_cast<size_t>(Action::Count)> s_keyNames;
-        constexpr char const* kMenuSettings[] = {"safe-mode",   "auto-reset",     "save-on-death",     "fast-search",
-                                                 "max-cps",     "search-beam",    "search-time-limit", "overlay",
-                                                 "show-status", "status-position"};
+        constexpr char const* kMenuSettings[] = {"safe-mode",   "auto-reset",     "save-on-death",     "fast-search", "max-cps",     "search-beam",    "search-time-limit", "overlay", "show-status", "status-position"};
     }
 
     // the only instance of the settings
@@ -141,7 +139,6 @@ $on_mod(Loaded) {
     }
     listenForSettingChanges<std::string>("status-position", [onChange](std::string) { onChange(); });
     for (size_t i = 0; i < static_cast<size_t>(ap::Action::Count); ++i) {
-        listenForSettingChanges<std::vector<Keybind>>(ap::actionSettingKey(static_cast<ap::Action>(i)),
-                                                      [](std::vector<Keybind>) { ap::refreshKeyNames(); });
+        listenForSettingChanges<std::vector<Keybind>>(ap::actionSettingKey(static_cast<ap::Action>(i)), [](std::vector<Keybind>) { ap::refreshKeyNames(); });
     }
 }

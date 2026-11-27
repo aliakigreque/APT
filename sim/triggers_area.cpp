@@ -13,7 +13,7 @@ namespace ap::sim {
         out.clear();
         auto inWindow = [&](std::array<int, 5> const& e) {
             return (e[3] >= wx0 && e[3] <= wx1 && e[4] >= wy0 && e[4] <= wy1) ||
-                   (e[1] >= wx0 && e[1] <= wx1 && e[2] >= wy0 && e[2] <= wy1);
+                (e[1] >= wx0 && e[1] <= wx1 && e[2] >= wy0 && e[2] <= wy1);
         };
         auto const& moved = g.trig.areaMoved;
         auto addOne = [&](int idx) {
@@ -30,7 +30,7 @@ namespace ap::sim {
         std::vector<uint64_t> const* const ownBits = g.trig.areaYBits ? g.trig.areaYBits.get() : nullptr;
         auto isOwn = [&](int i) {
             return (playerSet && bitOf(playerSet->objBits, i)) ||
-                   (ownBits && (((*ownBits)[static_cast<size_t>(i) >> 6] >> (i & 63)) & 1u));
+                (ownBits && (((*ownBits)[static_cast<size_t>(i) >> 6] >> (i & 63)) & 1u));
         };
 
         struct M {
@@ -99,18 +99,15 @@ namespace ap::sim {
             if (reference != *sharedCells) {
                 static thread_local int reportCount = 0;
                 if (reportCount++ < 20) {
-                    std::fprintf(stderr,
-                                 "[cell memo] MISMATCH tick %d x %.2f y %.2f : %zu entries (memo) vs %zu ; split %d\n",
-                                 g.tick, g.p1.x, g.p1.y, sharedCells->size(), reference.size(), ownBits ? 1 : 0);
+                    std::fprintf(stderr, "[cell memo] MISMATCH tick %d x %.2f y %.2f : %zu entries (memo) vs %zu ; split %d\n",
+                                g.tick, g.p1.x, g.p1.y, sharedCells->size(), reference.size(), ownBits ? 1 : 0);
                     int shown = 0;
                     for (size_t i = 0; i < std::min(reference.size(), sharedCells->size()) && shown < 5; ++i) {
                         if (reference[i] != (*sharedCells)[i]) {
                             ++shown;
                             auto const& a = (*sharedCells)[i];
                             auto const& b = reference[i];
-                            std::fprintf(
-                                    stderr,
-                                    "    uid %d/%d PO %d : memo (%d,%d)->(%d,%d) computed (%d,%d)->(%d,%d) ; dyn %d\n",
+                            std::fprintf(stderr, "uid %d/%d PO %d : memo (%d,%d)->(%d,%d) computed (%d,%d)->(%d,%d) ; dyn %d\n",
                                     g.world->objs[static_cast<size_t>(a[0])].uid,
                                     g.world->objs[static_cast<size_t>(b[0])].uid, isPO(g, b[0]) ? 1 : 0, a[1], a[2],
                                     a[3], a[4], b[1], b[2], b[3], b[4],
@@ -212,9 +209,8 @@ namespace ap::sim {
             if (reference != *ownCells) {
                 static thread_local int ownReportCount = 0;
                 if (ownReportCount++ < 20) {
-                    std::fprintf(stderr,
-                                 "[cell memo] MISMATCH (own part) tick %d x %.2f y %.2f : %zu entries (memo) vs %zu\n",
-                                 g.tick, g.p1.x, g.p1.y, ownCells->size(), reference.size());
+                    std::fprintf(stderr,"[cell memo] MISMATCH (own part) tick %d x %.2f y %.2f : %zu entries (memo) vs %zu\n",
+                                g.tick, g.p1.x, g.p1.y, ownCells->size(), reference.size());
                 }
                 ownScratch = reference;
                 ownCells = &ownScratch;
@@ -288,8 +284,7 @@ namespace ap::sim {
         size_t const n = playerSet->collObjs.size();
         if (motion.ver == 0 || cn.ver != motion.ver || cn.ps != playerSet || cn.sig != playerSet->sig ||
             cn.w != g.world) {
-            bool const sameSet =
-                    cn.ps == playerSet && cn.sig == playerSet->sig && cn.w == g.world && cn.ord.size() == n;
+            bool const sameSet = cn.ps == playerSet && cn.sig == playerSet->sig && cn.w == g.world && cn.ord.size() == n;
             cn.ver = motion.ver;
             cn.ps = playerSet;
             cn.sig = playerSet->sig;
@@ -307,7 +302,7 @@ namespace ap::sim {
             tl_canonRead = prevCanonRead;
             auto lessK = [&](int a, int b) {
                 return cn.x[static_cast<size_t>(a)] < cn.x[static_cast<size_t>(b)] ||
-                       (cn.x[static_cast<size_t>(a)] == cn.x[static_cast<size_t>(b)] && a < b);
+                    (cn.x[static_cast<size_t>(a)] == cn.x[static_cast<size_t>(b)] && a < b);
             };
             if (!sameSet) {
                 cn.ord.resize(n);
@@ -390,8 +385,7 @@ namespace ap::sim {
             if (trigAreaOff(g, e.first)) addOnce(e.first);
         auto const first = std::partition_point(cn.xs.begin(), cn.xs.end(),
                                                 [&](double x) { return World::cellOf(x + maxOffsetX + 1.0) < lo; });
-        auto const last = std::partition_point(first, cn.xs.end(),
-                                               [&](double x) { return !(World::cellOf(x - maxOffsetX - 1.0) > hi); });
+        auto const last = std::partition_point(first, cn.xs.end(), [&](double x) { return !(World::cellOf(x - maxOffsetX - 1.0) > hi); });
         for (auto i = first; i != last; ++i) {
             size_t const k = static_cast<size_t>(cn.ord[static_cast<size_t>(i - cn.xs.begin())]);
             if (cn.mark[k] == cn.stamp) continue;
@@ -423,12 +417,10 @@ namespace ap::sim {
                 ~WorkScope() { A.owner = nullptr; }
             };
 
-            // The area triggers of one step (GJBaseGameLayer::processAreaActions), done in stages with a memo shared by
-            // the search threads; the state that several stages share is members.
+            // The area triggers of one step (GJBaseGameLayer::processAreaActions), done in stages with a memo shared by the search threads; the state that several stages share is members.
             struct AreaStep {
                 AreaStep(Game& g, double dtSec) : g(g), dtSec(dtSec) {}
 
-                // arguments of trigAreaActionsImpl
                 Game& g;
                 double dtSec;
 
@@ -496,8 +488,7 @@ namespace ap::sim {
                 Flow lookUpAreaMemo();
                 // per-call setup of the work buffer the effects write into
                 void prepareWork();
-                // when the effects depend on the player or the camera, applies the parts that do not and the parts that
-                // do apart, so the first part can be shared
+                // when the effects depend on the player or the camera, applies the parts that do not and the parts that do apart, so the first part can be shared
                 Flow applySplit();
                 // applies all the areas in one pass
                 void applyAll();
@@ -869,9 +860,7 @@ namespace ap::sim {
                         bool const inRange = cellX0 <= cellX && cellX <= cellX1 && cellY0 <= cellY && cellY <= cellY1;
                         if (!inRange && !nearPlayer) return;
                         auto randomOf = [&](int k) {
-                            return (o.areaRi >= 0 && static_cast<size_t>(o.areaRi + k) < w->areaRand.size())
-                                           ? w->areaRand[static_cast<size_t>(o.areaRi + k)]
-                                           : 0.f;
+                            return (o.areaRi >= 0 && static_cast<size_t>(o.areaRi + k) < w->areaRand.size()) ? w->areaRand[static_cast<size_t>(o.areaRi + k)] : 0.f;
                         };
                         float dist;
                         bool show;
@@ -1018,8 +1007,7 @@ namespace ap::sim {
                     };
                     for (int idx : cand) {
                         if (!selectObj(idx)) continue;
-                        if (targetGroups && !std::binary_search(targetGroups->looseSorted.begin(),
-                                                                targetGroups->looseSorted.end(), idx))
+                        if (targetGroups && !std::binary_search(targetGroups->looseSorted.begin(), targetGroups->looseSorted.end(), idx))
                             continue;
                         effect(idx, nullptr);
                     }
@@ -1043,8 +1031,7 @@ namespace ap::sim {
             if (entries.size() > work->nSorted) {
                 auto const byKey = [](auto const& x, auto const& y) { return x.first < y.first; };
                 std::sort(entries.begin() + static_cast<long>(work->nSorted), entries.end(), byKey);
-                std::inplace_merge(entries.begin(), entries.begin() + static_cast<long>(work->nSorted), entries.end(),
-                                   byKey);
+                std::inplace_merge(entries.begin(), entries.begin() + static_cast<long>(work->nSorted), entries.end(), byKey);
             }
             std::shared_ptr<TrigState::AreaOffMap> map;
             for (auto const& e : entries) {
@@ -1239,8 +1226,7 @@ namespace ap::sim {
                     if (!(heavyW.areasUnsorted & (1u << k))) continue;
                     auto& list = heavyW.areasW(k);
                     msvc::sort(list.begin(), list.end(), [&](AreaInst const& x, AreaInst const& y) {
-                        return w->areaDefs[static_cast<size_t>(x.def)].priority >
-                               w->areaDefs[static_cast<size_t>(y.def)].priority;
+                        return w->areaDefs[static_cast<size_t>(x.def)].priority > w->areaDefs[static_cast<size_t>(y.def)].priority;
                     });
                 }
                 heavyW.areasUnsorted = 0;
@@ -1357,11 +1343,8 @@ namespace ap::sim {
                 uint64_t sig = mix64(0x243f6a8885a308d3ull, playerSet ? playerSet->sig : 0u);
                 for (int k = 0; k < 3; ++k) {
                     for (auto const& inst : H->areas[k]) {
-                        sig = mix64(sig, (static_cast<uint64_t>(k) << 60) ^
-                                                 (static_cast<uint64_t>(static_cast<uint32_t>(inst.def)) << 28) ^
-                                                 static_cast<uint64_t>(static_cast<uint32_t>(inst.target)));
-                        sig = mix64(sig, (static_cast<uint64_t>(static_cast<uint32_t>(inst.center)) << 8) |
-                                                 static_cast<uint64_t>(inst.paused ? 128 : depOf(k, inst)));
+                        sig = mix64(sig, (static_cast<uint64_t>(k) << 60) ^ (static_cast<uint64_t>(static_cast<uint32_t>(inst.def)) << 28) ^ static_cast<uint64_t>(static_cast<uint32_t>(inst.target)));
+                        sig = mix64(sig, (static_cast<uint64_t>(static_cast<uint32_t>(inst.center)) << 8) | static_cast<uint64_t>(inst.paused ? 128 : depOf(k, inst)));
                     }
                 }
                 static thread_local std::vector<std::shared_ptr<SplitInfo>> splitCache;
@@ -1581,10 +1564,7 @@ namespace ap::sim {
                             }
                         }
                     }
-                    uint64_t const sharedInVer = !sharedNeeded ? kEmptyVer
-                                                 : (T->areaSplitSig == split->sig && T->areaVerS != 0)
-                                                         ? T->areaVerS
-                                                         : canonVer(T->areaOff().items, notOwn);
+                    uint64_t const sharedInVer = !sharedNeeded ? kEmptyVer : (T->areaSplitSig == split->sig && T->areaVerS != 0) ? T->areaVerS : canonVer(T->areaOff().items, notOwn);
                     std::shared_ptr<TrigState::AreaOffMap const> sharedOut;
                     uint64_t sharedVer = kEmptyVer;
                     bool found = false;
@@ -1691,10 +1671,7 @@ namespace ap::sim {
                                         bool const useX = rel || def.dirType != 2;
                                         bool const useY = rel || def.dirType != 1;
                                         sharedHash =
-                                                mix64(sharedHash,
-                                                      (useX ? bits64(static_cast<float>(x)) : 0x11u) ^
-                                                              ((useY ? bits64(static_cast<float>(y)) : 0x22u) << 32) ^
-                                                              0xce17e5ull);
+                                                mix64(sharedHash, (useX ? bits64(static_cast<float>(x)) : 0x11u) ^ ((useY ? bits64(static_cast<float>(y)) : 0x22u) << 32) ^ 0xce17e5ull);
                                     }
                                 }
                             }
@@ -1729,9 +1706,7 @@ namespace ap::sim {
                                     else if (sharedObjs[j] < dynItems[i].first)
                                         ++j;
                                     else {
-                                        hash = hashPod(mix64(hash, static_cast<uint64_t>(
-                                                                           static_cast<uint32_t>(dynItems[i].first))),
-                                                       dynItems[i].second);
+                                        hash = hashPod(mix64(hash, static_cast<uint64_t>(static_cast<uint32_t>(dynItems[i].first))), dynItems[i].second);
                                         ++i;
                                         ++j;
                                     }
@@ -1768,9 +1743,7 @@ namespace ap::sim {
                             sharedOut = finishWork();
                             sharedVer = sharedOut ? canonVer(sharedOut->items, all) : kEmptyVer;
                             if (sm.e.size() < 32) {
-                                sm.e.push_back(SM::E{sharedInVer, sharedHash, sharedDynHash, split->sig, sharedVer,
-                                                     dtSec, g.p1.x, sKeyX2, sKeyCamX, sKeyZoom, sKeyDual, sharedOut,
-                                                     sharedGroupsHash, sharedInstHash, nullptr});
+                                sm.e.push_back(SM::E{sharedInVer, sharedHash, sharedDynHash, split->sig, sharedVer, dtSec, g.p1.x, sKeyX2, sKeyCamX, sKeyZoom, sKeyDual, sharedOut, sharedGroupsHash, sharedInstHash, nullptr});
                             }
                         }
                     }
@@ -1809,9 +1782,7 @@ namespace ap::sim {
                             ym.w = g.world;
                             ym.e.clear();
                         }
-                        uint64_t const ownInVer = (T->areaSplitSig == split->sig && T->areaVerY != 0)
-                                                          ? T->areaVerY
-                                                          : canonVer(T->areaOff().items, isOwn);
+                        uint64_t const ownInVer = (T->areaSplitSig == split->sig && T->areaVerY != 0) ? T->areaVerY : canonVer(T->areaOff().items, isOwn);
                         ownKeyParts[0] = mix64(split->sig, sharedVer);
                         ownKeyParts[1] = ownInVer;
                         ownKeyParts[2] = trigHeavyHash(*H);
@@ -1857,9 +1828,7 @@ namespace ap::sim {
                         else {
                             auto merged = std::make_shared<TrigState::AreaOffMap>();
                             merged->items.resize(sharedOut->items.size() + ownOut->items.size());
-                            std::merge(sharedOut->items.begin(), sharedOut->items.end(), ownOut->items.begin(),
-                                       ownOut->items.end(), merged->items.begin(),
-                                       [](auto const& x, auto const& y) { return x.first < y.first; });
+                            std::merge(sharedOut->items.begin(), sharedOut->items.end(), ownOut->items.begin(), ownOut->items.end(), merged->items.begin(), [](auto const& x, auto const& y) { return x.first < y.first; });
                             for (auto const& e : merged->items) {
                                 merged->bloom.set(TrigState::AreaOffMap::bloomHash(e.first));
                             }
@@ -1879,14 +1848,11 @@ namespace ap::sim {
                         size_t const refCount = reference ? reference->items.size() : 0;
                         bool same = gotCount == refCount;
                         for (size_t i = 0; same && i < gotCount; ++i) {
-                            same = got->items[i].first == reference->items[i].first &&
-                                   std::memcmp(&got->items[i].second, &reference->items[i].second, sizeof(AreaOff)) ==
-                                           0;
+                            same = got->items[i].first == reference->items[i].first && std::memcmp(&got->items[i].second, &reference->items[i].second, sizeof(AreaOff)) == 0;
                         }
                         if (!same) {
-                            std::fprintf(stderr,
-                                         "[area-split] MISMATCH tick %d : %zu entries (split) vs %zu (full), memo %s\n",
-                                         g.tick, gotCount, refCount, found ? "read back" : "computed");
+                            std::fprintf(stderr, "[area-split] MISMATCH tick %d : %zu entries (split) vs %zu (full), memo %s\n",
+                                        g.tick, gotCount, refCount, found ? "read back" : "computed");
                             int shown = 0;
                             for (size_t i = 0, j = 0; (i < gotCount || j < refCount) && shown < 6;) {
                                 int const ki = i < gotCount ? got->items[i].first : INT32_MAX;
@@ -1896,26 +1862,22 @@ namespace ap::sim {
                                                     sizeof(AreaOff)) != 0) {
                                         AreaOff const& gotOff = got->items[i].second;
                                         AreaOff const& refOff = reference->items[j].second;
-                                        std::fprintf(stderr,
-                                                     "    object %d (uid %d, %s) : dx %g/%g dy %g/%g rot %g/%g scl "
-                                                     "%d/%d sx %g/%g pdx %g/%g latch %d/%d st %d/%d\n",
-                                                     ki, w->objs[static_cast<size_t>(ki)].uid,
-                                                     isOwn(ki) ? "own" : "shared", gotOff.dx, refOff.dx, gotOff.dy,
-                                                     refOff.dy, gotOff.rot, refOff.rot, gotOff.sclOn, refOff.sclOn,
-                                                     gotOff.sx, refOff.sx, gotOff.pdx, refOff.pdx, gotOff.latch,
-                                                     refOff.latch, gotOff.latchStamp, refOff.latchStamp);
+                                        std::fprintf(stderr, "object %d (uid %d, %s) : dx %g/%g dy %g/%g rot %g/%g scl %d/%d sx %g/%g pdx %g/%g latch %d/%d st %d/%d\n",
+                                                    ki, w->objs[static_cast<size_t>(ki)].uid,
+                                                    isOwn(ki) ? "own" : "shared", gotOff.dx, refOff.dx, gotOff.dy,
+                                                    refOff.dy, gotOff.rot, refOff.rot, gotOff.sclOn, refOff.sclOn,
+                                                    gotOff.sx, refOff.sx, gotOff.pdx, refOff.pdx, gotOff.latch,
+                                                    refOff.latch, gotOff.latchStamp, refOff.latchStamp);
                                         ++shown;
                                     }
                                     ++i;
                                     ++j;
                                 } else if (ki < kj) {
-                                    std::fprintf(stderr, "    object %d (uid %d) extra in the split\n", ki,
-                                                 w->objs[static_cast<size_t>(ki)].uid);
+                                    std::fprintf(stderr, "object %d (uid %d) extra in the split\n", ki, w->objs[static_cast<size_t>(ki)].uid);
                                     ++i;
                                     ++shown;
                                 } else {
-                                    std::fprintf(stderr, "    object %d (uid %d) missing from the split\n", kj,
-                                                 w->objs[static_cast<size_t>(kj)].uid);
+                                    std::fprintf(stderr, "    object %d (uid %d) missing from the split\n", kj, w->objs[static_cast<size_t>(kj)].uid);
                                     ++j;
                                     ++shown;
                                 }
@@ -1930,19 +1892,16 @@ namespace ap::sim {
                         T->areaVer = ownHit->aVer;
                         T->areaMoved = *ownHit->moved;
                     } else {
-                        T->areaVer = T->areaOffEmpty()
-                                             ? 0
-                                             : (ownVer != kEmptyVer ? mix64(mix64(sharedVer, ownVer), 0x7e11a5ull)
-                                                                    : mix64(sharedVer, 0x5ab1e5ull));
+                        T->areaVer = T->areaOffEmpty() ? 0 : (ownVer != kEmptyVer ? mix64(mix64(sharedVer, ownVer), 0x7e11a5ull) : mix64(sharedVer, 0x5ab1e5ull));
                         finishState();
                         if (ownMemoOn && ym.e.size() < 64) {
                             ym.e.push_back(YM::E{ownKey,
-                                                 ownVer,
-                                                 T->areaVer,
-                                                 T->areaOffP,
-                                                 std::make_shared<std::vector<int> const>(T->areaMoved),
-                                                 {ownKeyParts[0], ownKeyParts[1], ownKeyParts[2], ownKeyParts[3],
-                                                  ownKeyParts[4], ownKeyParts[5]}});
+                                                ownVer,
+                                                T->areaVer,
+                                                T->areaOffP,
+                                                std::make_shared<std::vector<int> const>(T->areaMoved),
+                                                {ownKeyParts[0], ownKeyParts[1], ownKeyParts[2], ownKeyParts[3],
+                                                ownKeyParts[4], ownKeyParts[5]}});
                         }
                     }
                     addAfMoved(g);
@@ -1970,16 +1929,13 @@ namespace ap::sim {
                 size_t const computedCount = computedMap ? computedMap->items.size() : 0;
                 bool same = memoCount == computedCount;
                 for (size_t i = 0; same && i < memoCount; ++i) {
-                    same = memoMap->items[i].first == computedMap->items[i].first &&
-                           std::memcmp(&memoMap->items[i].second, &computedMap->items[i].second, sizeof(AreaOff)) == 0;
+                    same = memoMap->items[i].first == computedMap->items[i].first && std::memcmp(&memoMap->items[i].second, &computedMap->items[i].second, sizeof(AreaOff)) == 0;
                 }
                 if (!same) {
                     static thread_local int nrep = 0;
                     if (nrep++ < 20) {
-                        std::fprintf(stderr,
-                                     "[area memo] MISMATCH tick %d x %.3f y %.3f : %zu entries (memo) vs %zu "
-                                     "(computed) ; needY %d cam %d p2 %d pv %d\n",
-                                     g.tick, g.p1.x, g.p1.y, memoCount, computedCount, needY, needCam, needP2, needPv);
+                        std::fprintf(stderr, "[area memo] MISMATCH tick %d x %.3f y %.3f : %zu entries (memo) vs %zu (computed) ; needY %d cam %d p2 %d pv %d\n",
+                                    g.tick, g.p1.x, g.p1.y, memoCount, computedCount, needY, needCam, needP2, needPv);
                         int shown = 0;
                         for (size_t i = 0, j = 0; (i < memoCount || j < computedCount) && shown < 4;) {
                             int const ki = i < memoCount ? memoMap->items[i].first : INT32_MAX;
@@ -1989,25 +1945,21 @@ namespace ap::sim {
                                                 sizeof(AreaOff)) != 0) {
                                     AreaOff const& memoOff = memoMap->items[i].second;
                                     AreaOff const& computedOff = computedMap->items[j].second;
-                                    std::fprintf(stderr,
-                                                 "    object uid %d PO %d : dx %g/%g dy %g/%g rot %g/%g sx %g/%g pdx "
-                                                 "%g/%g\n",
-                                                 w->objs[static_cast<size_t>(ki)].uid, isPO(g, ki) ? 1 : 0, memoOff.dx,
-                                                 computedOff.dx, memoOff.dy, computedOff.dy, memoOff.rot,
-                                                 computedOff.rot, memoOff.sx, computedOff.sx, memoOff.pdx,
-                                                 computedOff.pdx);
+                                    std::fprintf(stderr, "object uid %d PO %d : dx %g/%g dy %g/%g rot %g/%g sx %g/%g pdx %g/%g\n",
+                                                w->objs[static_cast<size_t>(ki)].uid, isPO(g, ki) ? 1 : 0, memoOff.dx,
+                                                computedOff.dx, memoOff.dy, computedOff.dy, memoOff.rot,
+                                                computedOff.rot, memoOff.sx, computedOff.sx, memoOff.pdx,
+                                                computedOff.pdx);
                                     ++shown;
                                 }
                                 ++i;
                                 ++j;
                             } else if (ki < kj) {
-                                std::fprintf(stderr, "    uid %d only in the memo\n",
-                                             w->objs[static_cast<size_t>(ki)].uid);
+                                std::fprintf(stderr, "uid %d only in the memo\n", w->objs[static_cast<size_t>(ki)].uid);
                                 ++i;
                                 ++shown;
                             } else {
-                                std::fprintf(stderr, "    uid %d only in the computation\n",
-                                             w->objs[static_cast<size_t>(kj)].uid);
+                                std::fprintf(stderr, "uid %d only in the computation\n", w->objs[static_cast<size_t>(kj)].uid);
                                 ++j;
                                 ++shown;
                             }
@@ -2016,10 +1968,8 @@ namespace ap::sim {
                             for (auto const& inst : H->areas[k]) {
                                 if (!inst.paused) {
                                     std::fprintf(
-                                            stderr, "    instance uid %d kind %d dep %d\n",
-                                            w->objs[static_cast<size_t>(w->areaDefs[static_cast<size_t>(inst.def)].idx)]
-                                                    .uid,
-                                            k, depOf(k, inst));
+                                            stderr, "instance uid %d kind %d dep %d\n",
+                                            w->objs[static_cast<size_t>(w->areaDefs[static_cast<size_t>(inst.def)].idx)].uid, k, depOf(k, inst));
                                 }
                             }
                         }

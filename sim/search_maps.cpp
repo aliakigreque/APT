@@ -43,10 +43,10 @@ namespace ap::sim {
             bit(p.isSideways, 27);
             bit(p.isGoingLeft, 28);
             int speedIdx = p.playerSpeed == 0.7f   ? 0
-                           : p.playerSpeed == 0.9f ? 1
-                           : p.playerSpeed == 1.1f ? 2
-                           : p.playerSpeed == 1.3f ? 3
-                                                   : 4;
+                        : p.playerSpeed == 0.9f ? 1
+                        : p.playerSpeed == 1.1f ? 2
+                        : p.playerSpeed == 1.3f ? 3
+                        : 4;
             flags |= static_cast<uint32_t>(speedIdx) << 24;
             k.flags = flags;
             k.extra = static_cast<uint32_t>(g.osSize()) * 131u + static_cast<uint32_t>(p.touchingRings.size()) * 7u +
@@ -98,8 +98,7 @@ namespace ap::sim {
             float maxX = -1e30f;
             extent.groundY = groundY;
             auto gameplay = [](Obj const& o) {
-                return o.type != Decoration && !o.trigger && !o.disabled && o.type != Modifier &&
-                       o.type != CollisionObject && o.rect.w < 3000.f && o.rect.h < 3000.f;
+                return o.type != Decoration && !o.trigger && !o.disabled && o.type != Modifier && o.type != CollisionObject && o.rect.w < 3000.f && o.rect.h < 3000.f;
             };
             for (auto const& o : w.objs)
                 if (gameplay(o)) {
@@ -138,8 +137,7 @@ namespace ap::sim {
             float minX = 1e30f;
             float maxX = -1e30f;
             auto collidable = [&excluded](Obj const& o) {
-                if (!(o.type != Decoration && !o.trigger && o.type != Modifier && o.type != CollisionObject &&
-                      o.rect.w < 3000.f && o.rect.h < 3000.f))
+                if (!(o.type != Decoration && !o.trigger && o.type != Modifier && o.type != CollisionObject && o.rect.w < 3000.f && o.rect.h < 3000.f))
                     return false;
                 for (auto const& box : excluded) {
                     if (o.rect.maxX() >= box[0] && o.rect.x <= box[1] && o.rect.maxY() >= box[2] && o.rect.y <= box[3])
@@ -170,8 +168,7 @@ namespace ap::sim {
                 if (!o.movable) {
                     int const staticC0 = std::max(0, static_cast<int>(std::floor((o.rect.x - minX) / VoidHull::kCol)));
                     int const staticC1 =
-                            std::min(static_cast<int>(n) - 1,
-                                     static_cast<int>(std::floor((o.rect.maxX() - minX) / VoidHull::kCol)));
+                            std::min(static_cast<int>(n) - 1, static_cast<int>(std::floor((o.rect.maxX() - minX) / VoidHull::kCol)));
                     for (int c = staticC0; c <= staticC1; ++c) hasStatic[static_cast<size_t>(c)] = 1;
                 }
                 int const c0 = std::max(0, static_cast<int>(std::floor((o.rect.x - minX) / VoidHull::kCol)));
@@ -241,8 +238,7 @@ namespace ap::sim {
             float minY = 1e30f;
             float maxY = -1e30f;
             auto gameplay = [](Obj const& o) {
-                return o.type != Decoration && !o.trigger && !o.disabled && o.type != Modifier &&
-                       o.type != CollisionObject && o.rect.w < 3000.f && o.rect.h < 3000.f;
+                return o.type != Decoration && !o.trigger && !o.disabled && o.type != Modifier && o.type != CollisionObject && o.rect.w < 3000.f && o.rect.h < 3000.f;
             };
             for (auto const& o : w.objs) {
                 if (!gameplay(o)) continue;

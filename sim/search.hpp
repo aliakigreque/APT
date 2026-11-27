@@ -79,6 +79,7 @@ namespace ap::sim {
         int maxLead = 0;
         int leadResume = 1200;
         std::atomic<bool> const* starving = nullptr;
+        std::atomic<bool>* holding = nullptr;
         int stuckKill = 960;
         float stuckMargin = 30.f;
         int escapeKill = 140;
@@ -134,7 +135,6 @@ namespace ap::sim {
     bool menuWanted(World const& w);
     std::vector<std::pair<int, int>> persistAfterOf(Game const& g);
 
-    SearchResult searchPath(Game const& start, SearchOptions const& opt, std::atomic<bool> const* cancel = nullptr,
-                            std::function<void(int, int)> const& progress = {});
+    SearchResult searchPath(Game const& start, SearchOptions const& opt, std::atomic<bool> const* cancel = nullptr, std::function<void(int, int)> const& progress = {});
 
 }

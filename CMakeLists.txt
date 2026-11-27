@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(AutoPathingTool VERSION 1.0.0)
+project(AutoPathingTool VERSION 1.0.1)
 
 add_library(${PROJECT_NAME} SHARED
     src/main.cpp

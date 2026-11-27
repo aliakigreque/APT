@@ -192,9 +192,7 @@ namespace ap {
         w.platformer = pl->m_isPlatformer;
         w.maxGameplayY = pl->m_maxGameplayY;
         w.twoPlayer = pl->m_levelSettings ? pl->m_levelSettings->m_twoPlayerMode : false;
-        w.ySection = pl->m_levelSettings
-                             ? (pl->m_levelSettings->m_platformerMode || pl->m_levelSettings->m_dynamicLevelHeight)
-                             : pl->m_isPlatformer;
+        w.ySection = pl->m_levelSettings ? (pl->m_levelSettings->m_platformerMode || pl->m_levelSettings->m_dynamicLevelHeight) : pl->m_isPlatformer;
         if (auto* settings = pl->m_levelSettings) {
             w.startMode = settings->m_startMode;
             w.startSpeed = static_cast<int>(settings->m_startSpeed);
@@ -421,9 +419,7 @@ namespace ap {
                     data.rgChannel = rotate->m_targetChannelID;
                     data.rgModX = rotate->m_velocityModX;
                     data.rgModY = rotate->m_velocityModY;
-                    data.rgFlags = (rotate->m_editVelocity ? 1 : 0) | (rotate->m_overrideVelocity ? 2 : 0) |
-                                   (rotate->m_changeChannel ? 4 : 0) | (rotate->m_channelOnly ? 8 : 0) |
-                                   (rotate->m_instantOffset ? 16 : 0) | (rotate->m_dontSlide ? 32 : 0) | 64;
+                    data.rgFlags = (rotate->m_editVelocity ? 1 : 0) | (rotate->m_overrideVelocity ? 2 : 0) | (rotate->m_changeChannel ? 4 : 0) | (rotate->m_channelOnly ? 8 : 0) | (rotate->m_instantOffset ? 16 : 0) | (rotate->m_dontSlide ? 32 : 0) | 64;
                 }
                 if (o->m_objectID == 2899) {
                     auto* options = static_cast<GameOptionsTrigger*>(o);
@@ -450,9 +446,7 @@ namespace ap {
 #endif
             {
                 auto* teleport = typeinfo_cast<TeleportPortalObject*>(o);
-                if (!teleport && (o->m_objectID == 3022 || o->m_objectID == 3027 ||
-                                  o->m_objectType == GameObjectType::TeleportPortal ||
-                                  o->m_objectType == GameObjectType::TeleportOrb)) {
+                if (!teleport && (o->m_objectID == 3022 || o->m_objectID == 3027 || o->m_objectType == GameObjectType::TeleportPortal || o->m_objectType == GameObjectType::TeleportOrb)) {
                     teleport = static_cast<TeleportPortalObject*>(o);
                 }
                 if (teleport) {
@@ -486,8 +480,7 @@ namespace ap {
                 data.forceKey = forceBlock->m_forceID;
             }
             {
-                bool const dashType = o->m_objectType == GameObjectType::DashRing ||
-                                      o->m_objectType == GameObjectType::GravityDashRing;
+                bool const dashType = o->m_objectType == GameObjectType::DashRing || o->m_objectType == GameObjectType::GravityDashRing;
                 auto* dashRing = typeinfo_cast<DashRingObject*>(o);
                 if (!dashRing && dashType) dashRing = static_cast<DashRingObject*>(o);
                 if (dashRing) {
@@ -507,8 +500,7 @@ namespace ap {
                 data.startRotY = o->m_startRotationY;
                 data.startScaleX = o->m_startScaleX;
                 data.startScaleY = o->m_startScaleY;
-                data.hasStartRS = data.startRotX != data.rotX || data.startRotY != data.rotY ||
-                                  data.startScaleX != data.scaleX || data.startScaleY != data.scaleY;
+                data.hasStartRS = data.startRotX != data.rotX || data.startRotY != data.rotY || data.startScaleX != data.scaleX || data.startScaleY != data.scaleY;
             }
             if (o->m_groups && o->m_groupCount > 0)
                 for (int i = 0; i < o->m_groupCount && i < 10; ++i) data.groups.push_back((*o->m_groups)[i]);
@@ -583,8 +575,7 @@ namespace ap {
     }
 
     // one json line for the level, then group parents, area random values, and one line per object
-    geode::Result<std::filesystem::path> writeWorld(sim::World const& w, PlayLayer* pl,
-                                                    std::filesystem::path const& dir, std::string const& tag) {
+    geode::Result<std::filesystem::path> writeWorld(sim::World const& w, PlayLayer* pl, std::filesystem::path const& dir, std::string const& tag) {
         std::error_code error;
         std::filesystem::create_directories(dir, error);
         if (pl && pl->m_level) {
@@ -622,13 +613,10 @@ namespace ap {
             std::string parents;
             for (size_t group = 0; group < w.exportParents.size(); ++group)
                 if (w.exportParents[group] >= 0) {
-                    parents += fmt::format("{}[{},{}]", parents.empty() ? "" : ",", group,
-                                           w.objs[static_cast<size_t>(w.exportParents[group])].uid);
+                    parents += fmt::format("{}[{},{}]", parents.empty() ? "" : ",", group, w.objs[static_cast<size_t>(w.exportParents[group])].uid);
                 }
             if (!parents.empty())
-                file << fmt::format(R"({{"ev":"parents","p":[{}]}})"
-                                    "\n",
-                                    parents);
+                file << fmt::format(R"({{"ev":"parents","p":[{}]}})" "\n",parents);
         }
         if ((w.hasAreaEffects || !w.advDefs.empty()) && !w.areaRand.empty()) {
             std::string values;
@@ -698,8 +686,7 @@ namespace ap {
                 addInt("rtid", o.rotTarget);
                 addFloat("roff", o.rotOffset);
                 if (o.aimExt && (o.tflags & (sim::Obj::TF_UseMoveTarget | sim::Obj::TF_DirSnap))) {
-                    extra += fmt::format(R"(,"aim":[{},{},{},{},{}])", o.rotMinX, o.rotMinY, o.rotMaxX, o.rotMaxY,
-                                         o.dynEasing);
+                    extra += fmt::format(R"(,"aim":[{},{},{},{},{}])", o.rotMinX, o.rotMinY, o.rotMaxX, o.rotMaxY, o.dynEasing);
                 }
                 addFloat("fxm", o.followXMod);
                 addFloat("fym", o.followYMod);
@@ -743,8 +730,7 @@ namespace ap {
             if (auto const* ext = w.extOf(o)) extra += fmt::format(R"(,"kv":"{}")", sim::formatExtProps(*ext));
             if (o.id == sim::ObjId::Text) {
                 size_t const index = static_cast<size_t>(&o - w.objs.data());
-                auto it = std::lower_bound(w.texts.begin(), w.texts.end(), static_cast<int>(index),
-                                           [](auto const& entry, int value) { return entry.first < value; });
+                auto it = std::lower_bound(w.texts.begin(), w.texts.end(), static_cast<int>(index), [](auto const& entry, int value) { return entry.first < value; });
                 if (it != w.texts.end() && it->first == static_cast<int>(index)) {
                     std::string escaped;
                     for (char c : it->second) {
@@ -781,8 +767,7 @@ namespace ap {
                         o.tpSnapGround, f32(o.tpRedirectMod), f32(o.tpRedirectMin), f32(o.tpRedirectMax), o.tpEase,
                         o.tpInstantCam);
             if (o.id == sim::ObjId::ForceBlock || o.id == sim::ObjId::ForceCircle)
-                extra += fmt::format(R"(,"fb":[{},{},{},{},{},{}])", f32(o.force), f32(o.forceMin), f32(o.forceMax),
-                                     o.forceRelative ? 1 : 0, o.forceRange ? 1 : 0, o.forceKey);
+                extra += fmt::format(R"(,"fb":[{},{},{},{},{},{}])", f32(o.force), f32(o.forceMin), f32(o.forceMax), o.forceRelative ? 1 : 0, o.forceRange ? 1 : 0, o.forceKey);
             if (o.dashSpeed != 0.f || o.maxDuration != 0.f)
                 extra +=
                         fmt::format(R"(,"dashSpeed":{},"endBoost":{},"maxDur":{},"allowCollide":{},"stopSlide":{})",
@@ -793,8 +778,7 @@ namespace ap {
                 extra += fmt::format(R"(,"ri":{})", o.areaRi);
             if (o.material != 0) extra += fmt::format(R"(,"mat":{})", o.material);
             if (o.hasStartRS)
-                extra += fmt::format(R"(,"srs":[{},{},{},{}])", f32(o.startRotX), f32(o.startRotY), f32(o.startScaleX),
-                                     f32(o.startScaleY));
+                extra += fmt::format(R"(,"srs":[{},{},{},{}])", f32(o.startRotX), f32(o.startRotY), f32(o.startScaleX), f32(o.startScaleY));
             std::string groups;
             for (size_t i = 0; i < o.groups.size(); ++i) groups += fmt::format("{}{}", i ? "," : "", o.groups[i]);
             std::string obb;

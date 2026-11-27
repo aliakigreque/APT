@@ -167,10 +167,10 @@ namespace ap::sim {
             if (p.fallStartY != 0.f) {
                 float const fallDistance = std::fabs(p.fallStartY - p.y);
                 int const fallEvent = fallDistance > 450.f   ? GameEvent::FallVHigh
-                                      : fallDistance > 300.f ? GameEvent::FallHigh
-                                      : fallDistance > 150.f ? GameEvent::FallMed
-                                      : fallDistance > 7.5f  ? GameEvent::FallLow
-                                                             : GameEvent::None;
+                                    : fallDistance > 300.f ? GameEvent::FallHigh
+                                    : fallDistance > 150.f ? GameEvent::FallMed
+                                    : fallDistance > 7.5f  ? GameEvent::FallLow
+                                                            : GameEvent::None;
                 if (fallEvent) trigGameEvent(g, fallEvent, material);
             }
             p.fallStartY = 0.f;
@@ -491,8 +491,7 @@ namespace ap::sim {
         bool aboveSlope = false;
         bool floorSide = false;
         bool const isBreakable = sourceObject && sourceObject.getType() == Breakable;
-        bool const isCube = !(self.isShip || self.isBird || self.isDart || self.isSwing || self.isBall ||
-                              self.isRobot || self.isSpider);
+        bool const isCube = !(self.isShip || self.isBird || self.isDart || self.isSwing || self.isBall || self.isRobot || self.isSpider);
         bool const isFlying = self.isShip || self.isBird || self.isDart || self.isSwing;
 
         auto noteAfterLanding = [&](bool ceiling) {
@@ -693,8 +692,7 @@ namespace ap::sim {
                             handled = true;
                         }
                         if (!handled) {
-                            if ((0.0 <= self.yVelocity || (self.isPlatformer && 0.0 < self.yVelocityRelated3) ||
-                                 self.wasOnSlope || fastMover) &&
+                            if ((0.0 <= self.yVelocity || (self.isPlatformer && 0.0 < self.yVelocityRelated3) || self.wasOnSlope || fastMover) &&
                                 (!nearSlope || !aboveSlope)) {
                                 if (headSide && 0.0 < (self.isUpsideDown ? -1.0 : 1.0) * self.yVelocity) {
                                     trigGameEvent(g, GameEvent::HitHead);
@@ -780,8 +778,7 @@ namespace ap::sim {
                     destroyPlayer(g, self, sourceObject ? sourceObject : object);
                     return true;
                 }
-                double const newY = !self.isUpsideDown ? objectMinY - static_cast<double>(halfH)
-                                                       : static_cast<double>(halfH) + objectMaxY;
+                double const newY = !self.isUpsideDown ? objectMinY - static_cast<double>(halfH) : static_cast<double>(halfH) + objectMaxY;
                 setPosition(self, self.x, static_cast<float>(newY));
                 hitGround(g, self, sourceObject, true);
                 self.isOnGround2 = false;
@@ -821,10 +818,8 @@ namespace ap::sim {
                 self.slopeEndTime = self.totalTime;
                 double const slopeSpeed = static_cast<double>(self.slopeVelocity);
                 double const yv = self.yVelocity;
-                bool slopeBoost = (slopeSpeed < 0.0 && slopeSpeed < yv && self.isCurrentSlopeTop) ||
-                                  (0.0 < slopeSpeed && yv < slopeSpeed && !self.isCurrentSlopeTop);
-                if ((!self.maybeIsBoosted || self.isShip || self.isBird || self.isDart || self.isSwing ||
-                     self.isBall) &&
+                bool slopeBoost = (slopeSpeed < 0.0 && slopeSpeed < yv && self.isCurrentSlopeTop) || (0.0 < slopeSpeed && yv < slopeSpeed && !self.isCurrentSlopeTop);
+                if ((!self.maybeIsBoosted || self.isShip || self.isBird || self.isDart || self.isSwing || self.isBall) &&
                     slopeBoost) {
                     double slopeTime = self.totalTime - self.slopeStartTime;
                     double slopeFactor = 1.0;
@@ -888,8 +883,7 @@ namespace ap::sim {
                 if (self.collidedTopMinY < static_cast<double>(self.y) &&
                     self.collidedTopMinY < static_cast<double>(self.lastY))
                     noSqueeze = true;
-            } else if (static_cast<double>(self.y) < self.collidedTopMinY &&
-                       static_cast<double>(self.lastY) < self.collidedTopMinY)
+            } else if (static_cast<double>(self.y) < self.collidedTopMinY && static_cast<double>(self.lastY) < self.collidedTopMinY)
                 noSqueeze = true;
             if (!(noSqueeze || playerHeight * squeezeRatio <= gap)) {
                 if (!self.ignoreDamage) {

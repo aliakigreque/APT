@@ -44,14 +44,12 @@ namespace ap::sim {
                     if (m > loguy) {
                         do {
                             ++loguy;
-                        } while (loguy < m &&
-                                 comp(items[static_cast<size_t>(loguy)], items[static_cast<size_t>(m)]) <= 0);
+                        } while (loguy < m && comp(items[static_cast<size_t>(loguy)], items[static_cast<size_t>(m)]) <= 0);
                     }
                     if (m <= loguy) {
                         do {
                             ++loguy;
-                        } while (loguy <= H &&
-                                 comp(items[static_cast<size_t>(loguy)], items[static_cast<size_t>(m)]) <= 0);
+                        } while (loguy <= H && comp(items[static_cast<size_t>(loguy)], items[static_cast<size_t>(m)]) <= 0);
                     }
                     do {
                         --higuy;

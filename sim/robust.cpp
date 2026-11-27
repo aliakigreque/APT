@@ -21,12 +21,12 @@ namespace ap::sim {
         // exact compare of the player fields that decide what happens next
         bool samePlayer(Player const& p, Player const& q) {
             return p.x == q.x && p.y == q.y && p.yVelocity == q.yVelocity && p.isUpsideDown == q.isUpsideDown &&
-                   p.isShip == q.isShip && p.isBall == q.isBall && p.isBird == q.isBird && p.isDart == q.isDart &&
-                   p.isRobot == q.isRobot && p.isSpider == q.isSpider && p.isSwing == q.isSwing &&
-                   p.isOnGround == q.isOnGround && p.isOnGround2 == q.isOnGround2 && p.vehicleSize == q.vehicleSize &&
-                   p.playerSpeed == q.playerSpeed && p.gravityMod == q.gravityMod && p.isDashing == q.isDashing &&
-                   p.holdingJump == q.holdingJump && p.jumpBuffered == q.jumpBuffered && p.isSideways == q.isSideways &&
-                   p.isGoingLeft == q.isGoingLeft && p.isDead == q.isDead;
+                p.isShip == q.isShip && p.isBall == q.isBall && p.isBird == q.isBird && p.isDart == q.isDart &&
+                p.isRobot == q.isRobot && p.isSpider == q.isSpider && p.isSwing == q.isSwing &&
+                p.isOnGround == q.isOnGround && p.isOnGround2 == q.isOnGround2 && p.vehicleSize == q.vehicleSize &&
+                p.playerSpeed == q.playerSpeed && p.gravityMod == q.gravityMod && p.isDashing == q.isDashing &&
+                p.holdingJump == q.holdingJump && p.jumpBuffered == q.jumpBuffered && p.isSideways == q.isSideways &&
+                p.isGoingLeft == q.isGoingLeft && p.isDead == q.isDead;
         }
 
         // returns true if both games will play the rest of the plan the same way
@@ -48,8 +48,7 @@ namespace ap::sim {
     }
 
     // tries every shift of each edge, keeps the ones that end in the same state, then centers the edge
-    std::vector<uint8_t> robustifyPlan(Game const& start, std::vector<uint8_t> const& inputs, RobustOptions const& opt,
-                                       RobustReport* report, std::atomic<bool> const* cancel) {
+    std::vector<uint8_t> robustifyPlan(Game const& start, std::vector<uint8_t> const& inputs, RobustOptions const& opt, RobustReport* report, std::atomic<bool> const* cancel) {
         RobustReport rep;
         int const planSize = static_cast<int>(inputs.size());
         int const startTick = start.tick;
@@ -66,8 +65,7 @@ namespace ap::sim {
                 }
             }
         }
-        std::sort(segs.begin(), segs.end(),
-                  [](Seg const& x, Seg const& y) { return x.a != y.a ? x.a < y.a : x.bit < y.bit; });
+        std::sort(segs.begin(), segs.end(), [](Seg const& x, Seg const& y) { return x.a != y.a ? x.a < y.a : x.bit < y.bit; });
         std::vector<uint8_t> plan = inputs;
         Game cur = start;
         int curTick = 0;
@@ -86,8 +84,7 @@ namespace ap::sim {
             edges.push_back(Edge{segs[k].a, static_cast<int>(k), true});
             if (segs[k].b < planSize) edges.push_back(Edge{segs[k].b, static_cast<int>(k), false});
         }
-        std::sort(edges.begin(), edges.end(),
-                  [](Edge const& x, Edge const& y) { return x.pos != y.pos ? x.pos < y.pos : x.seg < y.seg; });
+        std::sort(edges.begin(), edges.end(), [](Edge const& x, Edge const& y) { return x.pos != y.pos ? x.pos < y.pos : x.seg < y.seg; });
         auto setSeg = [&](std::vector<uint8_t>& p, Seg const& sg, bool on) {
             uint8_t const mask = static_cast<uint8_t>(1u << sg.bit);
             for (int t = std::max(0, sg.a); t < std::min(planSize, sg.b); ++t) {
@@ -233,8 +230,7 @@ namespace ap::sim {
             Game changed = start;
             run(original, inputs, 0, planSize);
             run(changed, plan, 0, planSize);
-            bool const okFinal = !changed.died && (changed.completed == original.completed) &&
-                                 (original.completed || samePhys(original, changed) || !original.died);
+            bool const okFinal = !changed.died && (changed.completed == original.completed) && (original.completed || samePhys(original, changed) || !original.died);
             if (!okFinal) {
                 result = inputs;
                 rep.moved = 0;

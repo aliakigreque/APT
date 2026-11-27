@@ -52,8 +52,7 @@ namespace ap::sim {
 
     // same as CCRect::intersectsRect, touching edges count
     inline bool intersectsRect(Rect const& a, Rect const& b) {
-        return !(getMaxX(a) < getMinX(b) || getMaxX(b) < getMinX(a) || getMaxY(a) < getMinY(b) ||
-                 getMaxY(b) < getMinY(a));
+        return !(getMaxX(a) < getMinX(b) || getMaxX(b) < getMinX(a) || getMaxY(a) < getMinY(b) || getMaxY(b) < getMinY(a));
     }
 
     // true if both rects are exactly the same
@@ -435,9 +434,7 @@ namespace ap::sim {
     // index in the recorded timeline, -1 if static
     inline int GObj::dyn() const {
         Timeline const* tl = g ? g->world->timeline : nullptr;
-        return (tl && index >= 0 && static_cast<size_t>(index) < tl->dynOf.size())
-                       ? tl->dynOf[static_cast<size_t>(index)]
-                       : -1;
+        return (tl && index >= 0 && static_cast<size_t>(index) < tl->dynOf.size()) ? tl->dynOf[static_cast<size_t>(index)] : -1;
     }
 
     // true if triggers are simulated
@@ -670,8 +667,7 @@ namespace ap::sim {
     void disablePlayerControls(Game& g, Player& p);
     void doReversePlayer(Game& g, Player& p, bool left);
     void applyCameraMode(Game& g, GObj object);
-    void playerRotateGameplay(Game& g, Player& p, int moveDir, int groundDir, bool editVel, float modX, float modY,
-                              bool overrideVel, bool dontSlide);
+    void playerRotateGameplay(Game& g, Player& p, int moveDir, int groundDir, bool editVel, float modX, float modY, bool overrideVel, bool dontSlide);
     void reversePlayer(Game& g, Player& p, GObj object);
     void enablePlayerControls(Game& g, Player& p);
     void propellPlayer(Player& p, float yVelocity, bool noEffects, int objectType);

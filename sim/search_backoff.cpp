@@ -8,6 +8,7 @@ namespace ap::sim {
     auto SearchRun::backOff() -> Flow {
         if (liveNext.empty()) {
             allowKilledZones();
+            checkDeadPortals();
             findLoopImpasse();
             findTrapImpasse();
             if (Flow const flow = retryNominalBeam(); flow != Flow::Next) return flow;
@@ -25,10 +26,23 @@ namespace ap::sim {
         return Flow::Next;
     }
 
-    // the layer died soon after some kills: lets the next try through the places of those kills (revisits,
-    // flying exits, escapes, away zones)
+    // the layer died soon after some kills: lets the next try through the places of those kills
     auto SearchRun::allowKilledZones() -> void {
         ++res.stats.widenings;
+        if (backPortalsOn && !backPortals.empty()) {
+            size_t nKills = 0;
+            size_t nSeeded = 0;
+            for (auto const& v : killersOf) {
+                nKills += v.size();
+                for (int u : v)
+                    if (u == kSeedLoopKiller) ++nSeeded;
+            }
+            if (nSeeded > 0 && nSeeded * 5 >= nKills && ++backPortalDeadEnds >= 2) {
+                backPortalsOn = false;
+                if (debugOptions().check)
+                    std::fprintf(stderr, "[loop] tick %d (x~%.0f) : dead end on the teleports that send the player back ; " "they are allowed again\n", tick, lastLiveX);
+            }
+        }
         if (revisitOn && tick - lastRevisitKillTick <= kFourSeconds) {
             bool covered = false;
             for (auto const& z : revisitOk)
@@ -59,15 +73,11 @@ namespace ap::sim {
                     break;
                 }
             if (widened && debugOptions().check)
-                std::fprintf(stderr, "[fly] tick %d (x~%.0f) : dead end again, relaxed zone widened\n", tick,
-                             lastLiveX);
+                std::fprintf(stderr, "[fly] tick %d (x~%.0f) : dead end again, relaxed zone widened\n", tick, lastLiveX);
             if (!covered) {
                 flyOkZones.emplace_back(lastFlyKillX - 600.f, std::max(lastFlyKillX, lastLiveX) + 300.f);
                 if (debugOptions().check)
-                    std::fprintf(stderr,
-                                 "[fly] tick %d (x~%.0f) : dead end after \"two missed exits\" kills (x~%.0f) ; rule "
-                                 "relaxed from x %.0f to %.0f\n",
-                                 tick, lastLiveX, lastFlyKillX, flyOkZones.back().first, flyOkZones.back().second);
+                    std::fprintf(stderr, "[fly] tick %d (x~%.0f) : dead end after \"two missed exits\" kills (x~%.0f) ; rule relaxed from x %.0f to %.0f\n", tick, lastLiveX, lastFlyKillX, flyOkZones.back().first, flyOkZones.back().second);
             }
         }
         if (tick - lastEscKillTick <= 480) {
@@ -80,10 +90,7 @@ namespace ap::sim {
             if (!covered) {
                 escOkZones.emplace_back(lastEscKillX - 3000.f, std::max(lastEscKillX, lastLiveX) + 600.f);
                 if (debugOptions().check)
-                    std::fprintf(stderr,
-                                 "[structure] tick %d (x~%.0f) : dead end after \"structure exit\" kills (x~%.0f) ; "
-                                 "rule relaxed from x %.0f to %.0f\n",
-                                 tick, lastLiveX, lastEscKillX, escOkZones.back().first, escOkZones.back().second);
+                    std::fprintf(stderr, "[structure] tick %d (x~%.0f) : dead end after \"structure exit\" kills (x~%.0f) ; rule relaxed from x %.0f to %.0f\n", tick, lastLiveX, lastEscKillX, escOkZones.back().first, escOkZones.back().second);
             }
         }
         if (tick - lastAwayKillTick <= 480 && cues.presence.ok()) {
@@ -99,18 +106,38 @@ namespace ap::sim {
                     covered = true;
                     break;
                 }
+                if (covered && !extended) {
+                size_t nDead = 0;
+                size_t nAway = 0;
+                for (auto const& v : killersOf)
+                    for (int u : v) {
+                        ++nDead;
+                        if (u == kAwayKiller) ++nAway;
+                    }
+                bool freeAlready = false;
+                for (auto const& z : awayFreeZones)
+                    if (lastLiveX >= z.first && lastLiveX <= z.second) freeAlready = true;
+                if (!freeAlready && nAway > 0 && nAway * 2 >= nDead) {
+                    awayFreeZones.emplace_back(lastLiveX - 1500.f, killX + 3000.f);
+                    if (debugOptions().check)
+                        std::fprintf(stderr,
+                                    "[off-level] tick %d (x~%.0f) : off-level kills again (%zu of %zu deaths) ; rule "
+                                    "lifted from x %.0f to %.0f\n",
+                                    tick, lastLiveX, nAway, nDead, lastLiveX - 1500.f, killX + 3000.f);
+                }
+            }
             if (!covered) {
                 awayZones.emplace_back(lastLiveX - 1500.f, killX + 300.f);
                 if (debugOptions().check)
                     std::fprintf(stderr,
-                                 "[off-level] tick %d (x~%.0f) : dead end after off-level kills ; delay x4 from x %.0f "
-                                 "to %.0f\n",
-                                 tick, lastLiveX, lastLiveX - 1500.f, killX + 300.f);
+                                "[off-level] tick %d (x~%.0f) : dead end after off-level kills ; delay x4 from x %.0f "
+                                "to %.0f\n",
+                                tick, lastLiveX, lastLiveX - 1500.f, killX + 300.f);
             } else if (extended && debugOptions().check)
                 std::fprintf(stderr,
-                             "[off-level] tick %d (x~%.0f) : dead end at the end of a relaxed zone ; zone extended to "
-                             "x %.0f\n",
-                             tick, lastLiveX, killX + 900.f);
+                            "[off-level] tick %d (x~%.0f) : dead end at the end of a relaxed zone ; zone extended to "
+                            "x %.0f\n",
+                            tick, lastLiveX, killX + 900.f);
         }
         if (debugOptions().check)
             std::fprintf(
@@ -120,6 +147,70 @@ namespace ap::sim {
                     live.empty()
                             ? ""
                             : (live[0]->g ? (live[0]->g->died ? ", live[0] dead" : "") : ", live[0] without state"));
+        if (debugOptions().check) {
+            std::map<int, int> hist;
+            for (auto const& v : killersOf)
+                for (int u : v) ++hist[u];
+            std::vector<std::pair<int, int>> top(hist.begin(), hist.end());
+            std::sort(top.begin(), top.end(), [](auto const& a, auto const& b) { return a.second > b.second; });
+            std::fprintf(stderr, "    killers :");
+            for (size_t i = 0; i < top.size() && i < 8; ++i) {
+                int const u = top[i].first;
+                int const idx = u > 0 ? start.world->indexOfUid(u) : -1;
+                if (idx >= 0) {
+                    Obj const& o = start.world->objs[static_cast<size_t>(idx)];
+                    std::fprintf(stderr, " uid %d (id %d x %.0f y %.0f) x%d ;", u, o.id, o.x, o.y, top[i].second);
+                } else
+                    std::fprintf(stderr, " %d x%d ;", u, top[i].second);
+            }
+            std::fprintf(stderr, "\n");
+        }
+    }
+
+    // remembers that a portal was refuted by a dead end, to avoid retrying it too soon
+    auto SearchRun::noteDeadRefuted(float learnX) -> void {
+        for (auto& e : deadRefutedAt)
+            if (std::fabs(e.first - learnX) < 300.f) {
+                ++e.second;
+                return;
+            }
+        deadRefutedAt.emplace_back(learnX, 1);
+    }
+
+    // returns how many times a portal was refuted by a dead end near the given x
+    auto SearchRun::deadRefutedNear(float x) const -> int {
+        for (auto const& e : deadRefutedAt)
+            if (std::fabs(e.first - x) < 300.f) return e.second;
+        return 0;
+    }
+
+    // the layer died soon after some portals: learns those portals as dead ends and restarts from before them
+    auto SearchRun::checkDeadPortals() -> void {
+        if (deadPortals.empty()) return;
+        size_t nDead = 0;
+        size_t nDeadP = 0;
+        for (auto const& v : killersOf)
+            for (int u : v) {
+                ++nDead;
+                if (u == kDeadPortalKiller) ++nDeadP;
+            }
+        for (auto& portal : deadPortals) {
+            if (portal.off) continue;
+            bool const atPortal = portal.x >= lastLiveX - 600.f && portal.x <= lastLiveX + 120.f;
+            bool const blocks = atPortal && nDeadP > 0 && nDeadP * 2 >= nDead;
+            bool const earlier = lastLiveX < portal.learnX - 300.f && lastLiveX >= portal.x - 900.f && nDeadP > 0 &&
+                                 nDeadP * 4 >= nDead;
+            if (!blocks && !earlier) continue;
+            portal.off = true;
+            portal.refuted = true;
+            portal.offAt = deadLearns;
+            noteDeadRefuted(portal.learnX);
+            if (debugOptions().check)
+                std::fprintf(stderr,
+                            "[maze] tick %d (x~%.0f) : learned portal uid %d (x %.0f) is needed (%zu of %zu deaths on "
+                            "it, learned at x %.0f) ; given up\n",
+                            tick, lastLiveX, portal.uid, portal.x, nDeadP, nDead, portal.learnX);
+        }
     }
 
     // states sent back by a loop trigger: remembers the zones of those loops
@@ -146,9 +237,9 @@ namespace ap::sim {
                             loopZones.push_back(z);
                             if (debugOptions().check)
                                 std::fprintf(stderr,
-                                             "[loop] learned zone : x %.0f .. %.0f, y %.0f (a lineage entering it is "
-                                             "dropped)\n",
-                                             z.x0, z.x1, z.y);
+                                            "[loop] learned zone : x %.0f .. %.0f, y %.0f (a lineage entering it is "
+                                            "dropped)\n",
+                                            z.x0, z.x1, z.y);
                             if (opt.pruneVoid && start.world && !start.world->platformer) {
                                 std::vector<std::array<float, 4>> exclude;
                                 for (auto const& zone : loopZones)
@@ -165,9 +256,9 @@ namespace ap::sim {
                 }
                 if (debugOptions().check)
                     std::fprintf(stderr,
-                                 "[loop] tick %d : endless loop entered at tick %d ; %zu restart point(s) of the loop "
-                                 "removed\n",
-                                 tick, loopStart, before - soft.size());
+                                "[loop] tick %d : endless loop entered at tick %d ; %zu restart point(s) of the loop "
+                                "removed\n",
+                                tick, loopStart, before - soft.size());
             }
         }
     }
@@ -196,10 +287,7 @@ namespace ap::sim {
                     popStreak = 0;
                     lastPopRestartTick = std::numeric_limits<int>::max();
                     if (debugOptions().check)
-                        std::fprintf(stderr,
-                                     "[trap] tick %d (x~%.0f) : the learned corridor (from x %.0f) kills everything as "
-                                     "soon as it is entered ; given up\n",
-                                     tick, lastLiveX, corr.xStart);
+                        std::fprintf(stderr, "[trap] tick %d (x~%.0f) : the learned corridor (from x %.0f) kills everything as soon as it is entered ; given up\n", tick, lastLiveX, corr.xStart);
                 }
             int const best = live.empty() ? -1 : bestOf(false);
             if (!loopImpasse && opt.stuckKill > 0 && nStuckD > 0 && nStuckD * 2 >= nDead && trapCorr.size() < 8 &&
@@ -280,9 +368,7 @@ namespace ap::sim {
                         for (size_t i = corrStart; i < path.size(); ++i) {
                             size_t const col = static_cast<size_t>((path[i].x - corr.x0) / 30.f);
                             if (col >= nCols) continue;
-                            std::pair<float, float> const freeY = cues.structure.empty()
-                                                                          ? std::pair<float, float>{-1e30f, 1e30f}
-                                                                          : cues.structure.freeAt(path[i].x, path[i].y);
+                            std::pair<float, float> const freeY = cues.structure.empty() ? std::pair<float, float>{-1e30f, 1e30f} : cues.structure.freeAt(path[i].x, path[i].y);
                             corr.band[col][0] =
                                     std::min(corr.band[col][0], std::max(freeY.first, path[i].y - kTrapBand));
                             corr.band[col][1] =
@@ -292,12 +378,7 @@ namespace ap::sim {
                         corr.startTick = path[corrStart].t;
                         corr.xStart = path[corrStart].x;
                         if (debugOptions().check)
-                            std::fprintf(stderr,
-                                         "[trap] tick %d (x~%.0f) : trap with no way out ; corridor learned from x "
-                                         "%.0f (tick %d, y %.0f) to x %.0f - a lineage entering it dies ; restart from "
-                                         "before tick %d\n",
-                                         tick, lastLiveX, corr.xStart, corr.startTick, path[corrStart].y, xmax,
-                                         corr.startTick - 240);
+                            std::fprintf(stderr, "[trap] tick %d (x~%.0f) : trap with no way out ; corridor learned from x %.0f (tick %d, y %.0f) to x %.0f - a lineage entering it dies ; restart from before tick %d\n", tick, lastLiveX, corr.xStart, corr.startTick, path[corrStart].y, xmax, corr.startTick - 240);
                         popBeforeTick = corr.startTick - 240;
                         trapSoftFrom = corr.startTick;
                         trapCorr.push_back(std::move(corr));
@@ -324,9 +405,7 @@ namespace ap::sim {
                 nominalSpots.push_back(tick);
                 noReduceUntil = tick + 480;
                 if (debugOptions().check)
-                    std::fprintf(stderr,
-                                 "[live] tick %d (x~%.0f) : dead end under a reduced beam ; back to the normal beam\n",
-                                 tick, lastLiveX);
+                    std::fprintf(stderr, "[live] tick %d (x~%.0f) : dead end under a reduced beam ; back to the normal beam\n", tick, lastLiveX);
                 while (!soft.empty() && soft.back().tick > tick - 240) {
                     soft.pop_back();
                     ++res.stats.softRestarts;
@@ -429,22 +508,16 @@ namespace ap::sim {
                     if (o.id == ObjId::CountTrigger)
                         reached = o.count >= 0 ? count >= o.count : count <= o.count;
                     else
-                        reached = o.compare == 0   ? count == o.count
-                                  : o.compare == 1 ? o.count < count
-                                                   : count < o.count;
+                        reached = o.compare == 0   ? count == o.count : o.compare == 1 ? o.count < count : count < o.count;
                     if (!reached) continue;
                     trapLearned.push_back(static_cast<int>(i));
                     trapWin.emplace_back(o.x - 30.f, frontX + 600.f);
                     minX = std::min(minX, o.x);
                     if (debugOptions().check)
-                        std::fprintf(stderr,
-                                     "[trap] tick %d (x~%.0f) : trigger uid %d (item %d = %d) turns the killers' group "
-                                     "%d back on ; presses without reward from x %.0f to %.0f\n",
-                                     tick, frontX, o.uid, item, count, o.targetGroup, o.x - 30.f, frontX + 600.f);
+                        std::fprintf(stderr, "[trap] tick %d (x~%.0f) : trigger uid %d (item %d = %d) turns the killers' group %d back on ; presses without reward from x %.0f to %.0f\n", tick, frontX, o.uid, item, count, o.targetGroup, o.x - 30.f, frontX + 600.f);
                 }
                 if (minX < 1e29f) {
-                    while (!soft.empty() && !soft.back().states.empty() &&
-                           soft.back().states[0].g.p1.x > minX - 120.f) {
+                    while (!soft.empty() && !soft.back().states.empty() &&soft.back().states[0].g.p1.x > minX - 120.f) {
                         soft.pop_back();
                         ++res.stats.softRestarts;
                     }
@@ -503,14 +576,35 @@ namespace ap::sim {
                     if (itemTargets.size() >= 4) break;
                     if (std::any_of(itemTargets.begin(), itemTargets.end(), [&](ItemTarget const& known) {
                             return known.idx == target.idx ||
-                                   (known.item == target.item && known.count == target.count &&
+                                    (known.item == target.item && known.count == target.count &&
                                     known.group == target.group);
                         }))
                         continue;
                     itemTargets.push_back(target);
-                    tMinX = std::min(tMinX, target.x);
-                    if (std::none_of(groupGoals.begin(), groupGoals.end(),
-                                     [&](GroupGoal const& goal) { return goal.group == target.group; })) {
+                    tMinX = std::min(tMinX, target.x0);
+                    if (target.avoid) {
+                        if (debugOptions().check)
+                            std::fprintf(
+                                    stderr,
+                                    "[counter] tick %d (x~%.0f) : counter uid %d (x %.0f) turns the killers' group "
+                                    "%d on unless item %d is %s %d (best state : %d) ; its item changes from x "
+                                    "%.0f ; restart from before it\n",
+                                    tick, frontX, w.objs[static_cast<size_t>(target.idx)].uid, target.x, target.group,
+                                    target.item, target.mode == 1 ? ">" : "<", target.count,
+                                    trigItemValue(bestGame, target.item), target.x0);
+                        continue;
+                    }
+                    if (target.cmp >= 0) {
+                        if (debugOptions().check)
+                            std::fprintf(stderr,
+                                        "[compare] tick %d (x~%.0f) : the killers are turned off by group %d, spawned "
+                                        "when compare uid %d (x %.0f) is true (gap now %d) ; its items change from x "
+                                        "%.0f ; restart from before it\n",
+                                        tick, frontX, target.group, w.objs[static_cast<size_t>(target.cmp)].uid,
+                                        target.x, itemTargetGap(bestGame, target), target.x0);
+                        continue;
+                    }
+                    if (std::none_of(groupGoals.begin(), groupGoals.end(), [&](GroupGoal const& goal) { return goal.group == target.group; })) {
                         GroupGoal goal;
                         goal.group = target.group;
                         goal.checkX = -1e30f;
@@ -539,29 +633,29 @@ namespace ap::sim {
                             tMinX = std::min(tMinX, firstX);
                             if (debugOptions().check)
                                 std::fprintf(stderr,
-                                             "[counter] group %d : %zu counters, %d pickup(s) between x %.0f and %.0f "
-                                             "- a state without a satisfied lit counter is dropped there\n",
-                                             target.group, goal.acts.size(), nPickups, firstX, goal.checkX);
+                                            "[counter] group %d : %zu counters, %d pickup(s) between x %.0f and %.0f "
+                                            "- a state without a satisfied lit counter is dropped there\n",
+                                            target.group, goal.acts.size(), nPickups, firstX, goal.checkX);
                             groupGoals.push_back(std::move(goal));
                         }
                     }
                     if (debugOptions().check)
                         std::fprintf(stderr,
-                                     "[counter] tick %d (x~%.0f) : group %d (rescue from the killers) is only turned "
-                                     "on by counter uid %d (x %.0f) : item %d %s %d (best state : %d) ; restart from "
-                                     "before x %.0f\n",
-                                     tick, frontX, target.group, w.objs[static_cast<size_t>(target.idx)].uid, target.x,
-                                     target.item,
-                                     target.mode == 1   ? ">"
-                                     : target.mode == 2 ? "<"
-                                     : target.mode == 3 ? "reached"
+                                    "[counter] tick %d (x~%.0f) : group %d (rescue from the killers) is only turned "
+                                    "on by counter uid %d (x %.0f) : item %d %s %d (best state : %d) ; restart from "
+                                    "before x %.0f\n",
+                                    tick, frontX, target.group, w.objs[static_cast<size_t>(target.idx)].uid, target.x,
+                                    target.item,
+                                    target.mode == 1   ? ">"
+                                    : target.mode == 2 ? "<"
+                                    : target.mode == 3 ? "reached"
                                                         : "=",
-                                     target.count, trigItemValue(bestGame, target.item), target.x);
+                                    target.count, trigItemValue(bestGame, target.item), target.x0);
                 }
                 if (tMinX < 1e29f) {
                     std::sort(cues.passX.begin(), cues.passX.end());
                     while (!soft.empty() && !soft.back().states.empty() &&
-                           soft.back().states[0].g.p1.x > tMinX - 120.f) {
+                            soft.back().states[0].g.p1.x > tMinX - 120.f) {
                         soft.pop_back();
                         ++res.stats.softRestarts;
                     }
@@ -611,16 +705,10 @@ namespace ap::sim {
                 minX = std::min(minX, lastX);
                 ++nTake;
                 if (debugOptions().check)
-                    std::fprintf(stderr,
-                                 "[cause] tick %d (x~%.0f) : group %d to turn off (%zu toggle orb(s), the last at x "
-                                 "%.0f) : a toggle of this group blocks the rescue from the killers\n",
-                                 tick, frontX, take.group, take.orbs.size(), lastX);
+                    std::fprintf(stderr, "[cause] tick %d (x~%.0f) : group %d to turn off (%zu toggle orb(s), the last at x %.0f) : a toggle of this group blocks the rescue from the killers\n", tick, frontX, take.group, take.orbs.size(), lastX);
             }
             if (nAvoid && debugOptions().check)
-                std::fprintf(stderr,
-                             "[cause] tick %d (x~%.0f) : %d toggle orb(s) to avoid (they turn on a toggle that blocks "
-                             "the rescue)\n",
-                             tick, frontX, nAvoid);
+                std::fprintf(stderr, "[cause] tick %d (x~%.0f) : %d toggle orb(s) to avoid (they turn on a toggle that blocks the rescue)\n", tick, frontX, nAvoid);
             if (minX < 1e29f) {
                 std::sort(cues.passX.begin(), cues.passX.end());
                 while (soft.size() > 1 && !soft.back().states.empty() &&
@@ -665,11 +753,20 @@ namespace ap::sim {
             float const frontX = lastLiveX;
             float minX = 1e30f;
             World const& w = *start.world;
+            std::vector<int> killerGroups;
+            for (auto const& v : killersOf)
+                for (int u : v) {
+                    if (u <= 0) continue;
+                    int const idx = w.indexOfUid(u);
+                    if (idx < 0) continue;
+                    for (short gr : w.objs[static_cast<size_t>(idx)].groups)
+                        if (gr > 0) killerGroups.push_back(gr);
+                }
+            std::sort(killerGroups.begin(), killerGroups.end());
+            killerGroups.erase(std::unique(killerGroups.begin(), killerGroups.end()), killerGroups.end());
             for (size_t i = 0; i < w.objs.size(); ++i) {
                 Obj const& o = w.objs[i];
-                bool const ring = (o.id == ObjId::ToggleOrb || o.id == ObjId::ToggleBlock) &&
-                                  ringEffectMatters(w, o.targetGroup) &&
-                                  !std::binary_search(avoidUids.begin(), avoidUids.end(), o.uid);
+                bool const ring = (o.id == ObjId::ToggleOrb || o.id == ObjId::ToggleBlock) && ringEffectMatters(w, o.targetGroup) && !std::binary_search(avoidUids.begin(), avoidUids.end(), o.uid);
                 if ((o.id == ObjId::ToggleOrb || o.id == ObjId::ToggleBlock) && !ring) continue;
                 if (!ring &&
                     (o.cls != 1 || !o.touchTriggered || o.spawnTriggered || !hasSimEffect(o.id) || !touchMatters(w, o)))
@@ -679,8 +776,10 @@ namespace ap::sim {
                     continue;
                 if (!ring && (o.rect.w > 600.f || o.rect.h > 600.f || o.multiTriggered || isTrapTouch(w, o))) continue;
                 float const passX = o.rect.x + o.rect.w + 15.f;
-                if (!(passX > frontX - 1800.f && o.rect.x < frontX)) continue;
-                if (!live.empty() && live[0]->g && std::fabs((o.rect.y + o.rect.h * 0.5f) - live[0]->g->p1.y) > 900.f)
+                bool const offKiller = ring && causeDeactivates(o) && std::binary_search(killerGroups.begin(), killerGroups.end(), o.targetGroup);
+                if (!(passX > frontX - (offKiller ? 9000.f : 1800.f) && o.rect.x < frontX)) continue;
+                if (!offKiller && !live.empty() && live[0]->g &&
+                    std::fabs((o.rect.y + o.rect.h * 0.5f) - live[0]->g->p1.y) > 900.f)
                     continue;
                 bool known = false;
                 for (auto const& extra : cues.extra)
@@ -713,9 +812,7 @@ namespace ap::sim {
                 cues.passX.emplace_back(passX, -static_cast<int>(cues.extra.size()));
                 minX = std::min(minX, o.rect.x);
                 if (debugOptions().check)
-                    std::fprintf(stderr,
-                                 "[touch] tick %d (x~%.0f) : %s uid %d (x %.0f) learned as a required passage\n", tick,
-                                 frontX, ring ? "toggle orb" : "trigger", o.uid, o.x);
+                    std::fprintf(stderr, "[touch] tick %d (x~%.0f) : %s uid %d (x %.0f) learned as a required passage\n", tick, frontX, ring ? "toggle orb" : "trigger", o.uid, o.x);
             }
             if (minX < 1e29f) {
                 std::sort(cues.passX.begin(), cues.passX.end());
@@ -854,10 +951,7 @@ namespace ap::sim {
                 if (tick - restartAt >= std::min(rung.back, 240) / 2) break;
                 if (hardTick <= res.startTick) break;
                 if (debugOptions().check)
-                    std::fprintf(stderr,
-                                 "[live] tick %d : rung %d skipped (restart at tick %d, %d ticks before the dead end : "
-                                 "published prefix)\n",
-                                 tick, *rungOf, restartAt, tick - restartAt);
+                    std::fprintf(stderr, "[live] tick %d : rung %d skipped (restart at tick %d, %d ticks before the dead end : published prefix)\n", tick, *rungOf, restartAt, tick - restartAt);
                 ++*rungOf;
             }
         }
@@ -905,8 +999,7 @@ namespace ap::sim {
                 if (!known) {
                     fineZones.emplace_back(fineX0, fineX1);
                     if (debugOptions().check)
-                        std::fprintf(stderr, "[precision] tick %d : x %.0f .. %.0f now searched with q/4\n", tick,
-                                     fineX0, fineX1);
+                        std::fprintf(stderr, "[precision] tick %d : x %.0f .. %.0f now searched with q/4\n", tick, fineX0, fineX1);
                 }
             }
             ++*rungOf;
@@ -942,9 +1035,9 @@ namespace ap::sim {
             applyZone(lastLiveX);
             if (anchored && debugOptions().check)
                 std::fprintf(stderr,
-                             "[anchor] tick %d : restart from the ancestor of the best state at tick %d (x %.0f y "
-                             "%.0f), beam %d\n",
-                             tick, anchorTick, anchorGame.p1.x, anchorGame.p1.y, beam);
+                            "[anchor] tick %d : restart from the ancestor of the best state at tick %d (x %.0f y "
+                            "%.0f), beam %d\n",
+                            tick, anchorTick, anchorGame.p1.x, anchorGame.p1.y, beam);
         } else {
             bool learnedDead = false;
             {
@@ -968,17 +1061,45 @@ namespace ap::sim {
                 for (auto const& portal : deadPortals)
                     if (!portal.off) ++nActive;
                 bool const canLearn = !loopImpasse && sameMode && !dualAny && bestIdx >= 0 &&
-                                      live[static_cast<size_t>(bestIdx)]->g && nActive < 16 &&
-                                      deadLearns < kMaxDeadLearns && !start.world->platformer;
+                                    live[static_cast<size_t>(bestIdx)]->g && nActive < 16 &&
+                                    deadLearns < kMaxDeadLearns && !start.world->platformer;
                 if (!canLearn && dbgDead)
                     std::fprintf(stderr, "[maze] tick %d (x~%.0f) : nothing learned (%s)\n", tick, lastLiveX,
-                                 loopImpasse                    ? "loop"
-                                 : !sameMode                    ? "mixed modes"
-                                 : dualAny                      ? "dual"
-                                 : nActive >= 16                ? "16 portals already learned"
-                                 : deadLearns >= kMaxDeadLearns ? "enough tries"
+                                loopImpasse                    ? "loop"
+                                : !sameMode                    ? "mixed modes"
+                                : dualAny                      ? "dual"
+                                : nActive >= 16                ? "16 portals already learned"
+                                : deadLearns >= kMaxDeadLearns ? "enough tries"
                                                                 : "no state");
-                if (canLearn) {
+                bool undone = false;
+                if (canLearn)
+                    for (auto& portal : deadPortals) {
+                        bool const earlier = lastLiveX < portal.learnX - 300.f && lastLiveX >= portal.x - 900.f;
+                        bool const same = std::fabs(lastLiveX - portal.learnX) < 300.f;
+                        if (portal.off || !(earlier || same)) continue;
+                        portal.off = true;
+                        portal.refuted = true;
+                        portal.offAt = deadLearns;
+                        noteDeadRefuted(portal.learnX);
+                        undone = true;
+                        learnedDead = true;
+                        popStreak = 0;
+                        fromStart = false;
+                        lastPopRestartTick = std::numeric_limits<int>::max();
+                        if (dbgDead)
+                            std::fprintf(stderr,
+                                        "[maze] tick %d (x~%.0f) : avoiding portal uid %d (x %.0f) %s x %.0f where it "
+                                        "was learned ; given up\n",
+                                        tick, lastLiveX, portal.uid, portal.x, same ? "still dies at" : "dies before",
+                                        portal.learnX);
+                    }
+                bool const ruledOut = deadRefutedNear(lastLiveX) >= 2;
+                if (canLearn && !undone && ruledOut && dbgDead)
+                    std::fprintf(stderr,
+                                "[maze] tick %d (x~%.0f) : nothing learned (the portals learned for this dead end "
+                                "were all needed)\n",
+                                tick, lastLiveX);
+                if (canLearn && !undone && !ruledOut) {
                     size_t hardIdx = hard.size() - 1;
                     while (hardIdx > 0 && tick - hard[hardIdx - 1].tick <= 14400) --hardIdx;
                     std::vector<uint8_t> acts(
@@ -992,10 +1113,24 @@ namespace ap::sim {
                     World const& world = *start.world;
                     float const fromX = g.p1.x - 200.f;
                     float const toX = lastLiveX + 400.f;
+                    bool gravityCase = false;
+                    {
+                        size_t nDead = 0;
+                        size_t nNoObj = 0;
+                        for (auto const& v : killersOf)
+                            for (int u : v) {
+                                ++nDead;
+                                if (u == 0) ++nNoObj;
+                            }
+                        gravityCase = nNoObj > 0 && nNoObj * 2 >= nDead && live[static_cast<size_t>(bestIdx)]->g->p1.isUpsideDown;
+                    }
                     std::vector<int> modePortals;
                     for (size_t i = 0; i < world.objs.size(); ++i) {
                         Obj const& o = world.objs[i];
-                        if (!isGameModePortal(o.type) || o.rect.maxX() < fromX || o.rect.x > toX) continue;
+                        bool const candidate =
+                                isGameModePortal(o.type) ||
+                                (gravityCase && (o.type == InverseGravityPortal || o.type == NormalGravityPortal));
+                        if (!candidate || o.rect.maxX() < fromX || o.rect.x > toX) continue;
                         if (!portalTakenBy(g, static_cast<int>(i))) modePortals.push_back(static_cast<int>(i));
                     }
 
@@ -1032,20 +1167,21 @@ namespace ap::sim {
                         if (deadIdx < 0)
                             pick = static_cast<int>(j);
                         else if (deadPortals[static_cast<size_t>(deadIdx)].off &&
-                                 deadLearns > deadPortals[static_cast<size_t>(deadIdx)].offAt) {
+                                !deadPortals[static_cast<size_t>(deadIdx)].refuted &&
+                                deadLearns > deadPortals[static_cast<size_t>(deadIdx)].offAt) {
                             pick = static_cast<int>(j);
                             pickDead = deadIdx;
                         }
                     }
                     if (dbgDead) {
                         std::fprintf(stderr,
-                                     "[maze] tick %d (x~%.0f) : layer in mode %c ; mode portals of the best path since "
-                                     "tick %d :",
-                                     tick, lastLiveX, modeCharOf(live[static_cast<size_t>(bestIdx)]->g->p1),
-                                     hard[hardIdx].tick);
+                                    "[maze] tick %d (x~%.0f) : layer in mode %c ; mode portals of the best path since "
+                                    "tick %d :",
+                                    tick, lastLiveX, modeCharOf(live[static_cast<size_t>(bestIdx)]->g->p1),
+                                    hard[hardIdx].tick);
                         for (auto const& take : taken)
                             std::fprintf(stderr, " %d(x %.0f, t %d)", world.objs[static_cast<size_t>(take.idx)].uid,
-                                         take.x, take.tick);
+                                        take.x, take.tick);
                         std::fprintf(stderr, "\n");
                     }
                     if (pick >= 0 && taken[static_cast<size_t>(pick)].tick > hard.front().tick) {
@@ -1054,8 +1190,9 @@ namespace ap::sim {
                         if (pickDead >= 0) {
                             deadPortals[static_cast<size_t>(pickDead)].off = false;
                             deadPortals[static_cast<size_t>(pickDead)].tick = take.tick;
+                            deadPortals[static_cast<size_t>(pickDead)].learnX = lastLiveX;
                         } else
-                            deadPortals.push_back(DeadPortal{o.uid, take.idx, o.rect.midX(), take.tick, false, 0});
+                            deadPortals.push_back(DeadPortal{o.uid, take.idx, o.rect.midX(), take.tick, false, 0, lastLiveX, false});
                         ++deadLearns;
                         learnedDead = true;
                         popBeforeTick = take.tick - 240;
@@ -1085,10 +1222,7 @@ namespace ap::sim {
                             portal.off = true;
                             portal.offAt = deadLearns;
                             if (dbgDead)
-                                std::fprintf(stderr,
-                                             "[maze] tick %d (x~%.0f) : learned portal uid %d cannot be avoided ; "
-                                             "given up\n",
-                                             tick, lastLiveX, portal.uid);
+                                std::fprintf(stderr, "[maze] tick %d (x~%.0f) : learned portal uid %d cannot be avoided ; given up\n", tick, lastLiveX, portal.uid);
                         }
                 }
             }
@@ -1129,11 +1263,7 @@ namespace ap::sim {
                 if (chkLevel() >= 2) {
                     Game replay = start;
                     for (uint8_t act : inputs) stepTick(replay, act);
-                    std::fprintf(stderr,
-                                 "[check] back off : %d hard points removed, inputs %zu -> (%.3f,%.3f) tick %d, hard "
-                                 "point (%.3f,%.3f) tick %d\n",
-                                 hardPopped, inputs.size(), replay.p1.x, replay.p1.y, replay.tick, hard.back().g.p1.x,
-                                 hard.back().g.p1.y, hard.back().tick);
+                    std::fprintf(stderr, "[check] back off : %d hard points removed, inputs %zu -> (%.3f,%.3f) tick %d, hard point (%.3f,%.3f) tick %d\n", hardPopped, inputs.size(), replay.p1.x, replay.p1.y, replay.tick, hard.back().g.p1.x, hard.back().g.p1.y, hard.back().tick);
                 }
             }
             if (nPops == wantPops && !learnedDead) {

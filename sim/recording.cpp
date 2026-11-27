@@ -72,13 +72,11 @@ namespace ap::sim {
                 if (auto const* items = v.get("pitems")) {
                     rec.hasPersist = true;
                     for (size_t i = 0; i + 1 < items->arr.size(); i += 2)
-                        rec.persistentItems.emplace_back(static_cast<int>(items->arr[i].num),
-                                                         static_cast<int>(items->arr[i + 1].num));
+                        rec.persistentItems.emplace_back(static_cast<int>(items->arr[i].num), static_cast<int>(items->arr[i + 1].num));
                 }
                 if (auto const* pre = v.get("pre"))
                     for (size_t i = 0; i + 1 < pre->arr.size(); i += 2)
-                        rec.preInputs.emplace_back(static_cast<int>(pre->arr[i].num),
-                                                   static_cast<uint8_t>(pre->arr[i + 1].num));
+                        rec.preInputs.emplace_back(static_cast<int>(pre->arr[i].num), static_cast<uint8_t>(pre->arr[i + 1].num));
                 if (auto const* timers = v.get("ptimers"))
                     for (auto const& e : timers->arr) rec.persistentTimers.push_back(static_cast<int>(e.num));
                 continue;

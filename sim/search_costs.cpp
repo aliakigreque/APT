@@ -8,24 +8,24 @@ namespace ap::sim {
         // one letter for the game mode, for debug output
         char modeCharOf(Player const& p) {
             return p.isShip     ? 'S'
-                   : p.isBall   ? 'B'
-                   : p.isBird   ? 'U'
-                   : p.isDart   ? 'W'
-                   : p.isRobot  ? 'R'
-                   : p.isSpider ? 'P'
-                   : p.isSwing  ? 'G'
+                : p.isBall   ? 'B'
+                : p.isBird   ? 'U'
+                : p.isDart   ? 'W'
+                : p.isRobot  ? 'R'
+                : p.isSpider ? 'P'
+                : p.isSwing  ? 'G'
                                 : 'C';
         }
 
         // one bit for the game mode (bit 0 is cube)
         uint8_t modeBitOf(Player const& p) {
             return static_cast<uint8_t>(1u << (p.isShip     ? 1
-                                               : p.isBall   ? 2
-                                               : p.isBird   ? 3
-                                               : p.isDart   ? 4
-                                               : p.isRobot  ? 5
-                                               : p.isSpider ? 6
-                                               : p.isSwing  ? 7
+                                            : p.isBall   ? 2
+                                            : p.isBird   ? 3
+                                            : p.isDart   ? 4
+                                            : p.isRobot  ? 5
+                                            : p.isSpider ? 6
+                                            : p.isSwing  ? 7
                                                             : 0));
         }
 
@@ -169,8 +169,7 @@ namespace ap::sim {
         }
 
         // cost change of the prepaid portal clusters this tick
-        int portalPrepay(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt,
-                         SmallVec<std::pair<int, bool>, 8> const& open) {
+        int portalPrepay(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt, SmallVec<std::pair<int, bool>, 8> const& open) {
             if (g.p1.isSideways || cues.approachX.empty()) return 0;
             float const nowX = g.p1.x;
             int cost = 0;
@@ -180,8 +179,7 @@ namespace ap::sim {
                 cost += (owedNow ? opt.missedPortalCost : 0) - (e.second ? opt.missedPortalCost : 0);
             }
             if (!(prevX < nowX)) return cost;
-            auto it = std::upper_bound(cues.approachX.begin(), cues.approachX.end(),
-                                       std::make_pair(prevX + 60.f, 1 << 30));
+            auto it = std::upper_bound(cues.approachX.begin(), cues.approachX.end(), std::make_pair(prevX + 60.f, 1 << 30));
             for (; it != cues.approachX.end() && it->first <= nowX; ++it) {
                 bool inOpen = false;
                 for (auto const& e : open) {
@@ -196,8 +194,7 @@ namespace ap::sim {
         }
 
         // cost of the portal clusters passed without being taken
-        int missedPortalsCost(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt, int& speedMisses,
-                              bool outside) {
+        int missedPortalsCost(Game const& g, float prevX, Cues const& cues, SearchOptions const& opt, int& speedMisses, bool outside) {
             speedMisses = 0;
             g_portalMisses = 0;
             if (cues.passX.empty()) return 0;
@@ -253,8 +250,7 @@ namespace ap::sim {
                     cost += opt.missedSpeedCost;
                 else if (c.speed) {
                     bool const ground = !(g.p1.isShip || g.p1.isBird || g.p1.isDart || g.p1.isSwing);
-                    bool otherFloor = opt.speedSepGround && ground && dy > 0.f &&
-                                      cues.structure.separated(it->first, y, yLo, yHi);
+                    bool otherFloor = opt.speedSepGround && ground && dy > 0.f && cues.structure.separated(it->first, y, yLo, yHi);
                     if (otherFloor && y < yLo && cues.structure.freeAt(it->first, y).first < -1e29f) otherFloor = false;
                     if (otherFloor)
                         for (int m : c.members) {
@@ -293,8 +289,7 @@ namespace ap::sim {
                                     auto const playerSpace = cues.structure.freeAt(it->first, y);
                                     bool const roof =
                                             playerSpace.second > 1e29f && playerSpace.first > -1e29f && y > yHi;
-                                    bool const under = playerSpace.first < -1e29f && playerSpace.second < 1e29f &&
-                                                       y < yLo && y > 705.f;
+                                    bool const under = playerSpace.first < -1e29f && playerSpace.second < 1e29f && y < yLo && y > 705.f;
                                     if (roof || under) reach = true;
                                 }
                             }
@@ -352,8 +347,7 @@ namespace ap::sim {
         }
 
         // cost of orbs touched last tick (prevRings1/2), left this tick without being taken
-        int missedOrbsCost(Game const& g, RingList const& prevRings1, RingList const& prevRings2,
-                           SearchOptions const& opt) {
+        int missedOrbsCost(Game const& g, RingList const& prevRings1, RingList const& prevRings2, SearchOptions const& opt) {
             int cost = 0;
             auto check = [&](RingList const& prev, Player const& p) {
                 if (p.isDart) return;

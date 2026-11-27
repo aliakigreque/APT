@@ -15,7 +15,6 @@ namespace ap {
     void applyAreaRandom(PlayLayer* pl);
     void forgetAreaRandom();
 
-    geode::Result<std::filesystem::path> writeWorld(sim::World const& w, PlayLayer* pl,
-                                                    std::filesystem::path const& dir, std::string const& tag);
+    geode::Result<std::filesystem::path> writeWorld(sim::World const& w, PlayLayer* pl, std::filesystem::path const& dir, std::string const& tag);
 
 }

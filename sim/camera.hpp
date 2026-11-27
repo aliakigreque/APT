@@ -69,12 +69,9 @@ namespace ap::sim {
 
     void cameraReset(Game& g);
     void cameraUpdate(Game& g, float dt);
-    void cameraStaticPos(Game& g, float x, float y, bool affectsX, bool affectsY, bool follow, float time, int easing,
-                         float rate);
-    void cameraStaticToGroup(Game& g, int group, bool affectsX, bool affectsY, bool follow, float followEase,
-                             float time, int easing, float rate, bool smooth, float velMod);
-    void cameraExitStatic(Game& g, bool exitX, bool exitY, float time, int easing, float rate, bool smooth,
-                          float velMod, bool instant);
+    void cameraStaticPos(Game& g, float x, float y, bool affectsX, bool affectsY, bool follow, float time, int easing, float rate);
+    void cameraStaticToGroup(Game& g, int group, bool affectsX, bool affectsY, bool follow, float followEase, float time, int easing, float rate, bool smooth, float velMod);
+    void cameraExitStatic(Game& g, bool exitX, bool exitY, float time, int easing, float rate, bool smooth, float velMod, bool instant);
     void cameraResetStatic(Game& g, bool all);
     void cameraCheckLimitAfterTeleport(Game& g, Player const& p, float yOffset);
     bool cameraTweenSet(Game& g, int key, float value);

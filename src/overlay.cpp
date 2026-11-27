@@ -88,12 +88,10 @@ namespace ap {
         static std::vector<cocos2d::CCPoint> s_last;
         static int s_lastFrom = -1;
         static cocos2d::CCDrawNode* s_lastNode = nullptr;
-        bool const same = s_lastNode == s_path && s_lastFrom == fromStep && s_pathSegments > 0 &&
-                          s_last.size() == points.size() &&
-                          std::equal(points.begin(), points.end(), s_last.begin(),
-                                     [](cocos2d::CCPoint const& a, cocos2d::CCPoint const& b) {
-                                         return a.x == b.x && a.y == b.y;
-                                     });
+        bool const same = s_lastNode == s_path && s_lastFrom == fromStep && s_pathSegments > 0 && s_last.size() == points.size() &&
+                        std::equal(points.begin(), points.end(), s_last.begin(), [](cocos2d::CCPoint const& a, cocos2d::CCPoint const& b) {
+            return a.x == b.x && a.y == b.y;
+        });
         if (same) {
             s_path->setVisible(true);
             return;

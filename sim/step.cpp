@@ -220,8 +220,7 @@ namespace ap::sim {
                     camera.p18[1] = 0.f;
                     camera.p22[1] = 0.f;
                 }
-                trigTweenValue(g, 0x19, camera.dualProg, 0.f, g.isDualMode ? 0.320000022649765f : 0.4f, 1, 1.5f, -1,
-                               -1);
+                trigTweenValue(g, 0x19, camera.dualProg, 0.f, g.isDualMode ? 0.320000022649765f : 0.4f, 1, 1.5f, -1, -1);
             }
         }
     }
@@ -251,8 +250,7 @@ namespace ap::sim {
                 otherSameMode = other.isShip;
                 break;
             case 6:
-                otherSameMode = !other.isShip && !other.isBird && !other.isDart && !other.isSwing && !other.isBall &&
-                                !other.isRobot && !other.isSpider;
+                otherSameMode = !other.isShip && !other.isBird && !other.isDart && !other.isSwing && !other.isBall && !other.isRobot && !other.isSpider;
                 break;
             case 0x10:
                 otherSameMode = other.isBall;
@@ -273,9 +271,7 @@ namespace ap::sim {
                 break;
             }
             if (g_trace)
-                std::printf(
-                        "      [portal] player %d mode %d : other player same mode=%d upside down=%d -> upside down "
-                        "%d\n",
+                std::printf("[portal] player %d mode %d : other player same mode=%d upside down=%d -> upside down %d\n",
                         p.uniqueID, mode, otherSameMode ? 1 : 0, other.isUpsideDown ? 1 : 0,
                         otherSameMode ? (!other.isUpsideDown ? 1 : 0) : -1);
             if (otherSameMode && !g.unlinkDualGravity) flipGravity(p, !other.isUpsideDown, true);
@@ -339,10 +335,7 @@ namespace ap::sim {
                 if (object.o->tpIgnoreX) newX = p.x;
                 if (object.o->tpIgnoreY) newY = p.y;
                 if (g_trace)
-                    std::printf(
-                            "      [teleport] tick %d uid %d id %d : player (%.3f, %.3f) -> (%.3f, %.3f) target uid "
-                            "%d\n",
-                            g.tick, object.uid(), id, p.x, p.y, newX, newY, target.uid());
+                    std::printf("[teleport] tick %d uid %d id %d : player (%.3f, %.3f) -> (%.3f, %.3f) target uid %d\n", g.tick, object.uid(), id, p.x, p.y, newX, newY, target.uid());
                 p.x = newX;
                 p.y = newY;
                 playerMoved(p);
@@ -377,10 +370,7 @@ namespace ap::sim {
             float angle;
             if (target) {
                 int const targetId = target.o->id;
-                float const base =
-                        (targetId == 38 || targetId == 747 || targetId == 749 || targetId == 2064 || targetId == 2902)
-                                ? 180.f
-                                : 90.f;
+                float const base = (targetId == 38 || targetId == 747 || targetId == 749 || targetId == 2064 || targetId == 2902) ? 180.f : 90.f;
                 angle = (target.flipXEff() ? 180.f : 0.f) + (base - target.nodeRotX());
             } else {
                 angle = (object.flipXEff() ? 180.f : 0.f) - object.nodeRotX();
@@ -436,10 +426,7 @@ namespace ap::sim {
                 float angle;
                 if (target) {
                     int const targetId = target.o->id;
-                    float const base = (targetId == 38 || targetId == 747 || targetId == 749 || targetId == 2064 ||
-                                        targetId == 2902)
-                                               ? 180.f
-                                               : 90.f;
+                    float const base = (targetId == 38 || targetId == 747 || targetId == 749 || targetId == 2064 || targetId == 2902) ? 180.f : 90.f;
                     angle = (target.flipXEff() ? 180.f : 0.f) + (base - target.nodeRotX());
                 } else {
                     angle = (object.flipXEff() ? 180.f : 0.f) - object.nodeRotX();
@@ -814,23 +801,19 @@ namespace ap::sim {
         };
         if (g.activatedObjectIDs.size() > 24) {
             auto& items = g.activatedObjectIDs.items;
-            items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) { return isFar(e.first.first); }),
-                        items.end());
+            items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) { return isFar(e.first.first); }), items.end());
         }
         if (g.triggeredIDs.size() > 24) {
             auto& items = g.triggeredIDs.items;
-            items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) { return isFar(e.first); }),
-                        items.end());
+            items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) { return isFar(e.first); }), items.end());
         }
         if (g.objState.size() > 24) {
             auto& items = g.objState.items;
-            items.erase(std::remove_if(items.begin(), items.end(),
-                                       [&](auto const& e) {
-                                           Obj const& o = w.objs[static_cast<size_t>(e.first)];
-                                           if (g.trig.on && o.movable) return false;
-                                           return o.rect.x + o.rect.w < behind && o.x < behind;
-                                       }),
-                        items.end());
+            items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) {
+                Obj const& o = w.objs[static_cast<size_t>(e.first)];
+                if (g.trig.on && o.movable) return false;
+                    return o.rect.x + o.rect.w < behind && o.x < behind;
+                }), items.end());
         }
         if (g.trig.on) trigPrune(g, behind);
     }
@@ -900,27 +883,22 @@ namespace ap::sim {
         bool const mismatch =
                 !(ref.died && g.died) &&
                 (ref.p1.x != g.p1.x || ref.p1.y != g.p1.y || ref.p1.yVelocity != g.p1.yVelocity || ref.died != g.died ||
-                 trigHash(ref) != trigHash(g) ||
-                 ((ref.tickGap < 2.5f || g.tickGap < 2.5f) && ref.tickGap != g.tickGap) ||
-                 ((ref.obbGap < 13.f || g.obbGap < 13.f) && ref.obbGap != g.obbGap) ||
-                 ref.p1.rotation != g.p1.rotation || ref.osSize() != g.osSize() || ref.itemChanges != g.itemChanges ||
-                 ref.p1.isOnGround != g.p1.isOnGround || ref.triggeredIDs.size() != g.triggeredIDs.size() ||
-                 ref.rng != g.rng || ref.tpRng != g.tpRng);
+                trigHash(ref) != trigHash(g) ||
+                ((ref.tickGap < 2.5f || g.tickGap < 2.5f) && ref.tickGap != g.tickGap) ||
+                ((ref.obbGap < 13.f || g.obbGap < 13.f) && ref.obbGap != g.obbGap) ||
+                ref.p1.rotation != g.p1.rotation || ref.osSize() != g.osSize() || ref.itemChanges != g.itemChanges ||
+                ref.p1.isOnGround != g.p1.isOnGround || ref.triggeredIDs.size() != g.triggeredIDs.size() ||
+                ref.rng != g.rng || ref.tpRng != g.tpRng);
         if (mismatch && reported.fetch_add(1) < 12) {
-            std::fprintf(stderr,
-                         "[memo] tick %d : mismatch ; ref (%.4f, %.4f, dead %d, trig %08x) shared (%.4f, %.4f, dead "
-                         "%d, trig %08x)\n",
-                         g.tick - 1, ref.p1.x, ref.p1.y, ref.died, trigHash(ref), g.p1.x, g.p1.y, g.died, trigHash(g));
-            std::fprintf(stderr,
-                         "    items %u / %u ; trigIDs %zu / %zu ; ground %d / %d ; rng %u / %u ; teleporters %u / %u\n",
-                         ref.itemChanges, g.itemChanges, ref.triggeredIDs.size(), g.triggeredIDs.size(),
-                         ref.p1.isOnGround, g.p1.isOnGround, ref.rng, g.rng, ref.tpRng, g.tpRng);
-            std::fprintf(stderr, "    gaps ref %.3f %.3f shared %.3f %.3f ; rot %.3f / %.3f ; objState %zu / %zu\n",
-                         ref.tickGap, ref.obbGap, g.tickGap, g.obbGap, ref.p1.rotation, g.p1.rotation, ref.osSize(),
-                         g.osSize());
+            std::fprintf(stderr, "[memo] tick %d : mismatch ; ref (%.4f, %.4f, dead %d, trig %08x) shared (%.4f, %.4f, dead %d, trig %08x)\n", g.tick - 1, ref.p1.x, ref.p1.y, ref.died, trigHash(ref), g.p1.x, g.p1.y, g.died, trigHash(g));
+            std::fprintf(stderr, "items %u / %u ; trigIDs %zu / %zu ; ground %d / %d ; rng %u / %u ; teleporters %u / %u\n",
+                        ref.itemChanges, g.itemChanges, ref.triggeredIDs.size(), g.triggeredIDs.size(),
+                        ref.p1.isOnGround, g.p1.isOnGround, ref.rng, g.rng, ref.tpRng, g.tpRng);
+            std::fprintf(stderr, "gaps ref %.3f %.3f shared %.3f %.3f ; rot %.3f / %.3f ; objState %zu / %zu\n",
+                        ref.tickGap, ref.obbGap, g.tickGap, g.obbGap, ref.p1.rotation, g.p1.rotation, ref.osSize(), g.osSize());
             std::fprintf(stderr, "    ground ref %d (uid %d) shared %d (uid %d) ; yv %.4f / %.4f ; mode %d%d%d\n",
-                         ref.p1.isOnGround, ref.p1.lastGroundObject, g.p1.isOnGround, g.p1.lastGroundObject,
-                         ref.p1.yVelocity, g.p1.yVelocity, g.p1.isShip, g.p1.isBall, g.p1.isBird);
+                        ref.p1.isOnGround, ref.p1.lastGroundObject, g.p1.isOnGround, g.p1.lastGroundObject,
+                        ref.p1.yVelocity, g.p1.yVelocity, g.p1.isShip, g.p1.isBall, g.p1.isBird);
             if (trigHeavyHash(*ref.trig.h) != trigHeavyHash(*g.trig.h)) trigHeavyDiff(*ref.trig.h, *g.trig.h);
             if ((check & 4) && traced.fetch_add(1) == 0) {
                 std::fflush(stdout);
@@ -958,27 +936,22 @@ namespace ap::sim {
                         auto const* o = sharedPv->off.find(e.first);
                         if (!o || memcmp(o, &e.second, sizeof(GroupOff))) {
                             if (diffCount++ < 4)
-                                std::fprintf(stderr,
-                                             "      group %d : ref (%.6f, %.6f st %d px %.4f) shared (%.6f, %.6f st %d "
-                                             "px %.4f)\n",
-                                             e.first, e.second.x, e.second.y, e.second.stamp, e.second.px,
-                                             o ? o->x : 0.0, o ? o->y : 0.0, o ? o->stamp : -9, o ? o->px : 0.0);
+                                std::fprintf(stderr, "group %d : ref (%.6f, %.6f st %d px %.4f) shared (%.6f, %.6f st %d px %.4f)\n",
+                                            e.first, e.second.x, e.second.y, e.second.stamp, e.second.px,
+                                            o ? o->x : 0.0, o ? o->y : 0.0, o ? o->stamp : -9, o ? o->px : 0.0);
                         }
                     }
                     for (auto const& e : sharedPv->off.items)
                         if (!refPv->off.find(e.first) && diffCount++ < 6)
-                            std::fprintf(stderr, "      group %d only shared (%.6f, %.6f)\n", e.first, e.second.x,
-                                         e.second.y);
+                            std::fprintf(stderr, "group %d only shared (%.6f, %.6f)\n", e.first, e.second.x, e.second.y);
                     for (auto const& e : refPv->dyn.items) {
                         auto const* o = sharedPv->dyn.find(e.first);
                         if (!o || memcmp(o, &e.second, sizeof(ObjDyn))) {
                             if (diffCount++ < 8)
-                                std::fprintf(stderr,
-                                             "      obj %d (uid %d) : ref (%.6f, %.6f last %.4f st %d) shared (%.6f, "
-                                             "%.6f last %.4f st %d)\n",
-                                             e.first, g.world->objs[static_cast<size_t>(e.first)].uid, e.second.x,
-                                             e.second.y, e.second.lastX, e.second.stamp, o ? o->x : 0.0, o ? o->y : 0.0,
-                                             o ? o->lastX : 0.f, o ? o->stamp : -9);
+                                std::fprintf(stderr, "obj %d (uid %d) : ref (%.6f, %.6f last %.4f st %d) shared (%.6f, %.6f last %.4f st %d)\n",
+                                            e.first, g.world->objs[static_cast<size_t>(e.first)].uid, e.second.x,
+                                            e.second.y, e.second.lastX, e.second.stamp, o ? o->x : 0.0, o ? o->y : 0.0,
+                                            o ? o->lastX : 0.f, o ? o->stamp : -9);
                         }
                     }
                     for (auto const& e : sharedPv->dyn.items)
@@ -988,8 +961,7 @@ namespace ap::sim {
             }
             if (trigDynHash(*ref.trig.d) != trigDynHash(*g.trig.d)) {
                 std::fprintf(stderr, "    differs : own state (%zu / %zu entries ; af %zu / %zu)\n",
-                             ref.trig.d->objDyn.size(), g.trig.d->objDyn.size(), ref.trig.d->afPhys.size(),
-                             g.trig.d->afPhys.size());
+                            ref.trig.d->objDyn.size(), g.trig.d->objDyn.size(), ref.trig.d->afPhys.size(), g.trig.d->afPhys.size());
                 auto const& refDyn = ref.trig.d->objDyn.items;
                 auto const& sharedDyn = g.trig.d->objDyn.items;
                 int diffCount = 0;
@@ -998,29 +970,24 @@ namespace ap::sim {
                         memcmp(&refDyn[k].second, &sharedDyn[k].second, sizeof(ObjDyn))) {
                         ++diffCount;
                         Obj const& o = g.world->objs[static_cast<size_t>(refDyn[k].first)];
-                        std::fprintf(stderr,
-                                     "      obj uid %d id %d (grp %d) : ref (%.6f, %.6f last %.4f,%.4f st %d) shared "
-                                     "(%.6f, %.6f last %.4f,%.4f st %d)\n",
-                                     o.uid, o.id, o.groups.empty() ? -1 : o.groups[0], refDyn[k].second.x,
-                                     refDyn[k].second.y, refDyn[k].second.lastX, refDyn[k].second.lastY,
-                                     refDyn[k].second.stamp, sharedDyn[k].second.x, sharedDyn[k].second.y,
-                                     sharedDyn[k].second.lastX, sharedDyn[k].second.lastY, sharedDyn[k].second.stamp);
+                        std::fprintf(stderr, "obj uid %d id %d (grp %d) : ref (%.6f, %.6f last %.4f,%.4f st %d) shared (%.6f, %.6f last %.4f,%.4f st %d)\n",
+                                    o.uid, o.id, o.groups.empty() ? -1 : o.groups[0], refDyn[k].second.x,
+                                    refDyn[k].second.y, refDyn[k].second.lastX, refDyn[k].second.lastY,
+                                    refDyn[k].second.stamp, sharedDyn[k].second.x, sharedDyn[k].second.y,
+                                    sharedDyn[k].second.lastX, sharedDyn[k].second.lastY, sharedDyn[k].second.stamp);
                     }
                 auto const& refPhys = ref.trig.d->afPhys.items;
                 auto const& sharedPhys = g.trig.d->afPhys.items;
                 for (size_t k = 0; k < std::min(refPhys.size(), sharedPhys.size()); ++k)
                     if (refPhys[k].first != sharedPhys[k].first ||
                         memcmp(&refPhys[k].second, &sharedPhys[k].second, sizeof(AfPhys))) {
-                        std::fprintf(stderr,
-                                     "      afPhys obj %d : ref v(%.4f,%.4f) last %d / shared v(%.4f,%.4f) last %d\n",
-                                     refPhys[k].first, refPhys[k].second.vx, refPhys[k].second.vy,
-                                     refPhys[k].second.last, sharedPhys[k].second.vx, sharedPhys[k].second.vy,
-                                     sharedPhys[k].second.last);
+                        std::fprintf(stderr, "afPhys obj %d : ref v(%.4f,%.4f) last %d / shared v(%.4f,%.4f) last %d\n",
+                                    refPhys[k].first, refPhys[k].second.vx, refPhys[k].second.vy,
+                                    refPhys[k].second.last, sharedPhys[k].second.vx, sharedPhys[k].second.vy, sharedPhys[k].second.last);
                         break;
                     }
                 if (ref.trig.d->afObjs != g.trig.d->afObjs)
-                    std::fprintf(stderr, "      afObjs differ (%zu / %zu)\n", ref.trig.d->afObjs.size(),
-                                 g.trig.d->afObjs.size());
+                    std::fprintf(stderr, "afObjs differ (%zu / %zu)\n", ref.trig.d->afObjs.size(), g.trig.d->afObjs.size());
             }
         }
     }
@@ -1036,9 +1003,7 @@ namespace ap::sim {
                                                 static_cast<double>(dt) * (g.p1.isGoingLeft ? -1.0 : 1.0));
             g.tlTick = timeline->tickForX(xNext, g.tick + timeline->tickOffset) - timeline->tickOffset;
         }
-        g.camKey = (timeline && (!g.trig.on || g.trig.camTrack))
-                           ? timeline->camAt(timeline->xTicks.empty() ? g.tick : timeline->tickForX(g.p1.x, g.tick))
-                           : nullptr;
+        g.camKey = (timeline && (!g.trig.on || g.trig.camTrack)) ? timeline->camAt(timeline->xTicks.empty() ? g.tick : timeline->tickForX(g.p1.x, g.tick)) : nullptr;
         if (g.camKey) {
             g.timeWarp = g.camKey->timeWarp;
             g.cameraZoom = g.camKey->zoom;
@@ -1052,15 +1017,13 @@ namespace ap::sim {
             World const& w = *g.world;
             float const behind = std::min(g.p1.x, g.isDualMode ? g.p2.x : g.p1.x) - 3000.f;
             auto& items = g.objState.items;
-            items.erase(std::remove_if(items.begin(), items.end(),
-                                       [&](auto const& e) {
-                                           Obj const& o = w.objs[static_cast<size_t>(e.first)];
-                                           if (o.type == Modifier || o.rect.x + o.rect.w >= behind) return false;
-                                           if (!o.movable) return true;
-                                           Rect const r = g.obj(e.first).getObjectRect();
-                                           return r.x + r.w < behind;
-                                       }),
-                        items.end());
+            items.erase(std::remove_if(items.begin(), items.end(), [&](auto const& e) {
+                Obj const& o = w.objs[static_cast<size_t>(e.first)];
+                if (o.type == Modifier || o.rect.x + o.rect.w >= behind) return false;
+                if (!o.movable) return true;
+                Rect const r = g.obj(e.first).getObjectRect();
+                return r.x + r.w < behind;
+                }), items.end());
         } else if (g.world && !g.world->canPruneBehind && (g.tick & 63) == 0 && g.objState.size() > 96) {
             archiveBehind(g);
         }
@@ -1068,8 +1031,7 @@ namespace ap::sim {
             CamKey const* nextKey =
                     timeline->camAt(timeline->xTicks.empty() ? g.tick : timeline->tickForX(g.p1.x, g.tick));
             if (nextKey && nextKey->timeWarp != warpBefore) {
-                double const ratio = static_cast<double>(std::min(nextKey->timeWarp, 1.f)) /
-                                     static_cast<double>(std::min(warpBefore, 1.f));
+                double const ratio = static_cast<double>(std::min(nextKey->timeWarp, 1.f)) / static_cast<double>(std::min(warpBefore, 1.f));
                 g.levelTime += (0.25 * static_cast<double>(std::min(warpBefore, 1.f)) / 60.0) * (ratio - 1.0);
                 g.p1.totalTime = g.levelTime;
                 g.p2.totalTime = g.levelTime;
@@ -1172,8 +1134,7 @@ namespace ap::sim {
                 float const warpBefore = g.timeWarp;
                 trigEndTick(g, dSec);
                 if (g.timeWarp != warpBefore && !g.camKey) {
-                    double const ratio = static_cast<double>(std::min(g.timeWarp, 1.f)) /
-                                         static_cast<double>(std::min(warpBefore, 1.f));
+                    double const ratio = static_cast<double>(std::min(g.timeWarp, 1.f)) / static_cast<double>(std::min(warpBefore, 1.f));
                     g.levelTime += dSec * (ratio - 1.0);
                     g.p1.totalTime = g.levelTime;
                     g.p2.totalTime = g.levelTime;
@@ -1185,8 +1146,7 @@ namespace ap::sim {
             if (!g.activatedObjectIDs.items.empty()) {
                 auto& items = g.activatedObjectIDs.items;
                 unsigned const commandIndex = g.commandIndex;
-                items.erase(std::remove_if(items.begin(), items.end(),
-                                           [commandIndex](auto const& e) { return e.second < commandIndex; }),
+                items.erase(std::remove_if(items.begin(), items.end(), [commandIndex](auto const& e) { return e.second < commandIndex; }),
                             items.end());
             }
         }

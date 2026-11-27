@@ -1,5 +1,4 @@
-// Engine that plays the real game step by step: single steps, level snapshots and restores, macro playback,
-//rng and start-state alignment with the simulator.
+// Engine that plays the real game step by step: single steps, level snapshots and restores, macro playback, rng and start-state alignment with the simulator.
 
 #include "engine.hpp"
 #include "offsets.hpp"
@@ -53,8 +52,7 @@ namespace ap {
 #ifdef GEODE_IS_WINDOWS
     // seed picked by the last resetLevel (PlayLayer::m_randomSeed)
     uint64_t Engine::resetSeed(PlayLayer* pl) {
-        return pl ? *reinterpret_cast<uint64_t const*>(reinterpret_cast<uintptr_t>(pl) + offsets::kPlayLayerRandomSeed)
-                  : 0;
+        return pl ? *reinterpret_cast<uint64_t const*>(reinterpret_cast<uintptr_t>(pl) + offsets::kPlayLayerRandomSeed) : 0;
     }
 #else
     // 0 on other platforms
@@ -303,8 +301,7 @@ namespace ap {
                 Log::print("Auto Pathing Tool: inexact restore, retrying with practice mode forced.");
                 continue;
             }
-            Log::printf("Auto Pathing Tool: WARNING inexact restore at tick {} (hook {}).", snapshot.step,
-                        m_loadHookRan ? "ok" : "not called");
+            Log::printf("Auto Pathing Tool: WARNING inexact restore at tick {} (hook {}).", snapshot.step, m_loadHookRan ? "ok" : "not called");
             return false;
         }
         return false;
@@ -438,9 +435,7 @@ namespace ap {
         if (m_redoCount >= 2) return;
         ++m_redoCount;
         m_redoReset = true;
-        Log::print(
-                "reset: no step played since the previous reset, so the game would not replay the start triggers; "
-                "resetting again after one step.");
+        Log::print("reset: no step played since the previous reset, so the game would not replay the start triggers; resetting again after one step.");
     }
 
     // replaces the queued inputs with the script's toggles for this tick

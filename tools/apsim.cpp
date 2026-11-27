@@ -1268,6 +1268,51 @@ namespace {
         }
         Game const g0 = g;
 
+        if (char const* benchMac = std::getenv("APSIM_BENCHMAC")) {
+            std::vector<uint8_t> mac;
+            if (FILE* fp = std::fopen(benchMac, "r")) {
+                int ch;
+                while ((ch = std::fgetc(fp)) != EOF)
+                    if (ch >= '0' && ch <= '3') mac.push_back(static_cast<uint8_t>(ch - '0'));
+                std::fclose(fp);
+            }
+            int const reps =
+                    std::max(1, std::getenv("APSIM_BENCHREPS") ? std::atoi(std::getenv("APSIM_BENCHREPS")) : 1);
+            double stepSec = 0, copySec = 0;
+            Game end;
+            for (int r = 0; r < reps; ++r) {
+                Game b = g;
+                Game h;
+                double segStep = 0;
+                float segX = b.p1.x;
+                for (size_t t = 0; t < mac.size() && !b.died && !b.completed; ++t) {
+                    auto const c0 = std::chrono::steady_clock::now();
+                    h = b;
+                    auto const c1 = std::chrono::steady_clock::now();
+                    stepTick(h, mac[t]);
+                    auto const c2 = std::chrono::steady_clock::now();
+                    b = std::move(h);
+                    copySec += std::chrono::duration<double>(c1 - c0).count();
+                    double const s = std::chrono::duration<double>(c2 - c1).count();
+                    stepSec += s;
+                    segStep += s;
+                    if (r == 0 && (t + 1) % 512 == 0) {
+                        std::printf("  bench tick %zu x %.0f..%.0f : %.1f us/tick\n", t + 1, segX, b.p1.x,
+                                    segStep * 1e6 / 512);
+                        segStep = 0;
+                        segX = b.p1.x;
+                    }
+                }
+                end = b;
+            }
+            std::printf(
+                    "bench : %d x %zu ticks, step %.3f s, copy %.3f s ; end tick %d x %.6f y %.6f yv %.6f died %d "
+                    "completed %d\n",
+                    reps, mac.size(), stepSec, copySec, end.tick, static_cast<double>(end.p1.x),
+                    static_cast<double>(end.p1.y), static_cast<double>(end.p1.yVelocity), end.died, end.completed);
+            return 0;
+        }
+
         std::vector<uint8_t> prefix;
         if (prefixPath) {
             std::ifstream macroFile(prefixPath);
@@ -1312,9 +1357,11 @@ namespace {
         std::thread gameThread;
         auto const liveT0 = std::chrono::steady_clock::now();
         static std::atomic<bool> starving{false};
+        static std::atomic<bool> holding{false};
         if (liveRate > 0) {
             opt.playedTicks = &playedAbs;
             opt.starving = &starving;
+            opt.holding = &holding;
             opt.maxLead = 0;
             opt.waitFor = &lostAtAbs;
             opt.onPrefix = [&](std::vector<uint8_t> const& prefix) {
@@ -1384,7 +1431,14 @@ namespace {
                             maxStall = std::max(maxStall, stallSec - stallStart);
                         }
                         if (stalled && stallSec - stallStart > 0.75) starving = true;
-                        constexpr double maxWait = 4.0;
+                        static int holdSeenTick = -1;
+                        static double holdSeenAt = 0;
+                        if (g_liveSearchTick.load() != holdSeenTick) {
+                            holdSeenTick = g_liveSearchTick.load();
+                            holdSeenAt = stallSec;
+                        }
+                        bool const holdOn = holding.load() && stallSec - holdSeenAt < 30.0;
+                        double const maxWait = holdOn ? 300.0 : 4.0;
                         if (stalled && stallSec - stallStart >= maxWait && played.load() > 0) {
                             if (debugOptions().check)
                                 std::printf(
@@ -1582,8 +1636,7 @@ namespace {
                             : replay.p1.isDart   ? 'W'
                             : replay.p1.isRobot  ? 'R'
                             : replay.p1.isSpider ? 'P'
-                            : replay.p1.isSwing  ? 'G'
-                                                 : 'C',
+                            : replay.p1.isSwing  ? 'G' : 'C',
                             replay.p1.isUpsideDown ? " (upside down)" : "", replay.p1.playerSpeed);
             if (replay.died || replay.completed) break;
         }
@@ -1718,8 +1771,7 @@ namespace {
             check(g.p1.isSpider && g.p1.isOnGround, "spider : spider mode on, on the ground");
             stepTick(g, true);
             std::printf("    after the press : y=%.3f ud=%d yv=%.3f\n", g.p1.y, g.p1.isUpsideDown, g.p1.yVelocity);
-            check(std::fabs(g.p1.y - 226.5f) < 0.01f && g.p1.isUpsideDown,
-                  "spider : teleported to the ceiling (y 226.5, gravity flipped)");
+            check(std::fabs(g.p1.y - 226.5f) < 0.01f && g.p1.isUpsideDown, "spider : teleported to the ceiling (y 226.5, gravity flipped)");
             for (int i = 0; i < 20; ++i) stepTick(g, false);
             check(std::fabs(g.p1.y - 226.5f) < 0.01f && !g.died, "spider : stays on the ceiling");
             stepTick(g, true);
@@ -1750,8 +1802,7 @@ namespace {
             check(g.p2.isUpsideDown && std::fabs(g.p2.x - g.p1.x) < 0.01f, "dual : p2 copied from p1, gravity flipped");
             while (!g.died && g.p1.x < 600) stepTick(g, false);
             std::printf("    p1 y=%.3f p2 y=%.3f (expected 105 / 225) dead=%d\n", g.p1.y, g.p2.y, g.died);
-            check(!g.died && std::fabs(g.p1.y - 105.f) < 0.01f && std::fabs(g.p2.y - 225.f) < 0.01f,
-                  "dual : p1 on the ground, p2 on the ceiling");
+            check(!g.died && std::fabs(g.p1.y - 105.f) < 0.01f && std::fabs(g.p2.y - 225.f) < 0.01f, "dual : p1 on the ground, p2 on the ceiling");
             stepTick(g, true);
             check(g.p1.yVelocity > 5 && g.p2.yVelocity < -5, "dual : one press makes both jump (p2 downward)");
             for (int i = 0; i < 150 && !g.died; ++i) stepTick(g, false);
@@ -1781,8 +1832,7 @@ namespace {
             Game g;
             setupGame(g, w);
             stepTick(g, 2);
-            check(!g.p1.holdingJump && g.p1.yVelocity <= 0.0,
-                  "2 players : outside dual, the player 2 button does nothing");
+            check(!g.p1.holdingJump && g.p1.yVelocity <= 0.0, "2 players : outside dual, the player 2 button does nothing");
             stepTick(g, 0);
             while (!g.died && g.p1.x < 600) stepTick(g, 0);
             check(g.isDualMode && !g.died, "2 players : dual");
@@ -2098,9 +2148,7 @@ namespace {
     // "apsim replay": plays a macro and prints the player state on the chosen ticks
     int cmdReplay(int argc, char** argv) {
         if (argc < 4) {
-            std::fprintf(stderr,
-                         "usage: apsim replay <level.objects.jsonl> <macro.txt> [--rec recording.jsonl] [--from T] "
-                         "[--to T] [--then 0|1 N] [--trace T] [--noclip]\n");
+            std::fprintf(stderr, "usage: apsim replay <level.objects.jsonl> <macro.txt> [--rec recording.jsonl] [--from T] [--to T] [--then 0|1 N] [--trace T] [--noclip]\n");
             return 2;
         }
         World w;
@@ -2177,6 +2225,12 @@ namespace {
         std::printf("end of the macro : tick %zu dead=%d (uid %d) complete=%d x=%.2f y=%.2f\n", i, g.died, g.killerUid,
                     g.completed, g.p1.x, g.p1.y);
 
+        if (char const* itemEnv = std::getenv("APSIM_ITEM"))
+            std::printf("item %d = %d\n", std::atoi(itemEnv), trigItemValue(g, std::atoi(itemEnv)));
+        if (char const* actEnv = std::getenv("APSIM_ACT"))
+            if (int const idx = w.indexOfUid(std::atoi(actEnv)); idx >= 0)
+                std::printf("activated %d = %d\n", std::atoi(actEnv), trigActivatedBit(g, idx) ? 1 : 0);
+                
         if (thenBtn >= 0) {
             for (int k = 0; k < thenN && !g.died && !g.completed; ++k) {
                 g_trace = (g.tick == traceTick);
@@ -2184,8 +2238,7 @@ namespace {
                 g_trace = false;
                 show(g.tick - 1, thenBtn != 0);
             }
-            std::printf("after : tick %d dead=%d (uid %d) complete=%d x=%.2f y=%.2f\n", g.tick, g.died, g.killerUid,
-                        g.completed, g.p1.x, g.p1.y);
+            std::printf("after : tick %d dead=%d (uid %d) complete=%d x=%.2f y=%.2f\n", g.tick, g.died, g.killerUid, g.completed, g.p1.x, g.p1.y);
         }
         return 0;
     }

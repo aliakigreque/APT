@@ -31,8 +31,7 @@ namespace ap {
     }
 
     // adds an event for every object whose position, rotation or flags changed
-    size_t ObjectWatcher::sample(int tick, std::vector<sim::TimelineEvent>& out, bool all, cocos2d::CCPoint center,
-                                 float window) {
+    size_t ObjectWatcher::sample(int tick, std::vector<sim::TimelineEvent>& out, bool all, cocos2d::CCPoint center,float window) {
         size_t count = 0;
         bool const windowed = window > 0.f && !all;
         for (auto& candidate : m_c) {
@@ -45,8 +44,7 @@ namespace ap {
             float const rot = object->getObjectRotation();
             uint8_t const flags = flagsOf(object);
             bool const changed = !candidate.seen || all || x != candidate.x || y != candidate.y ||
-                                 rot != candidate.rot || flags != candidate.flags || nodeX != candidate.nx ||
-                                 nodeY != candidate.ny;
+                                rot != candidate.rot || flags != candidate.flags || nodeX != candidate.nx || nodeY != candidate.ny;
             if (!changed) continue;
             candidate.x = x;
             candidate.y = y;
